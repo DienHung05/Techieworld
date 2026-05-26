@@ -11,7 +11,7 @@
        class="action pv-order-track"
        data-order-id="<?= $block->escapeHtmlAttr($_order->getRealOrderId()) ?>"
        data-provider="spx">
-        <span><?= $block->escapeHtml(__('Theo dõi đơn hàng')) ?></span>
+        <span><?= $block->escapeHtml(__('Track order')) ?></span>
     </a>
     <?php if ($this->helper(\Magento\Sales\Helper\Reorder::class)->canReorder($_order->getEntityId())) : ?>
         <a href="#" data-post='<?=

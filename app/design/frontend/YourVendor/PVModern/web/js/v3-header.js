@@ -221,18 +221,52 @@ define([
             }
 
             var cartData = customerData.get('cart');
+
+            // Read the snapshot the checkout widget froze when place_order ran.
+            // While the customer is mid-payment at step 4, we ignore Magento's
+            // (correctly-empty) cart section and display the snapshot count
+            // instead — otherwise the header would flash to 0 the moment the
+            // order is placed, while the customer is still waiting for their
+            // bank transfer to confirm.
+            function readFrozenSnapshotCount() {
+                try {
+                    var raw = window.sessionStorage.getItem('pvmodern_checkout_customer_flow');
+                    if (!raw) return null;
+                    var saved = JSON.parse(raw);
+                    if (!saved || !saved.cartSnapshotLocked) return null;
+                    if (saved.step && saved.step >= 5) return null; // payment done — let Magento's 0 through
+                    var snap = saved.cartSnapshot || [];
+                    return snap.reduce(function (s, i) { return s + (parseInt(i.qty, 10) || 1); }, 0);
+                } catch (e) { return null; }
+            }
+
             function refreshBadge(data) {
-                var count = (data && data.summary_count !== undefined)
-                    ? data.summary_count
-                    : ((data && data.qty_count !== undefined)
-                        ? data.qty_count
-                        : (data && data.items ? data.items.reduce(function (s, i) { return s + (parseInt(i.qty, 10) || 1); }, 0) : 0));
-                applyCount(count);
+                var frozen = readFrozenSnapshotCount();
+                if (frozen !== null) { applyCount(frozen); return; }
+                /* Use the sum of qty across items so the badge shows the true
+                   product quantity (e.g. 3 of one item + 2 of another → 5),
+                   not the line-item count. Magento's summary_count is the
+                   number of distinct lines, not the total qty. */
+                var count = 0;
+                if (data && data.items && data.items.length) {
+                    count = data.items.reduce(function (s, i) {
+                        return s + (parseFloat(i.qty) || 0);
+                    }, 0);
+                } else if (data && typeof data.summary_qty !== 'undefined') {
+                    count = parseFloat(data.summary_qty) || 0;
+                } else if (data && typeof data.qty_count !== 'undefined') {
+                    count = parseFloat(data.qty_count) || 0;
+                } else if (data && typeof data.summary_count !== 'undefined') {
+                    count = parseFloat(data.summary_count) || 0;
+                }
+                applyCount(Math.round(count));
             }
             cartData.subscribe(refreshBadge);
             refreshBadge(cartData());
 
-            /* Immediate update from checkout widget after order is placed */
+            /* Immediate update from checkout widget — honored regardless of
+               freeze state because pvCartCountChanged is fired explicitly
+               (e.g. at step 5 when we DO want to clear the badge). */
             $(window).on('pvCartCountChanged', function (e, count) { applyCount(count); });
         }());
 
@@ -257,10 +291,12 @@ define([
             var $form  = $root.find('.pv3-search');
             var $input = $form.find('.pv3-search-input');
             var $drop  = $form.find('#pv3-search-dropdown');
-            var suggestUrl = String($form.data('suggest-url') || '');
-            var searchUrl  = String($form.data('search-url') || '');
-            var resultsAnchor = String($form.data('results-anchor') || 'pv3-products');
-            var minLength  = parseInt($form.data('min-length'), 10) || 1;
+            /* Read attributes directly — jQuery .data() can return stale-cached values
+               when other widgets mutate the DOM, which silently breaks suggestions. */
+            var suggestUrl = String($form.attr('data-suggest-url') || $form.data('suggest-url') || '');
+            var searchUrl  = String($form.attr('data-search-url')  || $form.data('search-url')  || '');
+            var resultsAnchor = String($form.attr('data-results-anchor') || 'pv3-products');
+            var minLength  = parseInt($form.attr('data-min-length'), 10) || 1;
             var debounceTimer = null;
             var activeIdx = -1;
             var request = null;
@@ -367,7 +403,7 @@ define([
 
             function fetchSuggestions(query) {
                 if (request && request.readyState !== 4) {
-                    request.abort();
+                    try { request.abort(); } catch (e) { /* ignore */ }
                 }
 
                 if (cache[query]) {
@@ -382,6 +418,8 @@ define([
                     url: suggestUrl,
                     method: 'GET',
                     dataType: 'json',
+                    cache: false,
+                    timeout: 8000,
                     data: {q: query}
                 }).done(function (response) {
                     var currentQuery = normalizeQuery($input.val());
@@ -392,11 +430,14 @@ define([
                         renderItems(items, query);
                     }
                 }).fail(function (xhr) {
-                    if (xhr && xhr.statusText === 'abort') {
+                    if (xhr && (xhr.statusText === 'abort' || xhr.readyState === 0)) {
                         return;
                     }
-
-                    $drop.html('<div class="pv3-search-loading">Search is temporarily unavailable.</div>');
+                    /* Surface backend errors to the dropdown so they aren't silent. */
+                    var hint = (xhr && xhr.responseJSON && xhr.responseJSON.error)
+                        ? ' (' + xhr.responseJSON.error + ')'
+                        : '';
+                    $drop.html('<div class="pv3-search-loading">Search is temporarily unavailable.' + escHtml(hint) + '</div>');
                     showDrop();
                 });
             }

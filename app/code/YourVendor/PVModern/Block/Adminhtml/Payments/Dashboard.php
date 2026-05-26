@@ -7,6 +7,7 @@ use Magento\Backend\Block\Template;
 use Magento\Backend\Block\Template\Context;
 use Magento\Framework\Data\Form\FormKey;
 use YourVendor\PVModern\Helper\PaymentDb;
+use YourVendor\PVModern\Model\IntegrationConfig;
 
 class Dashboard extends Template
 {
@@ -16,6 +17,7 @@ class Dashboard extends Template
         Context $context,
         private readonly PaymentDb $paymentDb,
         private readonly FormKey $formKeyHelper,
+        private readonly IntegrationConfig $integrationConfig,
         array $data = []
     ) {
         parent::__construct($context, $data);
@@ -54,6 +56,16 @@ class Dashboard extends Template
     public function getOrdersJsonUrl(): string
     {
         return $this->getUrl('pvmodern_payments/payments/orders');
+    }
+
+    public function getSimulateWebhookUrl(): string
+    {
+        return $this->getUrl('pvmodern_payments/payments/simulateWebhook');
+    }
+
+    public function isMockModeEnabled(): bool
+    {
+        return $this->integrationConfig->isMockModeEnabled('payment');
     }
 
     public function getFormKey(): string

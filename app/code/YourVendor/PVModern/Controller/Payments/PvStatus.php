@@ -7,6 +7,7 @@ use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\App\DeploymentConfig;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
+use Magento\Framework\Serialize\Serializer\Json;
 use YourVendor\PVModern\Helper\PaymentDb;
 
 class PvStatus implements HttpGetActionInterface
@@ -19,7 +20,8 @@ class PvStatus implements HttpGetActionInterface
         private readonly JsonFactory $resultJsonFactory,
         private readonly OrderCollectionFactory $orderCollectionFactory,
         private readonly PaymentDb $paymentDb,
-        private readonly DeploymentConfig $deploymentConfig
+        private readonly DeploymentConfig $deploymentConfig,
+        private readonly Json $json
     ) {}
 
     public function execute()
@@ -86,17 +88,61 @@ class PvStatus implements HttpGetActionInterface
             $pvOrder['payment_status'] = 'expired';
         }
 
+        $attempt = $this->paymentDb->findLatestAttemptForIncrement((string) $pvOrder['magento_increment_id']);
+        $status = (string) ($pvOrder['payment_status'] ?? 'pending');
+        if ($attempt && in_array((string) $attempt['status'], ['paid', 'failed', 'expired', 'manual_review'], true)) {
+            $status = (string) $attempt['status'];
+        }
+
+        $paymentContext = $this->loadPaymentContext((string) $pvOrder['magento_increment_id']);
+
         return $result->setData([
             'success' => true,
             'pv_order_id' => (int)$pvOrder['id'],
-            'status' => $pvOrder['payment_status'],
+            'paymentAttemptId' => $attempt ? (int) $attempt['id'] : (int) ($pvOrder['payment_attempt_id'] ?? 0),
+            'payment_attempt_id' => $attempt ? (int) $attempt['id'] : (int) ($pvOrder['payment_attempt_id'] ?? 0),
+            'orderId' => (string) $pvOrder['magento_increment_id'],
+            'method' => (string) $pvOrder['payment_method'],
+            'status' => $status,
+            'paidAt' => !empty($pvOrder['paid_at']) ? gmdate('c', strtotime((string) $pvOrder['paid_at'])) : null,
+            'providerTransactionId' => (string) ($pvOrder['provider_transaction_id'] ?? ($attempt['provider_transaction_id'] ?? '')),
             'transfer_code' => $pvOrder['transfer_code'],
             'payment_method' => $pvOrder['payment_method'],
             'total_amount' => (float)$pvOrder['total_amount'],
             'expires_at' => $pvOrder['expires_at'],
             'screenshot_uploaded' => !empty($pvOrder['screenshot_url']),
-            'can_proceed' => $pvOrder['payment_status'] === 'paid',
+            'nextStepAllowed' => $status === 'paid',
+            'can_proceed' => $status === 'paid',
+            'payment' => $paymentContext,
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function loadPaymentContext(string $incrementId): ?array
+    {
+        try {
+            $orders = $this->orderCollectionFactory->create()
+                ->addFieldToFilter('increment_id', $incrementId)
+                ->setPageSize(1);
+            $order = $orders->getFirstItem();
+            if (!$order || !$order->getId() || !$order->getPayment()) {
+                return null;
+            }
+            $raw = (string) $order->getPayment()->getAdditionalInformation('pvmodern_payment_context');
+            if ($raw === '') {
+                return null;
+            }
+            $decoded = $this->json->unserialize($raw);
+            if (!is_array($decoded)) {
+                return null;
+            }
+            $decoded['amount'] = (int) round((float) ($decoded['amount'] ?? $order->getGrandTotal()));
+            return $decoded;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     private function mapMagentoMethod(string $method, array $addInfo): string

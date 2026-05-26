@@ -42,8 +42,8 @@ try {
             'regular' => $regular,
             'special' => $special,
             'disc'    => $disc,
-            'reg_fmt' => $priceCurrency->format($regular, false),
-            'sp_fmt'  => $priceCurrency->format($special, false),
+            'reg_fmt' => preg_replace('/[.,]0+(?=\s|[^\d.,]|$)/', '', (string) $priceCurrency->format($regular, false)),
+            'sp_fmt'  => preg_replace('/[.,]0+(?=\s|[^\d.,]|$)/', '', (string) $priceCurrency->format($special, false)),
         ];
     }
     usort($deals, function ($a, $b) { return $b['disc'] - $a['disc']; });
@@ -177,7 +177,7 @@ $tabs = [
                          alt="<?= $block->escapeHtmlAttr($d['name']) ?>"
                          loading="lazy" />
                     <?php else: ?>
-                    <svg viewBox="0 0 100 80" fill="none">
+                    <svg viewBox="0 0 100 80" fill="none" width="100" height="80" aria-hidden="true">
                         <rect width="100" height="80" rx="8" fill="#1e1b4b"/>
                         <path d="M30 40h40M50 20v40" stroke="#6366f1" stroke-width="3" stroke-linecap="round"/>
                     </svg>
@@ -197,7 +197,7 @@ $tabs = [
                         <span class="pvd-price-reg"><?= $block->escapeHtml($d['reg_fmt']) ?></span>
                     </div>
                     <div class="pvd-savings-bar">
-                        <span>Save <?= $block->escapeHtml($priceCurrency->format($d['regular'] - $d['special'], false)) ?></span>
+                        <span>Save <?= $block->escapeHtml(preg_replace('/[.,]0+(?=\s|[^\d.,]|$)/', '', (string) $priceCurrency->format($d['regular'] - $d['special'], false))) ?></span>
                         <div class="pvd-savings-progress">
                             <div class="pvd-savings-fill" style="width:<?= min($d['disc'], 100) ?>%"></div>
                         </div>
@@ -215,7 +215,7 @@ $tabs = [
 
         <?php else: ?>
         <div class="pvd-empty">
-            <svg viewBox="0 0 80 80" fill="none">
+            <svg viewBox="0 0 80 80" fill="none" width="48" height="48" aria-hidden="true">
                 <circle cx="40" cy="40" r="38" stroke="#4f46e5" stroke-width="2" opacity=".3"/>
                 <path d="M25 40h30M40 25v30" stroke="#818cf8" stroke-width="3" stroke-linecap="round" opacity=".5"/>
             </svg>
@@ -249,6 +249,7 @@ $tabs = [
 .pvd-page {
     background: #0a0a12;
     min-height: 100vh;
+    min-height: 100dvh;
     padding-bottom: 80px;
     color: #e2e8f0;
 }

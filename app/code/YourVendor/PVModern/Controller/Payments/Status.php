@@ -65,6 +65,8 @@ class Status implements HttpGetActionInterface
         return match ($status) {
             OrderPaymentStatus::PAID, 'paid', 'complete', 'processing' => 'paid',
             OrderPaymentStatus::FAILED, 'failed' => 'failed',
+            OrderPaymentStatus::EXPIRED, 'expired' => 'expired',
+            OrderPaymentStatus::MANUAL_REVIEW, 'manual_review', 'pending_review' => 'manual_review',
             OrderPaymentStatus::CANCELLED, 'cancelled', 'canceled' => 'cancelled',
             default => 'pending',
         };

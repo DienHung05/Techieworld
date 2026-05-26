@@ -10,5 +10,7 @@ class OrderPaymentStatus
     public const PAID = 'paid';
     public const FAILED = 'failed';
     public const CANCELLED = 'cancelled';
+    public const EXPIRED = 'expired';
+    public const MANUAL_REVIEW = 'manual_review';
     public const COD_PENDING = 'cod_pending';
 }

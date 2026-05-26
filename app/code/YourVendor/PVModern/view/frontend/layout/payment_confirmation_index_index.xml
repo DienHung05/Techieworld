@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      layout="checkout"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <css src="css/pv-cart-checkout-final.css"/>
+    </head>
+    <body>
+        <referenceBlock name="checkout.root" remove="true"/>
+        <referenceContainer name="content">
+            <block class="YourVendor\PVModern\Block\Checkout\Flow"
+                   name="pvmodern.checkout.flow"
+                   template="Magento_Checkout::onepage/pv-checkout.phtml"
+                   cacheable="false">
+                <arguments>
+                    <argument name="is_payment_confirmation_only" xsi:type="boolean">true</argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+    </body>
+</page>

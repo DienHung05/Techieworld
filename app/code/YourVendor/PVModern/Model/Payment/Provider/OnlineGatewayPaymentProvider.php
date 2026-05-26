@@ -3,10 +3,35 @@ declare(strict_types=1);
 
 namespace YourVendor\PVModern\Model\Payment\Provider;
 
+use Psr\Log\LoggerInterface;
 use YourVendor\PVModern\Model\Checkout\OrderPaymentStatus;
+use YourVendor\PVModern\Model\IntegrationConfig;
+use YourVendor\PVModern\Model\Payment\VietQrBuilder;
 
 class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
 {
+    private const BRAND_LABELS = [
+        'momo'   => 'MoMo',
+        'vnpay'  => 'VNPay',
+        'card'   => 'Visa / Mastercard',
+        'stripe' => 'Visa / Mastercard',
+    ];
+
+    private const BRAND_PROVIDERS = [
+        'momo'   => 'momo',
+        'vnpay'  => 'vnpay',
+        'card'   => 'stripe',
+        'stripe' => 'stripe',
+    ];
+
+    public function __construct(
+        IntegrationConfig $integrationConfig,
+        LoggerInterface $logger,
+        private readonly VietQrBuilder $vietQrBuilder
+    ) {
+        parent::__construct($integrationConfig, $logger);
+    }
+
     public function getCode(): string
     {
         return 'online_gateway';
@@ -50,6 +75,10 @@ class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
             return $this->initializeVnpay($increment, $amount, $isMock);
         }
 
+        if ($channel === 'stripe' || $channel === 'card') {
+            return $this->initializeStripe($increment, $amount, $isMock);
+        }
+
         return [
             'status' => $this->getInitialStatus(),
             'label' => $this->getLabel(),
@@ -69,17 +98,7 @@ class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
         $reference = 'VNPAY-' . $increment;
 
         if ($isMock || !$hasCredentials) {
-            $mockPayload = sprintf('TECHIEWORLD|VNPAY|MOCK_PENDING|AMOUNT=%d|REF=%s', $amount, $reference);
-            return [
-                'status' => $this->getInitialStatus(),
-                'label' => 'VNPay',
-                'provider' => 'vnpay',
-                'redirect_url' => '',
-                'qr_payload' => $mockPayload,
-                'reference' => $reference,
-                'message' => 'VNPay is in mock mode. Set VNPAY_TMN_CODE, VNPAY_HASH_SECRET, VNPAY_PAYMENT_URL, VNPAY_RETURN_URL for live payment URLs.',
-                'mock' => true,
-            ];
+            return $this->initializeVietQrFallback('vnpay', $increment, $amount);
         }
 
         $params = [
@@ -116,6 +135,9 @@ class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
             'redirect_url' => $redirectUrl,
             'qr_payload' => $redirectUrl,
             'reference' => $reference,
+            'provider_order_id' => (string) $params['vnp_TxnRef'],
+            'expires_at' => date('Y-m-d H:i:s', time() + 30 * 60),
+            'amount' => $amount,
             'message' => 'VNPay payment URL created.',
             'mock' => false,
         ];
@@ -128,17 +150,7 @@ class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
         $reference = 'MOMO-' . $increment;
 
         if ($isMock || !$hasCredentials) {
-            $mockPayload = sprintf('TECHIEWORLD|MOMO|MOCK_PENDING|AMOUNT=%d|REF=%s', $amount, $reference);
-            return [
-                'status' => $this->getInitialStatus(),
-                'label' => 'MoMo',
-                'provider' => 'momo',
-                'redirect_url' => '',
-                'qr_payload' => $mockPayload,
-                'reference' => $reference,
-                'message' => 'MoMo is in mock mode. Set MOMO_PARTNER_CODE, MOMO_ACCESS_KEY, MOMO_SECRET_KEY, MOMO_ENDPOINT, MOMO_REDIRECT_URL, MOMO_IPN_URL for live payUrl creation.',
-                'mock' => true,
-            ];
+            return $this->initializeVietQrFallback('momo', $increment, $amount);
         }
 
         $requestId = $reference . '-' . time();
@@ -184,10 +196,116 @@ class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
             'redirect_url' => $payUrl,
             'qr_payload' => $payUrl,
             'qr_code_url' => $qrCodeUrl,
+            'deeplink_url' => (string) ($response['deeplink'] ?? $response['deeplinkUrl'] ?? ''),
             'reference' => $reference,
+            'provider_order_id' => $orderId,
+            'provider_session_id' => $requestId,
+            'expires_at' => date('Y-m-d H:i:s', time() + 30 * 60),
+            'amount' => $amount,
             'message' => $payUrl !== '' ? 'MoMo payUrl created.' : 'MoMo did not return a payUrl.',
             'mock' => false,
             'gateway_response' => $response,
+        ];
+    }
+
+    private function initializeStripe(string $increment, int $amount, bool $isMock): array
+    {
+        $config = $this->integrationConfig->getStripeConfig();
+        $secretKey = (string) ($config['secret_key'] ?? '');
+        $reference = 'STRIPE-' . preg_replace('/[^A-Za-z0-9_-]/', '', $increment);
+
+        if ($isMock || $secretKey === '') {
+            return $this->initializeVietQrFallback('card', $increment, $amount);
+        }
+
+        $payload = [
+            'mode' => 'payment',
+            'success_url' => (string) $config['success_url'],
+            'cancel_url' => (string) $config['cancel_url'],
+            'payment_method_types' => ['card'],
+            'line_items' => [[
+                'quantity' => 1,
+                'price_data' => [
+                    'currency' => 'vnd',
+                    'unit_amount' => $amount,
+                    'product_data' => [
+                        'name' => 'Techieworld order ' . $increment,
+                    ],
+                ],
+            ]],
+            'metadata' => [
+                'order_increment_id' => $increment,
+                'provider_order_id' => $reference,
+            ],
+            'payment_intent_data' => [
+                'metadata' => [
+                    'order_increment_id' => $increment,
+                    'provider_order_id' => $reference,
+                ],
+            ],
+        ];
+
+        $response = $this->postForm((string) $config['checkout_sessions_url'], $payload, $secretKey);
+        $paymentUrl = (string) ($response['url'] ?? '');
+
+        return [
+            'status' => $this->getInitialStatus(),
+            'label' => 'Visa / Mastercard',
+            'provider' => 'stripe',
+            'redirect_url' => $paymentUrl,
+            'qr_payload' => $paymentUrl,
+            'reference' => $reference,
+            'provider_order_id' => $reference,
+            'provider_session_id' => (string) ($response['id'] ?? ''),
+            'provider_transaction_id' => (string) ($response['payment_intent'] ?? ''),
+            'expires_at' => date('Y-m-d H:i:s', time() + 30 * 60),
+            'amount' => $amount,
+            'message' => $paymentUrl !== '' ? 'Stripe Checkout session created.' : 'Stripe did not return a checkout URL.',
+            'mock' => false,
+            'gateway_response' => $response,
+        ];
+    }
+
+    /**
+     * Sandbox/no-credentials fallback: every "online gateway" method (momo/vnpay/card)
+     * returns a dynamic BIDV VietQR. Customer scans → bank app auto-fills amount + memo →
+     * Casso webhook detects the ORD<digits> reference → SSE pushes paid status to the browser.
+     *
+     * @return array<string, mixed>
+     */
+    private function initializeVietQrFallback(string $channel, string $increment, int $amount): array
+    {
+        $details = $this->vietQrBuilder->getMerchantDetails();
+        $transferCode = 'ORD' . preg_replace('/[^0-9]/', '', $increment);
+        if ($transferCode === 'ORD') {
+            $transferCode = sprintf('ORD%d', time());
+        }
+
+        $qrCodeUrl = $this->vietQrBuilder->buildUrl($amount, $transferCode);
+        $label = self::BRAND_LABELS[$channel] ?? 'Bank Transfer';
+        $provider = self::BRAND_PROVIDERS[$channel] ?? 'bank_transfer';
+
+        return [
+            'status' => $this->getInitialStatus(),
+            'label' => $label,
+            'provider' => $provider,
+            'redirect_url' => '',
+            'qr_code_url' => $qrCodeUrl,
+            'qr_payload' => $transferCode,
+            'qr_channel_brand' => $channel,
+            'reference' => $transferCode,
+            'provider_order_id' => $transferCode,
+            'expires_at' => date('Y-m-d H:i:s', time() + 30 * 60),
+            'amount' => $amount,
+            'instructions' => [
+                'account_name' => $details['account_name'] ?? '',
+                'account_number' => $details['account_number'] ?? '',
+                'bank_name' => $details['bank_name'] ?? '',
+                'branch' => $details['branch'] ?? '',
+                'transfer_reference' => $transferCode,
+            ],
+            'message' => sprintf('%s VietQR — amount auto-filled, auto-detected by Casso webhook.', $label),
+            'mock' => false,
         ];
     }
 
@@ -211,6 +329,36 @@ class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
             CURLOPT_POST => true,
             CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
             CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_SLASHES),
+            CURLOPT_TIMEOUT => 12,
+        ]);
+
+        $body = curl_exec($ch);
+        curl_close($ch);
+
+        $decoded = json_decode((string) $body, true);
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    private function postForm(string $url, array $payload, string $secretKey): array
+    {
+        if (!function_exists('curl_init')) {
+            return [];
+        }
+
+        $ch = curl_init($url);
+        if (!$ch) {
+            return [];
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $secretKey],
+            CURLOPT_POSTFIELDS => http_build_query($payload),
             CURLOPT_TIMEOUT => 12,
         ]);
 

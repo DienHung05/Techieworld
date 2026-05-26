@@ -6,12 +6,14 @@ namespace YourVendor\PVModern\Controller\Api;
 use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\JsonFactory;
+use YourVendor\PVModern\Model\IntegrationConfig;
 
 class Weather implements HttpGetActionInterface
 {
     public function __construct(
         private readonly RequestInterface $request,
-        private readonly JsonFactory $resultJsonFactory
+        private readonly JsonFactory $resultJsonFactory,
+        private readonly IntegrationConfig $integrationConfig
     ) {
     }
 
@@ -22,9 +24,6 @@ class Weather implements HttpGetActionInterface
         $lon = trim((string) $this->request->getParam('lon', ''));
         $unit = strtolower(trim((string) $this->request->getParam('unit', 'metric'))) === 'imperial' ? 'imperial' : 'metric';
         $live = $this->fetchOpenWeather($city, $lat, $lon, $unit);
-        if (!$live) {
-            $live = $this->fetchOpenMeteo($city, $lat, $lon, $unit);
-        }
         if ($live) {
             $result = $this->resultJsonFactory->create();
             $result->setHeader('Cache-Control', 'public, max-age=900', true);
@@ -44,6 +43,11 @@ class Weather implements HttpGetActionInterface
             'location' => $lat && $lon ? sprintf('Lat %s, Lon %s', $lat, $lon) : $city,
             'updated_at' => $now,
             'unit' => $unit,
+            'provider' => 'OpenWeatherMap',
+            'source_url' => 'https://openweathermap.org/',
+            'note' => $this->openWeatherKey() === ''
+                ? 'OPENWEATHER_API_KEY chưa được cấu hình; dữ liệu thời tiết bên dưới là dự phòng để trang không bị trống.'
+                : 'OpenWeatherMap không trả dữ liệu hợp lệ trong lần gọi này; dữ liệu bên dưới là dự phòng.',
             'current' => [
                 'temperature' => $baseTemp,
                 'condition' => $unit === 'metric' && $baseTemp >= 30 ? 'Nắng nóng nhẹ' : 'Có mây',
@@ -80,7 +84,7 @@ class Weather implements HttpGetActionInterface
             'hourly' => $this->hourly($baseTemp),
             'daily' => $this->daily($baseTemp),
             'news' => $this->weatherNews(),
-            'mock' => getenv('OPENWEATHER_API_KEY') ? false : true,
+            'mock' => true,
         ]);
     }
 
@@ -209,13 +213,14 @@ class Weather implements HttpGetActionInterface
 
     private function fetchOpenWeather(string $city, string $lat, string $lon, string $unit): array
     {
-        $key = $this->env('WEATHER_API_KEY') ?: $this->env('OPENWEATHER_API_KEY');
+        $key = $this->openWeatherKey();
         if ($key === '') {
             return [];
         }
+        $base = rtrim($this->env('OPENWEATHER_API_BASE_URL') ?: 'https://api.openweathermap.org', '/');
 
         if ($lat === '' || $lon === '') {
-            $geo = $this->httpGetJson('https://api.openweathermap.org/geo/1.0/direct?' . http_build_query([
+            $geo = $this->httpGetJson($base . '/geo/1.0/direct?' . http_build_query([
                 'q' => $city,
                 'limit' => '1',
                 'appid' => $key,
@@ -231,16 +236,18 @@ class Weather implements HttpGetActionInterface
             $country = '';
         }
 
-        $current = $this->httpGetJson('https://api.openweathermap.org/data/2.5/weather?' . http_build_query([
+        $current = $this->httpGetJson($base . '/data/2.5/weather?' . http_build_query([
             'lat' => $lat,
             'lon' => $lon,
             'units' => $unit,
+            'lang' => 'vi',
             'appid' => $key,
         ]));
-        $forecast = $this->httpGetJson('https://api.openweathermap.org/data/2.5/forecast?' . http_build_query([
+        $forecast = $this->httpGetJson($base . '/data/2.5/forecast?' . http_build_query([
             'lat' => $lat,
             'lon' => $lon,
             'units' => $unit,
+            'lang' => 'vi',
             'appid' => $key,
         ]));
         if (empty($current['main'])) {
@@ -248,23 +255,37 @@ class Weather implements HttpGetActionInterface
         }
 
         $weather = is_array($current['weather'][0] ?? null) ? $current['weather'][0] : [];
+        $timezoneOffset = (int) ($current['timezone'] ?? 0);
+        $cityName = trim((string) ($current['name'] ?? $city));
+        $country = trim((string) ($country ?: ($current['sys']['country'] ?? '')));
+        /* OpenWeatherMap returns hyper-local neighborhood names like "Xom Pho"
+           for Hanoi-area coords. Normalise to the user-facing city. */
+        $coordLat = (float) ($current['coord']['lat'] ?? $lat);
+        $coordLon = (float) ($current['coord']['lon'] ?? $lon);
+        if ($country === 'VN' && abs($coordLat - 21.03) < 0.25 && abs($coordLon - 105.85) < 0.35) {
+            $cityName = 'Ha Noi';
+        }
         $windUnit = $unit === 'imperial' ? 'mph' : 'm/s';
         $hourly = [];
         foreach (array_slice((array) ($forecast['list'] ?? []), 0, 8) as $row) {
             $hourWeather = is_array($row['weather'][0] ?? null) ? $row['weather'][0] : [];
             $hourly[] = [
-                'time' => gmdate('H:00', (int) ($row['dt'] ?? time())),
+                'time' => $this->formatUnixTime((int) ($row['dt'] ?? time()), $timezoneOffset, 'H:00'),
                 'icon' => $this->weatherIcon((string) ($hourWeather['main'] ?? 'Clouds')),
                 'temp' => (int) round((float) ($row['main']['temp'] ?? 0)),
                 'rain' => (int) round(((float) ($row['pop'] ?? 0)) * 100),
                 'wind' => round((float) ($row['wind']['speed'] ?? 0), 1) . ' ' . $windUnit,
             ];
         }
+        $daily = $this->dailyFromOpenWeatherForecast($forecast, $timezoneOffset, $unit);
+        $aqi = $this->fetchOpenWeatherAirQuality($base, $lat, $lon, $key);
 
         return [
-            'location' => trim($city . ($country ? ', ' . $country : '')),
-            'updated_at' => gmdate('d/m/Y H:i', (int) ($current['dt'] ?? time())),
+            'location' => trim($cityName . ($country ? ', ' . $country : '')),
+            'updated_at' => $this->formatUnixTime((int) ($current['dt'] ?? time()), $timezoneOffset, 'd/m/Y H:i'),
             'unit' => $unit,
+            'provider' => 'OpenWeatherMap',
+            'source_url' => 'https://openweathermap.org/',
             'current' => [
                 'temperature' => (int) round((float) ($current['main']['temp'] ?? 0)),
                 'condition' => (string) ($weather['description'] ?? $weather['main'] ?? 'Weather'),
@@ -278,14 +299,14 @@ class Weather implements HttpGetActionInterface
                 'low' => (int) round((float) ($current['main']['temp_min'] ?? $current['main']['temp'] ?? 0)),
                 'wind_direction' => $this->windDirection((int) ($current['wind']['deg'] ?? 45)),
                 'rain_chance' => isset($hourly[0]['rain']) ? (int) $hourly[0]['rain'] : 0,
-                'sunrise' => !empty($current['sys']['sunrise']) ? gmdate('H:i', (int) $current['sys']['sunrise']) : '06:00',
-                'sunset' => !empty($current['sys']['sunset']) ? gmdate('H:i', (int) $current['sys']['sunset']) : '18:00',
+                'sunrise' => !empty($current['sys']['sunrise']) ? $this->formatUnixTime((int) $current['sys']['sunrise'], $timezoneOffset, 'H:i') : '06:00',
+                'sunset' => !empty($current['sys']['sunset']) ? $this->formatUnixTime((int) $current['sys']['sunset'], $timezoneOffset, 'H:i') : '18:00',
                 'icon' => $this->weatherIcon((string) ($weather['main'] ?? 'Clouds')),
             ],
-            'aqi' => [
-                'value' => 42,
-                'label' => 'Good',
-                'advice' => 'Air quality requires OpenWeather Air Pollution endpoint for live AQI. Showing normalized reference indicator.',
+            'aqi' => $aqi ?: [
+                'value' => 'N/A',
+                'label' => 'Không có dữ liệu',
+                'advice' => 'OpenWeatherMap Air Pollution endpoint chưa trả dữ liệu AQI cho vị trí này.',
             ],
             'map' => [
                 'lat' => $lat,
@@ -295,13 +316,97 @@ class Weather implements HttpGetActionInterface
             'alert' => [
                 'severity' => 'normal',
                 'title' => 'Không có cảnh báo thời tiết nghiêm trọng.',
-                'time' => gmdate('d/m/Y H:i'),
-                'description' => 'OpenWeather current data loaded. Alerts require One Call subscription.',
+                'time' => $this->formatUnixTime(time(), $timezoneOffset, 'd/m/Y H:i'),
+                'description' => 'Dữ liệu hiện tại và dự báo được tải từ OpenWeatherMap. Cảnh báo chi tiết phụ thuộc gói One Call.',
             ],
             'hourly' => $hourly ?: $this->hourly((int) round((float) ($current['main']['temp'] ?? 27))),
-            'daily' => $this->daily((int) round((float) ($current['main']['temp'] ?? 27))),
+            'daily' => $daily ?: $this->daily((int) round((float) ($current['main']['temp'] ?? 27))),
             'news' => $this->weatherNews(),
         ];
+    }
+
+    private function openWeatherKey(): string
+    {
+        return $this->env('OPENWEATHER_API_KEY') ?: $this->env('WEATHER_API_KEY');
+    }
+
+    private function formatUnixTime(int $timestamp, int $timezoneOffset, string $format): string
+    {
+        return gmdate($format, $timestamp + $timezoneOffset);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function dailyFromOpenWeatherForecast(array $forecast, int $timezoneOffset, string $unit): array
+    {
+        $groups = [];
+        $windUnit = $unit === 'imperial' ? 'mph' : 'm/s';
+        foreach ((array) ($forecast['list'] ?? []) as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $timestamp = (int) ($row['dt'] ?? time());
+            $key = $this->formatUnixTime($timestamp, $timezoneOffset, 'Y-m-d');
+            $main = is_array($row['main'] ?? null) ? $row['main'] : [];
+            $wind = is_array($row['wind'] ?? null) ? $row['wind'] : [];
+            $weather = is_array($row['weather'][0] ?? null) ? $row['weather'][0] : [];
+            $temp = (float) ($main['temp'] ?? 0);
+            $min = (float) ($main['temp_min'] ?? $temp);
+            $max = (float) ($main['temp_max'] ?? $temp);
+
+            if (!isset($groups[$key])) {
+                $groups[$key] = [
+                    'day' => $this->formatUnixTime($timestamp, $timezoneOffset, 'D d/m'),
+                    'condition' => (string) ($weather['description'] ?? $weather['main'] ?? 'Weather'),
+                    'icon' => $this->weatherIcon((string) ($weather['main'] ?? 'Clouds')),
+                    'min' => $min,
+                    'max' => $max,
+                    'rain' => 0,
+                    'humidity' => 0,
+                    'wind' => 0.0,
+                ];
+            }
+
+            $groups[$key]['min'] = min((float) $groups[$key]['min'], $min);
+            $groups[$key]['max'] = max((float) $groups[$key]['max'], $max);
+            $groups[$key]['rain'] = max((int) $groups[$key]['rain'], (int) round(((float) ($row['pop'] ?? 0)) * 100));
+            $groups[$key]['humidity'] = max((int) $groups[$key]['humidity'], (int) ($main['humidity'] ?? 0));
+            $groups[$key]['wind'] = max((float) $groups[$key]['wind'], (float) ($wind['speed'] ?? 0));
+        }
+
+        return array_map(static function (array $row) use ($windUnit): array {
+            $row['min'] = (int) round((float) $row['min']);
+            $row['max'] = (int) round((float) $row['max']);
+            $row['wind'] = round((float) $row['wind'], 1) . ' ' . $windUnit;
+            return $row;
+        }, array_slice(array_values($groups), 0, 5));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function fetchOpenWeatherAirQuality(string $base, string $lat, string $lon, string $key): array
+    {
+        $data = $this->httpGetJson($base . '/data/2.5/air_pollution?' . http_build_query([
+            'lat' => $lat,
+            'lon' => $lon,
+            'appid' => $key,
+        ]));
+        $aqi = (int) ($data['list'][0]['main']['aqi'] ?? 0);
+        if ($aqi < 1 || $aqi > 5) {
+            return [];
+        }
+
+        $labels = [
+            1 => ['value' => 25, 'label' => 'Good', 'advice' => 'Không khí tốt cho hoạt động ngoài trời.'],
+            2 => ['value' => 50, 'label' => 'Fair', 'advice' => 'Chất lượng không khí chấp nhận được.'],
+            3 => ['value' => 85, 'label' => 'Moderate', 'advice' => 'Người nhạy cảm nên giảm hoạt động ngoài trời kéo dài.'],
+            4 => ['value' => 125, 'label' => 'Poor', 'advice' => 'Nên hạn chế vận động ngoài trời nếu có bệnh hô hấp.'],
+            5 => ['value' => 175, 'label' => 'Very poor', 'advice' => 'Hạn chế ra ngoài và theo dõi cảnh báo địa phương.'],
+        ];
+
+        return $labels[$aqi];
     }
 
     private function hourly(int $baseTemp): array
@@ -348,8 +453,8 @@ class Weather implements HttpGetActionInterface
 
     private function env(string $key): string
     {
-        $value = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
-        return is_string($value) ? trim($value) : '';
+        // Use IntegrationConfig so pvmodern.env keys (e.g. OPENWEATHER_API_KEY) are resolved.
+        return $this->integrationConfig->getString($key) ?? '';
     }
 
     private function httpGetJson(string $url): array

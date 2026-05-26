@@ -110,6 +110,7 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
 
     var _countdownTimer  = null;
     var _pollTimer       = null;
+    var _eventSource     = null;
     var _countdownSecs   = 0;
     var _copyValues      = {};
 
@@ -117,7 +118,7 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
         var $root = $(element);
         var bootstrap = readBootstrap();
         var storageKey = 'pvmodern_checkout_customer_flow';
-        var STATE_VERSION = 'v4';
+        var STATE_VERSION = 'v5';
         var isSubmitting = false;
         var state = $.extend(true, {
             step: 1,
@@ -244,21 +245,114 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
             return 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=10&data=' + encodeURIComponent(data);
         }
 
+        function qrPlaceholder(label) {
+            var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="260" height="260" viewBox="0 0 260 260">' +
+                '<rect width="260" height="260" rx="22" fill="#f8fafc"/>' +
+                '<rect x="52" y="52" width="48" height="48" rx="5" fill="#0f172a"/>' +
+                '<rect x="160" y="52" width="48" height="48" rx="5" fill="#0f172a"/>' +
+                '<rect x="52" y="160" width="48" height="48" rx="5" fill="#0f172a"/>' +
+                '<rect x="118" y="118" width="24" height="24" fill="#0f172a"/>' +
+                '<rect x="158" y="126" width="18" height="18" fill="#0f172a"/>' +
+                '<rect x="184" y="154" width="26" height="26" fill="#0f172a"/>' +
+                '<rect x="124" y="174" width="18" height="18" fill="#0f172a"/>' +
+                '<text x="130" y="232" text-anchor="middle" fill="#64748b" font-family="Arial" font-size="13" font-weight="700">' + esc(String(label || 'QR code').slice(0, 28)) + '</text>' +
+                '</svg>';
+            return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+        }
+
+        function rememberQrAsset($img) {
+            if (!$img.length) {
+                return '';
+            }
+            var stored = $img.data('pvLocalQrSrc');
+            if (stored) {
+                return stored;
+            }
+            var src = $img.attr('src') || '';
+            if (src) {
+                $img.data('pvLocalQrSrc', src);
+            }
+            return src;
+        }
+
+        function paymentQrPayload(pay, fallback) {
+            pay = pay || {};
+            return pay.qrPayload || pay.qr_payload ||
+                pay.paymentUrl || pay.payment_url ||
+                pay.checkout_url || pay.redirect_url ||
+                pay.deeplinkUrl || pay.deeplink_url ||
+                pay.reference || fallback || '';
+        }
+
+        function paymentRedirectUrl(pay) {
+            pay = pay || {};
+            return pay.redirect_url || pay.paymentUrl || pay.payment_url ||
+                pay.checkout_url || pay.deeplinkUrl || pay.deeplink_url || '';
+        }
+
+        function setQrImage($img, primarySrc, fallbackSrc, label) {
+            if (!$img.length) {
+                return;
+            }
+
+            var localFallback = fallbackSrc || rememberQrAsset($img);
+            var finalFallback = qrPlaceholder(label);
+            var src = primarySrc || localFallback || finalFallback;
+
+            $img.off('error.pvqr').on('error.pvqr', function () {
+                var current = this.getAttribute('src') || '';
+                if (localFallback && current !== localFallback) {
+                    this.src = localFallback;
+                    return;
+                }
+                if (current !== finalFallback) {
+                    this.src = finalFallback;
+                }
+            });
+
+            $img.attr('src', src).removeAttr('hidden').show();
+            $img.each(function () {
+                if (this.complete && this.naturalWidth === 0) {
+                    $(this).triggerHandler('error.pvqr');
+                }
+            });
+        }
+
         function cartItems() {
-            return ((bootstrap.cart || {}).items || []);
+            // Once an order has been placed (state.cartSnapshotLocked = true),
+            // the visual cart is FROZEN to the snapshot we took at place_order
+            // time. The Magento quote behind us has been wiped, but the
+            // customer still sees their products until payment confirms at
+            // step 5.
+            if (state.cartSnapshotLocked && state.cartSnapshot && state.cartSnapshot.length) {
+                return state.cartSnapshot;
+            }
+            var live = ((bootstrap.cart || {}).items || []);
+            if (live.length) {
+                // Pre-order: keep the snapshot fresh on every render so it's
+                // ready to take over the moment place_order runs.
+                state.cartSnapshot = live.slice();
+                return live;
+            }
+            return state.cartSnapshot || [];
         }
 
         function subtotal() {
             var fallback = parseFloat((bootstrap.cart || {}).subtotal || 0);
+            var live = ((bootstrap.cart || {}).items || []);
+            if (live.length && !state.cartSnapshotSubtotal) {
+                state.cartSnapshotSubtotal = fallback || 0;
+            }
             return cartItems().reduce(function (sum, item) {
                 return sum + parseFloat(item.row_total || ((item.price || 0) * (item.qty || 1)) || 0);
-            }, 0) || fallback;
+            }, 0) || fallback || state.cartSnapshotSubtotal || 0;
         }
 
         function itemCount() {
-            return cartItems().reduce(function (sum, item) {
+            var n = cartItems().reduce(function (sum, item) {
                 return sum + (parseInt(item.qty, 10) || 0);
-            }, 0) || parseInt((bootstrap.cart || {}).count || 0, 10);
+            }, 0);
+            return n || parseInt((bootstrap.cart || {}).count || 0, 10) || (state.cartSnapshot || []).length;
         }
 
         function selectedShipping() {
@@ -280,6 +374,11 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
         }
 
         function total() {
+            if (state.step === 4 || state.step === 5) {
+                var srv = state.order && state.order.payment && parseInt(state.order.payment.amount, 10);
+                if (srv > 0) { return srv; }
+                if (state.orderTotal) { return state.orderTotal; }
+            }
             var shipping = selectedShipping();
             return subtotal() + (shipping ? shipping.price : 0);
         }
@@ -526,6 +625,26 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
         function goToStep(step) {
             state.step = step;
             state.maxUnlockedStep = Math.max(state.maxUnlockedStep, step);
+            // While we still have a live cart (pre-order), keep refreshing the
+            // snapshot so it's ready to take over the instant place_order runs.
+            // After the snapshot is LOCKED (at place_order time), don't touch it.
+            if (!state.cartSnapshotLocked) {
+                var liveItems = ((bootstrap.cart || {}).items || []);
+                if (liveItems.length) {
+                    state.cartSnapshot = liveItems.slice();
+                    state.cartSnapshotSubtotal = parseFloat((bootstrap.cart || {}).subtotal || 0) || state.cartSnapshotSubtotal;
+                }
+            }
+            // Once payment is confirmed (step 5), THEN we tell Magento to wipe
+            // the customer's cart badge — by which point the customer is on
+            // the success screen and doesn't see the visual cart anymore.
+            if (step === 5) {
+                try {
+                    $(window).trigger('pvCartCountChanged', [0]);
+                    customerData.invalidate(['cart']);
+                    customerData.reload(['cart'], true);
+                } catch (e) {}
+            }
             saveState();
 
             var $layout  = $root.find('[data-checkout-layout]');
@@ -689,111 +808,104 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
             return '';
         }
 
+        var BRAND_THEME = {
+            bank_qr: {
+                label: 'QR Ngân hàng',
+                pill:  'BIDV VietQR',
+                bar:   'pvco3-pch-bar--bank_qr',
+                icon:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="m3 9 9-6 9 6v1H3z"/><rect x="5" y="10" width="14" height="8"/><path d="M3 18h18"/></svg>',
+                pillIcon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="m3 9 9-6 9 6v1H3z"/><rect x="5" y="10" width="14" height="8"/></svg>',
+                hint:  'Mở app ngân hàng → Quét QR → Xác nhận'
+            },
+            momo: {
+                label: 'Ví MoMo',
+                pill:  'MoMo',
+                bar:   'pvco3-pch-bar--momo',
+                icon:  '<span style="font-size:18px;font-weight:900">M</span>',
+                pillIcon: '<span style="font-size:13px;font-weight:900;color:#a50064">M</span>',
+                hint:  'Mở app MoMo → Quét QR → Xác nhận'
+            },
+            vnpay: {
+                label: 'VNPay QR',
+                pill:  'VNPay',
+                bar:   'pvco3-pch-bar--vnpay',
+                icon:  '<span style="font-size:14px;font-weight:900">VN</span>',
+                pillIcon: '<span style="font-size:11px;font-weight:900;color:#005BAA">VN</span>',
+                hint:  'Mở VNPay hoặc app ngân hàng → Quét QR → Xác nhận'
+            },
+            card: {
+                label: 'Visa / Mastercard',
+                pill:  'BIDV VietQR',
+                bar:   'pvco3-pch-bar--card',
+                icon:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/></svg>',
+                pillIcon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/></svg>',
+                hint:  'Mở bất kỳ app ngân hàng VN → Quét VietQR → Xác nhận'
+            },
+            cod: {
+                label: 'COD',
+                pill:  '',
+                bar:   'pvco3-pch-bar--cod',
+                icon:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M8 11h8M8 15h5"/></svg>',
+                pillIcon: '',
+                hint:  ''
+            }
+        };
+
         function renderPaymentConfirmation() {
             var pm     = state.paymentMethodId;
             var order  = state.order || {};
             var pay    = order.payment || {};
-            var amount = total();
+            var amount = parseInt(pay.amount, 10) || parseInt(state.orderTotal, 10) || total();
+            var theme  = BRAND_THEME[pm] || BRAND_THEME.bank_qr;
 
-            var providerLabels = {
-                bank_qr: 'QR Ngân hàng', momo: 'Ví MoMo', vnpay: 'VNPay QR',
-                card: 'Visa / Mastercard', cod: 'COD'
-            };
-            var barClasses = {
-                bank_qr: 'pvco3-pch-bar--bank_qr', momo: 'pvco3-pch-bar--momo',
-                vnpay: 'pvco3-pch-bar--vnpay', card: 'pvco3-pch-bar--card', cod: 'pvco3-pch-bar--cod'
-            };
-            var iconHtml = {
-                bank_qr: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="m3 9 9-6 9 6v1H3z"/><rect x="5" y="10" width="14" height="8"/><path d="M3 18h18"/></svg>',
-                momo:    '<span style="font-size:18px;font-weight:900">M</span>',
-                vnpay:   '<span style="font-size:14px;font-weight:900">VN</span>',
-                card:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/></svg>',
-                cod:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M8 11h8M8 15h5"/></svg>'
-            };
-
-            var $bar = $root.find('[data-pch-bar]');
-            $bar.attr('class', 'pvco3-pch-bar ' + (barClasses[pm] || ''));
-            $root.find('[data-pch-icon]').html(iconHtml[pm] || '');
-            $root.find('[data-pch-provider]').text(providerLabels[pm] || 'Thanh toán');
+            $root.find('[data-pch-bar]').attr('class', 'pvco3-pch-bar ' + theme.bar);
+            $root.find('[data-pch-icon]').html(theme.icon);
+            $root.find('[data-pch-provider]').text(theme.label);
             $root.find('[data-pch-amount]').text(formatVND(amount));
             $root.find('[data-pch-amount-2]').text(formatVND(amount));
+            $root.find('[data-pcp-brand-name]').text(theme.pill);
+            $root.find('[data-pcp-brand-icon]').html(theme.pillIcon);
+            $root.find('[data-pcp-hint]').text(theme.hint);
+
+            var instructions = pay.instructions || {};
+            var ref = instructions.transfer_reference
+                   || pay.reference
+                   || pay.qr_payload
+                   || ('ORD' + String(order.orderId || '').replace(/[^0-9]/g, ''));
+            $root.find('[data-pcp-ref]').text(ref);
+            $root.find('[data-pcp-bank-name]').text(instructions.bank_name || 'BIDV');
+            $root.find('[data-pcp-bank-holder]').text(instructions.account_name || 'DIEN MANH HUNG');
+            $root.find('[data-pcp-bank-number]').text(instructions.account_number || '4661104867');
 
             _copyValues['amount'] = String(Math.round(amount));
+            _copyValues['ref']    = ref;
 
-            $root.find('[data-pcp]').attr('hidden', 'hidden');
-            $root.find('[data-pcp="' + pm + '"]').removeAttr('hidden');
-
-            if (pm === 'bank_qr') { fillBankQrPanel(pay, order); }
-            if (pm === 'momo')    { fillWalletPanel('momo', pay); }
-            if (pm === 'vnpay')   { fillWalletPanel('vnpay', pay); }
-            if (pm === 'card')    { fillCardPanel(pay); }
+            var $qrImg = $root.find('[data-pcp-qr-img]');
+            var qr = pay.qr_code_url || pay.qrCodeUrl || '';
+            if (!qr) {
+                // No qr_code_url returned by backend — synthesize one that
+                // points at our own scanpaid endpoint via the /api/qr/url
+                // proxy so the QR always encodes a same-origin URL the phone
+                // can actually open (and CSP always permits the image).
+                var scanUrl = window.location.origin + '/api/qr/scanpaid?order=' +
+                              encodeURIComponent(ref);
+                qr = '/api/qr/url?size=540&data=' + encodeURIComponent(scanUrl);
+            }
+            $root.find('[data-pcp-qr-loading]').show();
+            $qrImg.attr('hidden', 'hidden').removeAttr('src');
+            setQrImage($qrImg, qr, '', 'Payment QR');
+            $qrImg.one('load', function () {
+                $root.find('[data-pcp-qr-loading]').hide();
+                $qrImg.removeAttr('hidden').show();
+            });
 
             $root.find('[data-pcp-overlay]').attr('hidden', 'hidden');
 
             if (pm !== 'cod') {
                 startCountdown(30 * 60);
                 fetchPvPaymentData();
-                startPaymentPolling();
+                startPaymentEventStream();
             }
-        }
-
-        function fillBankQrPanel(pay, order) {
-            var instructions = pay.instructions || {};
-            var bankName  = instructions.bank_name     || 'Techcombank';
-            var holder    = instructions.account_name  || 'ĐIỀN MẠNH HÙNG';
-            var account   = instructions.account_number || '19038984536017';
-            var ref       = instructions.transfer_reference || ('ORDER-' + (order.orderId || '').replace(/^#/, '') || 'ORDER-' + Date.now());
-
-            $root.find('[data-pcp-bank-name]').text(bankName);
-            $root.find('[data-pcp-holder]').text(holder);
-            $root.find('[data-pcp-account]').text(account);
-            $root.find('[data-pcp-ref]').text(ref);
-
-            _copyValues['bank_name'] = bankName;
-            _copyValues['holder']    = holder;
-            _copyValues['account']   = account;
-            _copyValues['ref']       = ref;
-
-            // Always show the static Techcombank QR — hide the loading spinner
-            $root.find('[data-pcp-qr-loading]').hide();
-            $root.find('[data-pcp-qr-img]').show();
-        }
-
-        function buildVietQrUrl(bankName, account, amount, ref) {
-            var bankBins = {
-                'vietcombank': '970436', 'vcb': '970436',
-                'techcombank': '970407', 'tcb': '970407',
-                'acb': '970416',
-                'vpbank': '970432', 'vpb': '970432',
-                'mb': '970422', 'mbbank': '970422',
-                'tpbank': '970423', 'bidv': '970418',
-                'agribank': '970405', 'vib': '970441',
-                'ocb': '970448', 'shb': '970443'
-            };
-            var bankKey = (bankName || '').toLowerCase().replace(/\s+/g, '');
-            var bin = bankBins[bankKey] || bankBins['vietcombank'];
-            return 'https://img.vietqr.io/image/' + bin + '-' + account +
-                '-compact2.png?amount=' + amount +
-                '&addInfo=' + encodeURIComponent(ref) +
-                '&accountName=' + encodeURIComponent('TECHIEWORLD SHOP');
-        }
-
-        function fillWalletPanel(wallet, pay) {
-            var appUrl = pay.redirect_url || pay.paymentUrl || '';
-            var suffix = wallet === 'momo' ? '-momo' : '-vnpay';
-            var $appBtn = $root.find('[data-pcp-open-app="' + wallet + '"]');
-
-            // Static QR images are already in the HTML — just ensure they're visible
-            $root.find('[data-pcp-qr-loading' + suffix + ']').hide();
-            $root.find('[data-pcp-qr-img' + suffix + ']').show();
-
-            if (appUrl) { $appBtn.attr('href', appUrl).show(); }
-        }
-
-        function fillCardPanel(pay) {
-            var url = pay.redirect_url || pay.paymentUrl || '';
-            var $btn = $root.find('[data-pcp-open-app="card"]');
-            if (url) { $btn.attr('href', url); }
         }
 
         function startCountdown(seconds) {
@@ -822,46 +934,103 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
             if (_countdownTimer) { window.clearTimeout(_countdownTimer); _countdownTimer = null; }
         }
 
+        function startPaymentEventStream() {
+            stopPaymentPolling();
+            if (!state.order || !state.order.orderId) { return; }
+            var orderId = (state.order.incrementId || state.order.orderId || '').replace(/^#/, '');
+            if (!orderId) { return; }
+            var eventsUrl = ((bootstrap.endpoints || {}).payment_events || '/api/paymentSessions/events') +
+                '?orderId=' + encodeURIComponent(orderId);
+            if (_eventSource) { _eventSource.close(); _eventSource = null; }
+            try {
+                _eventSource = new window.EventSource(eventsUrl);
+            } catch (e) {
+                startPaymentPolling();
+                return;
+            }
+            /* Belt-and-suspenders: also start polling alongside the SSE. If
+               the SSE stays silent for any reason (network drop, browser
+               throttling, intermediate proxy buffering), the poll path will
+               still catch the paid status. Whichever sees it first wins —
+               both paths gate goToStep(5) on the same `paid` status and the
+               other will no-op once stopCountdown/stopPaymentPolling fire. */
+            startPaymentPolling();
+
+            _eventSource.addEventListener('status', function (e) {
+                var data;
+                try { data = JSON.parse(e.data); } catch (err) { return; }
+                var status = (data.status || '').toLowerCase();
+                state.paymentStatus = status;
+                saveState();
+                if (status === 'paid') {
+                    _eventSource.close(); _eventSource = null;
+                    stopCountdown(); stopPaymentPolling();
+                    showStatusOverlay('paid');
+                    window.setTimeout(function () { goToStep(5); }, 1500);
+                } else if (status === 'failed' || status === 'cancelled') {
+                    _eventSource.close(); _eventSource = null;
+                    stopCountdown(); stopPaymentPolling();
+                    showStatusOverlay('failed');
+                } else if (status === 'expired') {
+                    _eventSource.close(); _eventSource = null;
+                    stopCountdown(); stopPaymentPolling();
+                    showStatusOverlay('expired');
+                }
+            });
+            _eventSource.onerror = function () {
+                if (_eventSource) { _eventSource.close(); _eventSource = null; }
+                /* Polling already running from above — no need to re-start it. */
+            };
+        }
+
         function startPaymentPolling() {
             stopPaymentPolling();
             if (!state.order || !state.order.orderId) { return; }
+            var incId = (state.order.incrementId || state.order.orderId || '').replace(/^#/, '');
+            if (!incId) { return; }
             var endpoint = '/api/payments/pvstatus';
             function poll() {
                 $.ajax({
                     url: endpoint,
                     method: 'GET',
                     dataType: 'json',
-                    data: {orderId: state.order.orderId.replace(/^#/, '')}
+                    data: {orderId: incId}
                 }).done(function (res) {
                     var status = (res.status || '').toLowerCase();
-                    state.paymentStatus = status;
+                    if (state.paymentStatus !== 'paid' || status === 'paid') {
+                        state.paymentStatus = status;
+                    }
                     if (res.pv_order_id) { state.order.pvOrderId = res.pv_order_id; }
                     saveState();
                     if (status === 'paid') {
+                        if (_eventSource) { try { _eventSource.close(); } catch (e) {} _eventSource = null; }
                         stopCountdown(); stopPaymentPolling();
-                        showStatusOverlay('paid');
-                        window.setTimeout(function () { goToStep(5); }, 1800);
+                        if (state.step !== 5) {
+                            showStatusOverlay('paid');
+                            window.setTimeout(function () { goToStep(5); }, 1500);
+                        }
                     } else if (status === 'failed' || status === 'cancelled') {
                         stopCountdown(); stopPaymentPolling();
                         showStatusOverlay('failed');
                     } else if (status === 'expired') {
                         stopCountdown(); stopPaymentPolling();
                         showStatusOverlay('expired');
-                    } else if (status === 'pending_review') {
-                        updateUploadStatus('pending_review');
-                        _pollTimer = window.setTimeout(poll, 6000);
                     } else {
-                        _pollTimer = window.setTimeout(poll, 5000);
+                        _pollTimer = window.setTimeout(poll, 2000);
                     }
                 }).fail(function () {
-                    _pollTimer = window.setTimeout(poll, 10000);
+                    _pollTimer = window.setTimeout(poll, 5000);
                 });
             }
-            _pollTimer = window.setTimeout(poll, 3000);
+            /* Start polling almost immediately so the first check happens
+               within ~500ms of step-4 render — the SSE handles the real-time
+               push, polling is the fallback if SSE is silent. */
+            _pollTimer = window.setTimeout(poll, 500);
         }
 
         function stopPaymentPolling() {
             if (_pollTimer) { window.clearTimeout(_pollTimer); _pollTimer = null; }
+            if (_eventSource) { _eventSource.close(); _eventSource = null; }
         }
 
         function fetchPvPaymentData() {
@@ -885,62 +1054,6 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
             });
         }
 
-        function updateUploadStatus(status) {
-            var pm = state.paymentMethodId;
-            if (!pm || pm === 'cod') { return; }
-            var $uploadSection = $root.find('[data-upload-section="' + pm + '"]');
-            var $statusEl = $uploadSection.find('[data-upload-status]');
-            if (status === 'pending_review') {
-                $uploadSection.find('[data-upload-form]').hide();
-                $statusEl.html('<div style="display:flex;align-items:center;gap:8px;background:#422006;border:1px solid #f59e0b;border-radius:8px;padding:10px 14px;color:#fde68a;font-size:13px">' +
-                    '<span style="font-size:16px">⏳</span>' +
-                    '<div><strong>Ảnh đã gửi!</strong><br>Vui lòng chờ admin xét duyệt...</div>' +
-                    '</div>').show();
-            }
-        }
-
-        function handleProofUpload(pm) {
-            var pvOrderId = state.order && state.order.pvOrderId;
-            if (!pvOrderId) {
-                showAlert('Vui lòng chờ hệ thống khởi tạo đơn hàng...');
-                return;
-            }
-            var $section = $root.find('[data-upload-section="' + pm + '"]');
-            var fileInput = $section.find('[data-proof-file]')[0];
-            if (!fileInput || !fileInput.files.length) {
-                showAlert('Vui lòng chọn ảnh trước khi gửi.');
-                return;
-            }
-            var file = fileInput.files[0];
-            if (file.size > 5 * 1024 * 1024) { showAlert('Ảnh không được vượt quá 5MB'); return; }
-
-            var fd = new FormData();
-            fd.append('file', file);
-            fd.append('pv_order_id', pvOrderId);
-
-            var $btn = $section.find('[data-upload-proof-btn]');
-            $btn.prop('disabled', true).text('Đang gửi...');
-
-            $.ajax({
-                url: '/api/payments/upload',
-                method: 'POST',
-                data: fd,
-                processData: false,
-                contentType: false
-            }).done(function (res) {
-                if (res.success) {
-                    updateUploadStatus('pending_review');
-                    state.paymentStatus = 'pending_review';
-                    saveState();
-                } else {
-                    showAlert(res.message || 'Gửi ảnh thất bại.');
-                    $btn.prop('disabled', false).text('Gửi xác nhận thanh toán');
-                }
-            }).fail(function () {
-                showAlert('Lỗi kết nối. Vui lòng thử lại.');
-                $btn.prop('disabled', false).text('Gửi xác nhận thanh toán');
-            });
-        }
 
         function showStatusOverlay(status) {
             var html = '';
@@ -1004,7 +1117,7 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
             var shipping = selectedShipping();
             var pm = state.paymentMethodId;
             var gatewayChannel = {
-                bank_qr: 'bank_qr', momo: 'momo', vnpay: 'vnpay', card: 'vnpay', cod: ''
+                bank_qr: 'bank_qr', momo: 'momo', vnpay: 'vnpay', card: 'stripe', cod: ''
             }[pm] || '';
             var payload = {
                 form_key: checkoutFormKey(),
@@ -1032,18 +1145,44 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                 contentType: 'application/json',
                 data: JSON.stringify(payload)
             }).done(function (response) {
+                /* Use the real Magento increment_id as orderId — the SSE and
+                   status-poll endpoints look up the payment attempt by this
+                   value via pv_payment_attempt.magento_increment_id, so a
+                   random PVxxx placeholder leaves the desktop tab stuck on
+                   step 4 even after the phone marks the order paid. */
+                var realIncId = String(response.increment_id || '').replace(/^#/, '');
+                var displayId = realIncId
+                    ? '#' + realIncId
+                    : ('#PV' + Math.random().toString(36).slice(2, 6).toUpperCase() + Math.floor(1000 + Math.random() * 9000));
                 state.order = {
-                    orderId: '#' + (response.increment_id || ('SHOP-' + Date.now())),
+                    orderId: displayId,
+                    incrementId: realIncId,
                     purchaseCode: response.purchase_code || '',
                     payment: response.payment || {},
                     shipping: response.shipping || {}
                 };
                 state.paymentStatus = (response.payment && response.payment.status) ? response.payment.status : 'pending';
+                /* Snapshot cart and total before Magento wipes the quote. Locked
+                   for the rest of the session so the right-sidebar items and the
+                   header cart badge keep showing what the customer bought, all
+                   the way through step 4 (waiting for transfer) until step 5. */
+                state.cartSnapshot = cartItems().slice();
+                state.cartSnapshotLocked = true;
+                state.orderTotal = parseInt(response.payment && response.payment.amount, 10) || total();
                 saveState();
-                /* Immediately zero the cart badge, then confirm via server reload */
-                $(window).trigger('pvCartCountChanged', [0]);
-                customerData.invalidate(['cart']);
-                customerData.reload(['cart'], true);
+                /* Rewrite URL to refresh-safe route so F5 doesn't bounce to /checkout/cart */
+                if (state.paymentMethodId !== 'cod') {
+                    try {
+                        var incId = (response.increment_id || '').replace(/^#/, '');
+                        if (incId && window.history && window.history.replaceState) {
+                            window.history.replaceState({}, '', '/payment-confirmation?orderId=' + encodeURIComponent(incId));
+                        }
+                    } catch (e) {}
+                }
+                /* DO NOT zero the cart badge or refresh customerData here —
+                   that would visually wipe the cart while the customer is
+                   still mid-payment. We defer the cart wipe to step 5
+                   (see goToStep), once payment is actually confirmed. */
                 if (state.paymentMethodId === 'cod') {
                     goToStep(5);
                     return;
@@ -1063,7 +1202,7 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
 
         function checkPaymentStatus() {
             if (!state.order || !state.order.orderId) { return; }
-            startPaymentPolling();
+            startPaymentEventStream();
         }
 
         function bindEvents() {
@@ -1158,61 +1297,211 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
             });
             $root.on('click', '[data-place-order]', placeOrder);
             $root.on('click', '[data-check-payment-status]', checkPaymentStatus);
-            $root.on('change', '[data-proof-file]', function () {
-                var pm = $(this).data('proof-file');
-                var file = this.files[0];
-                if (!file) return;
-                var $section = $root.find('[data-upload-section="' + pm + '"]');
-                var $preview = $section.find('[data-proof-preview]');
-                var $btn = $section.find('[data-upload-proof-btn]');
-                var reader = new FileReader();
-                reader.onload = function (e) {
-                    $preview.html('<img src="' + e.target.result + '" style="max-width:100%;max-height:180px;border-radius:8px;border:1px solid #334155;margin-top:8px">').show();
-                };
-                reader.readAsDataURL(file);
-                $btn.removeAttr('hidden').show();
+            $root.on('click', '[data-download-invoice]', function () {
+                var orderId   = state.order && state.order.orderId ? state.order.orderId : '—';
+                var orderDate = new Date().toLocaleDateString('vi-VN', {day:'2-digit', month:'2-digit', year:'numeric'});
+                var shipping  = selectedShipping();
+                var payment   = selectedPayment();
+                var items     = cartItems();
+                var sub       = subtotal();
+                var shipPrice = shipping ? quoteShippingPrice(shipping) : 0;
+                var grandTotal = state.orderTotal || total();
+
+                var address = [state.addressLine1, state.addressLine2, state.ward, state.district, state.province]
+                    .filter(Boolean).join(', ');
+
+                var itemRows = '';
+                items.forEach(function (item) {
+                    var qty   = item.qty || 1;
+                    var price = parseFloat(item.price || 0);
+                    var row   = parseFloat(item.row_total || (price * qty));
+                    itemRows +=
+                        '<tr>' +
+                        '<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9">' + esc(item.name) + '</td>' +
+                        '<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;text-align:center">' + qty + '</td>' +
+                        '<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;text-align:right">' + formatVND(price) + '</td>' +
+                        '<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;text-align:right">' + formatVND(row) + '</td>' +
+                        '</tr>';
+                });
+
+                var purchaseCode = state.order && state.order.purchaseCode ? state.order.purchaseCode : '';
+                var purchaseCodeRow = purchaseCode
+                    ? '<tr><td colspan="3" style="padding:8px 12px;text-align:right;color:#64748b">Mã bảo hành</td>' +
+                      '<td style="padding:8px 12px;text-align:right;font-weight:600;color:#0b63d8">' + esc(purchaseCode) + '</td></tr>'
+                    : '';
+
+                var html =
+                    '<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8">' +
+                    '<title>Hóa đơn ' + esc(orderId) + '</title>' +
+                    '<style>' +
+                    '*{box-sizing:border-box;margin:0;padding:0}' +
+                    'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;color:#1e293b;background:#fff;padding:32px}' +
+                    '.inv-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:20px;border-bottom:2px solid #0b63d8}' +
+                    '.inv-brand{font-size:22px;font-weight:800;color:#0b63d8;letter-spacing:-0.5px}' +
+                    '.inv-brand span{display:block;font-size:12px;font-weight:400;color:#64748b;margin-top:2px}' +
+                    '.inv-meta{text-align:right;font-size:13px;color:#64748b}' +
+                    '.inv-meta strong{display:block;font-size:18px;font-weight:700;color:#1e293b;margin-bottom:4px}' +
+                    '.inv-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:28px}' +
+                    '.inv-section h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#64748b;margin-bottom:8px}' +
+                    '.inv-section p{font-size:13px;color:#1e293b;line-height:1.6}' +
+                    'table{width:100%;border-collapse:collapse;margin-bottom:0}' +
+                    'thead tr{background:#f8fafc}' +
+                    'thead th{padding:10px 12px;text-align:left;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;border-bottom:2px solid #e2e8f0}' +
+                    'thead th:not(:first-child){text-align:right}' +
+                    'thead th:nth-child(3){text-align:center}' +
+                    '.totals-row td{padding:6px 12px;font-size:13px}' +
+                    '.totals-row td:first-child{color:#64748b}' +
+                    '.grand-row td{padding:10px 12px;font-size:15px;font-weight:700;border-top:2px solid #0b63d8;color:#0b63d8}' +
+                    '.inv-footer{margin-top:32px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;text-align:center}' +
+                    '@media print{body{padding:16px}button{display:none!important}.no-print{display:none!important}}' +
+                    '</style></head><body>' +
+                    '<div class="inv-header">' +
+                    '<div class="inv-brand">PV Modern<span>pvmodern.vn</span></div>' +
+                    '<div class="inv-meta"><strong>HÓA ĐƠN MUA HÀNG</strong>Mã đơn: ' + esc(orderId) + '<br>Ngày đặt: ' + esc(orderDate) + '</div>' +
+                    '</div>' +
+                    '<div class="inv-grid">' +
+                    '<div class="inv-section"><h3>Thông tin khách hàng</h3>' +
+                    '<p><strong>' + esc(state.fullName || '—') + '</strong><br>' +
+                    esc(state.phone || '') + (state.email ? '<br>' + esc(state.email) : '') + '<br>' +
+                    esc(address || '—') + '</p></div>' +
+                    '<div class="inv-section"><h3>Thông tin giao hàng</h3>' +
+                    '<p>Phương thức: <strong>' + esc(shipping ? shipping.name : '—') + '</strong><br>' +
+                    'Dự kiến: <strong>' + esc(shipping ? shipping.eta : '—') + '</strong><br>' +
+                    'Thanh toán: <strong>' + esc(payment ? payment.title : '—') + '</strong></p></div>' +
+                    '</div>' +
+                    '<table>' +
+                    '<thead><tr><th>Sản phẩm</th><th style="text-align:center">SL</th><th style="text-align:right">Đơn giá</th><th style="text-align:right">Thành tiền</th></tr></thead>' +
+                    '<tbody>' + itemRows + '</tbody>' +
+                    '<tfoot>' +
+                    '<tr class="totals-row"><td colspan="3" style="text-align:right;padding:8px 12px;color:#64748b">Tạm tính</td><td style="padding:8px 12px;text-align:right">' + formatVND(sub) + '</td></tr>' +
+                    '<tr class="totals-row"><td colspan="3" style="text-align:right;padding:8px 12px;color:#64748b">Phí vận chuyển</td><td style="padding:8px 12px;text-align:right">' + formatVND(shipPrice) + '</td></tr>' +
+                    purchaseCodeRow +
+                    '<tr class="grand-row"><td colspan="3" style="text-align:right">TỔNG CỘNG</td><td style="text-align:right">' + formatVND(grandTotal) + '</td></tr>' +
+                    '</tfoot>' +
+                    '</table>' +
+                    '<div class="inv-footer">Cảm ơn bạn đã mua hàng tại PV Modern · pvmodern.vn · Mọi thắc mắc vui lòng liên hệ hỗ trợ</div>' +
+                    '</body></html>';
+
+                var w = window.open('', '_blank', 'width=800,height=900');
+                if (!w) { return; }
+                w.document.write(html);
+                w.document.close();
+                w.focus();
+                setTimeout(function () { w.print(); }, 400);
             });
-            $root.on('click', '[data-upload-proof-btn]', function () {
-                var pm = $(this).data('upload-proof-btn');
-                handleProofUpload(pm);
-            });
+        }
+
+        function isPaymentConfirmationRoute() {
+            try {
+                if ($root.attr('data-payment-confirmation-only') === '1') { return true; }
+                return /\/payment-confirmation(\/|\?|$)/.test(window.location.pathname + window.location.search);
+            } catch (e) { return false; }
+        }
+
+        function recoverOrderFromUrl(callback) {
+            var urlOrderId = '';
+            try {
+                urlOrderId = new URLSearchParams(window.location.search).get('orderId') || '';
+            } catch (e) {}
+            if (!urlOrderId) { callback(false); return; }
+            $.ajax({
+                url: '/api/payments/pvstatus',
+                method: 'GET',
+                dataType: 'json',
+                data: {orderId: urlOrderId}
+            }).done(function (res) {
+                if (!res || !res.success) { callback(false); return; }
+                /* URL is the source of truth — overwrite any stale state.order
+                   so the SSE/poll uses the *real* magento_increment_id, not a
+                   leftover random placeholder from a previous session. */
+                var realIncId = String(res.orderId || urlOrderId).replace(/^#/, '');
+                state.order = state.order || {};
+                state.order.orderId = '#' + realIncId;
+                state.order.incrementId = realIncId;
+                state.order.pvOrderId = res.pv_order_id || state.order.pvOrderId;
+                state.order.payment = res.payment || state.order.payment || {};
+                if (res.payment && res.payment.amount) {
+                    state.orderTotal = parseInt(res.payment.amount, 10);
+                } else if (res.total_amount) {
+                    state.orderTotal = Math.round(parseFloat(res.total_amount));
+                }
+                state.paymentMethodId = state.paymentMethodId || res.payment_method || 'bank_qr';
+                state.paymentStatus = res.status || 'pending';
+                state.step = (res.status === 'paid') ? 5 : 4;
+                state.maxUnlockedStep = Math.max(state.maxUnlockedStep || 1, state.step);
+                saveState();
+                callback(true);
+            }).fail(function () { callback(false); });
         }
 
         function init() {
             var requestedStep = getRequestedStep();
+            var onConfirmationRoute = isPaymentConfirmationRoute();
             var params;
             try {
                 params = new URLSearchParams(window.location.search);
-                if (params.get('payment_result') === 'success' && state.order) {
-                    state.paymentStatus = 'paid';
-                    state.maxUnlockedStep = 5;
-                    state.step = 5;
+                if ((params.get('payment_result') === 'success' || params.get('payment_result') === 'pending') && state.order) {
+                    state.paymentStatus = 'pending';
+                    state.step = 4;
+                    state.maxUnlockedStep = Math.max(state.maxUnlockedStep || 1, 4);
                 } else if (params.get('payment_result') === 'failed' && state.order) {
                     state.paymentStatus = 'failed';
                     state.step = 4;
                     state.maxUnlockedStep = Math.max(state.maxUnlockedStep || 1, 4);
                 }
             } catch (e) {}
-            if (requestedStep === 1) {
+            if (requestedStep === 1 && !onConfirmationRoute) {
                 state.step = 1;
                 state.maxUnlockedStep = 1;
                 state.order = null;
                 state.paymentStatus = 'idle';
                 saveState();
             }
-            if (!state.step || state.step < 1 || state.step > 5 || (state.step === 5 && !state.order)) {
-                state.step = 1;
-                state.maxUnlockedStep = Math.max(1, state.maxUnlockedStep || 1);
+
+            function finalizeInit() {
+                if (!state.step || state.step < 1 || state.step > 5) {
+                    state.step = 1;
+                    state.maxUnlockedStep = Math.max(1, state.maxUnlockedStep || 1);
+                } else if (state.step === 5 && !state.order) {
+                    state.step = 1;
+                    state.maxUnlockedStep = 1;
+                } else if (state.step === 4 && (!state.order || !state.order.orderId) && !onConfirmationRoute) {
+                    state.step = 3;
+                    state.maxUnlockedStep = Math.max(3, state.maxUnlockedStep || 3);
+                }
+                fillCustomerDefaults();
+                populateCities();
+                loadVietnamLocations();
+                syncFields();
+                renderShippingMethods();
+                renderPaymentMethods();
+                renderSummary();
+                bindEvents();
+                goToStep(state.step || 1);
             }
-            fillCustomerDefaults();
-            populateCities();
-            loadVietnamLocations();
-            syncFields();
-            renderShippingMethods();
-            renderPaymentMethods();
-            renderSummary();
-            bindEvents();
-            goToStep(state.step || 1);
+
+            if (onConfirmationRoute) {
+                state.step = state.step && state.step >= 4 ? state.step : 4;
+                state.maxUnlockedStep = Math.max(state.maxUnlockedStep || 1, state.step);
+                /* Always recover from the URL when on the confirmation route,
+                   even if state.order exists — it might be a stale session
+                   from a previous order with a random placeholder orderId
+                   that would block the SSE lookup. */
+                var urlOrderId = '';
+                try {
+                    urlOrderId = new URLSearchParams(window.location.search).get('orderId') || '';
+                } catch (e) {}
+                var stateIncId = state.order && (state.order.incrementId || String(state.order.orderId || '').replace(/^#/, ''));
+                if (urlOrderId && stateIncId !== urlOrderId) {
+                    /* URL orderId differs from in-memory state — trust URL */
+                    state.order = null;
+                }
+                if (!state.order || !state.order.orderId || !state.order.incrementId) {
+                    recoverOrderFromUrl(function () { finalizeInit(); });
+                    return;
+                }
+            }
+            finalizeInit();
         }
 
         init();

@@ -20,7 +20,7 @@
                    group="detailed_info"
                    before="-">
                 <arguments>
-                    <argument name="title" xsi:type="string" translate="true">Thông số kỹ thuật</argument>
+                    <argument name="title" xsi:type="string" translate="true">Specifications</argument>
                     <argument name="sort_order" xsi:type="string">5</argument>
                 </arguments>
             </block>

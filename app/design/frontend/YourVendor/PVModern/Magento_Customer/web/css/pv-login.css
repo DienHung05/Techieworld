@@ -1,0 +1,357 @@
+/* ── Google Font ───────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ── Magento chrome hiding ─────────────────────────────────────────── */
+body.customer-account-login .page-header,
+body.customer-account-login .page-footer,
+body.customer-account-login .breadcrumbs,
+body.customer-account-login .nav-sections,
+body.customer-account-login .nav-toggle,
+body.customer-account-login .page-title-wrapper,
+body.customer-account-login .pv3-header-shell,
+body.customer-account-login .pv3-footer-shell,
+body.customer-account-create .page-header,
+body.customer-account-create .page-footer,
+body.customer-account-create .breadcrumbs,
+body.customer-account-create .nav-sections,
+body.customer-account-create .nav-toggle,
+body.customer-account-create .page-title-wrapper,
+body.customer-account-create .pv3-header-shell,
+body.customer-account-create .pv3-footer-shell { display:none!important; }
+body.customer-account-login,
+body.customer-account-create { margin:0; overflow:hidden; background:#f0f2f5; }
+body.customer-account-login .page-wrapper,
+body.customer-account-create .page-wrapper { min-height:unset; }
+body.customer-account-login .page-main,
+body.customer-account-create .page-main { padding:0; max-width:none; }
+body.customer-account-login .columns,
+body.customer-account-create .columns { max-width:none; padding:0; margin:0; }
+body.customer-account-login .column.main,
+body.customer-account-create .column.main { padding:0; width:100%; }
+body.customer-account-login .login-container,
+body.customer-account-create .login-container { margin:0; }
+
+/* ── CSS Variables ─────────────────────────────────────────────────── */
+:root {
+    --pv-grad-a: #667eea; --pv-grad-b: #764ba2; --pv-grad-c: #0d9488;
+    --pv-primary: #667eea; --pv-primary-dark: #5a6fd6;
+    --pv-error: #e74c3c; --pv-success: #2ecc71;
+    --pv-text: #1a1a2e; --pv-muted: #6c757d;
+    --pv-border: #e2e8f0; --pv-card-bg: rgba(255,255,255,0.9);
+    --pv-input-h: 50px; --pv-radius-input: 12px; --pv-radius-card: 16px;
+    --pv-transition: 0.3s ease;
+}
+
+/* ── Page layout ───────────────────────────────────────────────────── */
+.pv-auth-page {
+    display:flex; height:100vh; min-height:100vh; width:100%;
+    font-family:'Inter', sans-serif; color:var(--pv-text);
+    position:fixed; top:0; left:0; z-index:9000;
+}
+
+/* ── Hero panel (left 45%) ─────────────────────────────────────────── */
+.pv-hero {
+    width:45%; flex-shrink:0;
+    background:linear-gradient(135deg,#667eea,#764ba2,#1a1a2e,#0d9488,#667eea);
+    background-size:400% 400%;
+    animation:pvGrad 8s ease infinite;
+    display:flex; align-items:center; justify-content:center;
+    position:relative; overflow:hidden;
+}
+@keyframes pvGrad {
+    0%  { background-position:0% 50%; }
+    50% { background-position:100% 50%; }
+    100%{ background-position:0% 50%; }
+}
+
+/* Floating decorative circles */
+.pv-hero-circle {
+    position:absolute; border-radius:50%;
+    border:1px solid rgba(255,255,255,0.15);
+}
+.pv-hero-circle--1 { width:300px; height:300px; top:-80px; right:-80px; animation:pvFloat 6s ease-in-out infinite; }
+.pv-hero-circle--2 { width:200px; height:200px; bottom:-60px; left:-60px; animation:pvFloat 8s ease-in-out infinite reverse; }
+.pv-hero-circle--3 { width:120px; height:120px; top:50%; left:10%; animation:pvFloat 5s ease-in-out infinite 1s; background:rgba(255,255,255,0.04); }
+.pv-hero-circle--4 { width:60px;  height:60px;  top:25%; right:20%; animation:pvFloat 7s ease-in-out infinite 2s; background:rgba(255,255,255,0.06); }
+@keyframes pvFloat {
+    0%,100% { transform:translateY(0) rotate(0deg); }
+    50%     { transform:translateY(-20px) rotate(5deg); }
+}
+
+.pv-hero-content { position:relative; z-index:1; text-align:center; padding:2rem; }
+.pv-hero-logo {
+    font-size:clamp(28px,4vw,48px); font-weight:800;
+    letter-spacing:-0.04em; line-height:1.1; margin-bottom:12px;
+    /* Match the storefront header's brand gradient exactly (.text-gradient). */
+    background:linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+    color:transparent;
+    display:inline-block;
+}
+.pv-hero-logo span { font-weight:800; }
+.pv-hero-tag {
+    font-size:15px; color:rgba(255,255,255,0.72); font-weight:400;
+    line-height:1.5; max-width:280px; margin:0 auto 32px;
+}
+.pv-hero-badge {
+    display:inline-flex; align-items:center; gap:8px;
+    background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2);
+    color:rgba(255,255,255,0.9); border-radius:999px;
+    padding:8px 18px; font-size:13px; font-weight:500;
+    backdrop-filter:blur(8px);
+}
+.pv-hero-badge::before { content:'●'; color:#2ecc71; font-size:8px; }
+
+/* ── Form panel (right 55%) ────────────────────────────────────────── */
+.pv-form-panel {
+    flex:1; background:#f0f2f5;
+    display:flex; align-items:center; justify-content:center;
+    padding:2rem; overflow-y:auto;
+}
+
+/* ── Card ──────────────────────────────────────────────────────────── */
+.pv-card {
+    width:100%; max-width:420px;
+    background:var(--pv-card-bg);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,0.4);
+    box-shadow:0 20px 60px rgba(0,0,0,0.1),0 1px 2px rgba(0,0,0,0.06);
+    border-radius:var(--pv-radius-card); padding:2.5rem;
+    animation:pvCardIn 0.5s ease-out;
+}
+@keyframes pvCardIn {
+    from { opacity:0; transform:translateY(20px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+
+/* ── View transitions ──────────────────────────────────────────────── */
+.pv-view { transition:opacity var(--pv-transition),transform var(--pv-transition); }
+.pv-view--hidden { display:none!important; }
+
+/* ── Server messages ───────────────────────────────────────────────── */
+.pv-server-msgs .message { border-radius:10px; padding:12px 14px; margin-bottom:16px; font-size:14px; }
+.pv-server-msgs .message.error { background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; }
+.pv-server-msgs .message.success { background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; }
+
+/* ── Heading / subtitle ────────────────────────────────────────────── */
+.pv-heading { font-size:26px; font-weight:700; color:var(--pv-text); margin:0 0 4px; letter-spacing:-0.02em; }
+.pv-subtitle { font-size:14px; color:var(--pv-muted); margin:0 0 24px; }
+
+/* ── Input fields ──────────────────────────────────────────────────── */
+.pv-field { position:relative; margin-bottom:16px; }
+.pv-field label { display:block; font-size:13px; font-weight:600; color:var(--pv-text); margin-bottom:6px; }
+
+.pv-input-wrap { position:relative; }
+.pv-input-wrap input {
+    width:100%; height:var(--pv-input-h);
+    border:1.5px solid var(--pv-border); border-radius:var(--pv-radius-input);
+    background:#fff; color:var(--pv-text); font-family:'Inter',sans-serif;
+    font-size:15px; font-weight:400;
+    padding:0 44px 0 14px;
+    outline:none; box-sizing:border-box;
+    transition:border-color 0.2s, box-shadow 0.2s;
+}
+.pv-input-wrap input:focus {
+    border-color:var(--pv-primary);
+    box-shadow:0 0 0 3px rgba(102,126,234,0.15);
+}
+.pv-input-wrap input.pv-valid   { border-color:var(--pv-success); }
+.pv-input-wrap input.pv-invalid { border-color:var(--pv-error); }
+
+/* Password toggle */
+.pv-eye {
+    position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    background:none; border:none; cursor:pointer;
+    color:#adb5bd; padding:4px; display:flex; align-items:center;
+    transition:color 0.2s; line-height:1;
+}
+.pv-eye svg { display:block; }
+.pv-eye:hover { color:var(--pv-primary); }
+.pv-eye:focus-visible { outline:2px solid var(--pv-primary); border-radius:4px; }
+
+/* Error / success messages */
+.pv-err, .pv-ok {
+    font-size:12px; margin-top:4px;
+    display:none; align-items:center; gap:4px;
+}
+.pv-err { color:var(--pv-error); }
+.pv-ok  { color:var(--pv-success); }
+.pv-field.has-error .pv-err { display:flex; }
+.pv-field.has-ok    .pv-ok  { display:flex; }
+
+/* ── Remember / Forgot row ─────────────────────────────────────────── */
+.pv-meta {
+    display:flex; align-items:center; justify-content:space-between;
+    margin:2px 0 20px; font-size:13px;
+}
+.pv-remember { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; }
+.pv-remember input[type=checkbox] {
+    width:16px; height:16px; accent-color:var(--pv-primary); cursor:pointer;
+}
+.pv-remember span { color:var(--pv-muted); font-weight:500; }
+.pv-link {
+    color:var(--pv-primary); font-weight:600; text-decoration:none; cursor:pointer;
+    background:none; border:none; font-size:13px; font-family:'Inter',sans-serif;
+    transition:opacity 0.2s;
+}
+.pv-link:hover { opacity:0.75; text-decoration:underline; }
+
+/* ── Primary button ────────────────────────────────────────────────── */
+.pv-btn {
+    width:100%; height:48px; border:none; border-radius:12px; cursor:pointer;
+    font-family:'Inter',sans-serif; font-size:15px; font-weight:700;
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    color:#fff; letter-spacing:0.01em;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    transition:all 0.3s ease; position:relative; overflow:hidden;
+}
+.pv-btn:hover   { filter:brightness(1.1); transform:translateY(-1px); box-shadow:0 8px 24px rgba(102,126,234,0.35); }
+.pv-btn:active  { transform:scale(0.98); }
+.pv-btn:disabled{ opacity:0.5; cursor:not-allowed; transform:none; filter:none; box-shadow:none; }
+.pv-btn:focus-visible { outline:2px solid var(--pv-primary); outline-offset:2px; }
+
+/* Spinner */
+.pv-spinner {
+    display:none; width:18px; height:18px;
+    border:2px solid rgba(255,255,255,0.4);
+    border-top-color:#fff; border-radius:50%;
+    animation:pvSpin 0.7s linear infinite;
+}
+@keyframes pvSpin { to { transform:rotate(360deg); } }
+.pv-btn.loading .pv-btn-label { display:none; }
+.pv-btn.loading .pv-spinner   { display:block; }
+
+/* ── Divider ───────────────────────────────────────────────────────── */
+.pv-divider {
+    display:flex; align-items:center; gap:12px;
+    margin:20px 0; color:#cbd5e1; font-size:12px; font-weight:500;
+    text-transform:uppercase; letter-spacing:0.05em;
+}
+.pv-divider::before, .pv-divider::after {
+    content:''; flex:1; height:1px; background:#e2e8f0;
+}
+
+/* ── Social buttons ────────────────────────────────────────────────── */
+.pv-socials {
+    display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
+    margin-bottom:20px;
+}
+.pv-social-btn {
+    height:48px; border:1.5px solid var(--pv-border); border-radius:12px;
+    background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    font-size:18px; transition:all 0.25s ease; position:relative;
+}
+.pv-social-btn:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,0.1); border-color:#c7d2fe; }
+.pv-social-btn:focus-visible { outline:2px solid var(--pv-primary); }
+.pv-social-btn--github { background:#24292e; border-color:#24292e; color:#fff; }
+.pv-social-btn--email  { background:#f0f9ff; border-color:#bae6fd; color:#0369a1; }
+.pv-social-btn--phone  { background:#f0fdf4; border-color:#bbf7d0; color:#15803d; }
+
+/* Google G */
+.pv-google-g {
+    width:20px; height:20px; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23EA4335' d='M24 9.5c3.5 0 6.6 1.2 9 3.2l6.8-6.8C35.7 2.4 30.2 0 24 0 14.7 0 6.8 5.4 2.9 13.3l7.9 6.1C12.5 13.3 17.8 9.5 24 9.5z'/%3E%3Cpath fill='%234285F4' d='M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.5-4.1 7-10.2 7-17.1z'/%3E%3Cpath fill='%23FBBC05' d='M10.8 28.6c-.6-1.8-1-3.7-1-5.6s.4-3.8 1-5.6L2.9 11.3A23.9 23.9 0 0 0 0 24c0 3.9.9 7.6 2.9 10.7l7.9-6.1z'/%3E%3Cpath fill='%2334A853' d='M24 48c6.2 0 11.4-2 15.2-5.5l-7.6-5.9c-2 1.3-4.6 2.1-7.6 2.1-6.2 0-11.5-3.8-13.2-9.1l-7.9 6.1C6.8 42.6 14.7 48 24 48z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+
+/* ── Bottom link ───────────────────────────────────────────────────── */
+.pv-bottom-link { text-align:center; font-size:13px; color:var(--pv-muted); margin-top:20px; }
+
+/* ── Password strength ─────────────────────────────────────────────── */
+.pv-strength { margin-top:8px; }
+.pv-strength-bar-wrap { height:4px; background:#e2e8f0; border-radius:2px; overflow:hidden; }
+.pv-strength-bar { height:100%; width:0; border-radius:2px; transition:width 0.4s, background 0.4s; }
+.pv-strength-label { font-size:11px; color:var(--pv-muted); margin-top:4px; font-weight:600; }
+
+/* ── Phone OTP ─────────────────────────────────────────────────────── */
+.pv-otp-hint { font-size:12px; color:var(--pv-muted); text-align:center; margin-top:10px; }
+
+/* ── Success state (forgot password) ──────────────────────────────── */
+.pv-success-box {
+    text-align:center; padding:2rem 1rem;
+}
+.pv-success-icon {
+    width:56px; height:56px; border-radius:50%;
+    background:linear-gradient(135deg,#2ecc71,#0d9488);
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 16px; font-size:24px; color:#fff;
+}
+.pv-success-box h3 { font-size:18px; font-weight:700; margin:0 0 8px; }
+.pv-success-box p  { font-size:14px; color:var(--pv-muted); line-height:1.6; }
+
+/* ── Back link ─────────────────────────────────────────────────────── */
+.pv-back-wrap { text-align:center; margin-top:16px; }
+
+/* ── Phone flag selector (simple) ─────────────────────────────────── */
+.pv-phone-row { display:flex; gap:8px; }
+.pv-phone-row .pv-flag {
+    height:var(--pv-input-h); padding:0 12px; border:1.5px solid var(--pv-border);
+    border-radius:var(--pv-radius-input); background:#fff; font-size:14px;
+    font-family:'Inter',sans-serif; cursor:pointer; flex-shrink:0;
+    display:flex; align-items:center; gap:6px;
+}
+.pv-phone-row .pv-input-wrap { flex:1; }
+.pv-phone-row .pv-input-wrap input { padding-right:14px; }
+
+/* ── OTP boxes ─────────────────────────────────────────────────────── */
+.pv-otp-row { display:flex; gap:8px; justify-content:center; margin:16px 0; }
+.pv-otp-box {
+    width:48px; height:56px; border:1.5px solid var(--pv-border);
+    border-radius:10px; text-align:center; font-size:22px; font-weight:700;
+    background:#fff; outline:none; font-family:'Inter',sans-serif;
+    transition:border-color 0.2s, box-shadow 0.2s;
+}
+.pv-otp-box:focus { border-color:var(--pv-primary); box-shadow:0 0 0 3px rgba(102,126,234,0.15); }
+
+/* ── Signup — terms checkbox ───────────────────────────────────────── */
+.pv-terms { display:flex; align-items:flex-start; gap:10px; font-size:13px; color:var(--pv-muted); margin:16px 0; }
+.pv-terms input { margin-top:2px; accent-color:var(--pv-primary); }
+.pv-signup-scroll { max-height:calc(100vh - 260px); overflow-y:auto; padding-right:4px; }
+
+/* ── Responsive – Tablet ───────────────────────────────────────────── */
+@media (max-width:1024px) {
+    .pv-auth-page { flex-direction:column; }
+    .pv-hero { width:100%; height:28vh; flex-shrink:0; }
+    .pv-hero-logo { font-size:28px; }
+    .pv-hero-tag   { display:none; }
+    .pv-form-panel { flex:1; padding:1.5rem 2rem; align-items:flex-start; padding-top:2rem; }
+}
+
+/* ── Responsive – Mobile ───────────────────────────────────────────── */
+@media (max-width:767px) {
+    .pv-hero { display:none; }
+    .pv-auth-page {
+        height:100dvh; min-height:100dvh;
+        background:linear-gradient(135deg,#667eea,#764ba2,#1a1a2e,#0d9488,#667eea);
+        background-size:400% 400%; animation:pvGrad 8s ease infinite;
+    }
+    .pv-form-panel {
+        background:transparent;
+        padding:1rem;
+        align-items:flex-start;
+        min-height:100dvh;
+        overflow-y:auto;
+        -webkit-overflow-scrolling:touch;
+    }
+    .pv-card {
+        background:rgba(255,255,255,0.92);
+        backdrop-filter:blur(20px);
+        padding:2rem 1.5rem;
+        margin:auto 0;
+        max-height:calc(100dvh - 2rem);
+        overflow-y:auto;
+        -webkit-overflow-scrolling:touch;
+    }
+    .pv-socials { grid-template-columns:repeat(2,1fr); }
+    .pv-signup-scroll { max-height:none; overflow:visible; padding-right:0; }
+}
+
+/* ── Responsive – Small phone ────────────────────────────────────────── */
+@media (max-width:480px) {
+    .pv-card { padding:1.5rem 1.25rem; }
+    /* font-size:16px prevents iOS Safari from auto-zooming on input focus */
+    .pv-input-wrap input { font-size:16px; min-height:48px; }
+    .pv-otp-box { width:40px; height:50px; font-size:18px; }
+    .pv-btn { height:52px; min-height:44px; font-size:16px; }
+    .pv-heading { font-size:22px; }
+}

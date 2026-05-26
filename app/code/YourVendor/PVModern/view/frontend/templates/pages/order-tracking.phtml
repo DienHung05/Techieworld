@@ -6,8 +6,8 @@
         <section class="pvw-hero">
             <div class="pvw-hero__copy">
                 <span class="pvw-hero__badge">GHN / GHTK / Shopee Express</span>
-                <h1>Theo dõi <span>đơn hàng</span></h1>
-                <p>Kiểm tra trạng thái, vận chuyển và lịch sử xử lý đơn hàng của bạn.</p>
+                <h1>Track <span>your order</span></h1>
+                <p>Check the status, shipping progress, and processing history of your order.</p>
             </div>
         </section>
 
@@ -17,28 +17,28 @@
 
         <section class="pvtracking-layout">
             <form class="pvtracking-form surface-card" data-tracking-page-form>
-                <h2>Tra cứu vận đơn</h2>
+                <h2>Track your shipment</h2>
                 <label>
-                    <span>Mã đơn hàng</span>
+                    <span>Order ID</span>
                     <input type="text" name="order_id" placeholder="#SHOP-20260426-0001" required>
                 </label>
                 <label>
-                    <span>Đơn vị vận chuyển</span>
+                    <span>Shipping carrier</span>
                     <select name="provider">
                         <option value="spx">Shopee Express / SPX</option>
-                        <option value="ghn">Giao Hàng Nhanh</option>
-                        <option value="ghtk">Giao Hàng Tiết Kiệm</option>
+                        <option value="ghn">GHN Express</option>
+                        <option value="ghtk">GHTK</option>
                     </select>
                 </label>
                 <label>
-                    <span>Mã vận đơn nếu có</span>
-                    <input type="text" name="tracking_number" placeholder="Có thể để trống để dùng mã demo">
+                    <span>Tracking number (optional)</span>
+                    <input type="text" name="tracking_number" placeholder="Leave blank to use demo code">
                 </label>
-                <button type="submit">Theo dõi đơn hàng</button>
+                <button type="submit">Track order</button>
             </form>
 
             <section class="pvtracking-result surface-card" data-tracking-page-result>
-                <div class="pvinfo-empty">Nhập mã đơn hàng để bắt đầu theo dõi.</div>
+                <div class="pvinfo-empty">Enter your order ID to start tracking.</div>
             </section>
         </section>
     </div>

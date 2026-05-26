@@ -6,7 +6,7 @@ return;
 <?php
 /** @var \Magento\Framework\View\Element\Template $block */
 $tabs = [
-    ['label' => 'Xem tất cả', 'url' => $block->getUrl('news'), 'active' => false],
+    ['label' => 'All', 'url' => $block->getUrl('news'), 'active' => false],
     ['label' => 'Weather', 'url' => $block->getUrl('weather'), 'active' => false],
     ['label' => 'Currency Rate', 'url' => $block->getUrl('currency-rate'), 'active' => true],
 ];
@@ -27,7 +27,7 @@ $tabs = [
         <section class="pvinfo-hero-copy">
             <span class="pvinfo-kicker">FX dashboard</span>
             <h1>Currency Rate</h1>
-            <p>Theo dõi tỷ giá tiền tệ, chuyển đổi nhanh và cập nhật xu hướng thị trường.</p>
+            <p>Live exchange rates, quick conversions, and market trend updates.</p>
             <button class="pvinfo-refresh pvinfo-refresh--hero" type="button" data-currency-refresh>Refresh rates</button>
         </section>
 
@@ -35,9 +35,9 @@ $tabs = [
             <span></span><span></span><span></span>
         </div>
         <div class="pvinfo-state pvinfo-error" data-currency-error hidden>
-            <strong>Không tải được dữ liệu tỷ giá.</strong>
-            <p>Vui lòng thử lại. Nếu dùng provider trả phí, kiểm tra biến môi trường API key ở backend.</p>
-            <button type="button" class="pvinfo-retry" data-currency-retry>Thử lại</button>
+            <strong>Could not load exchange rate data.</strong>
+            <p>Please try again. If using a paid provider, verify the API key environment variable on the backend.</p>
+            <button type="button" class="pvinfo-retry" data-currency-retry>Try again</button>
         </div>
 
         <div data-currency-content hidden>
@@ -66,7 +66,7 @@ $tabs = [
 
             <aside class="surface-card pvcurrency-watch">
                 <h2>Market summary</h2>
-                <p data-currency-note>Dữ liệu cập nhật theo ngày.</p>
+                <p data-currency-note>Data updated daily.</p>
                 <div class="pvcurrency-favorites" data-currency-favorites></div>
                 <div data-currency-watchlist></div>
             </aside>
@@ -95,7 +95,7 @@ $tabs = [
                 </div>
             </div>
             <div class="pvcurrency-chart" data-currency-chart></div>
-            <p class="pvinfo-note">Dữ liệu cập nhật theo ngày, không phải tick-by-tick realtime.</p>
+            <p class="pvinfo-note">Data is updated daily, not tick-by-tick in real time.</p>
         </section>
 
         <section class="surface-card">

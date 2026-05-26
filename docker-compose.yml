@@ -1,0 +1,204 @@
+# =====================================================================
+#  PVModern Magento 2 — production docker-compose
+# =====================================================================
+#  Services:
+#    app       — php-fpm with Magento + PVModern code baked in
+#    nginx     — TLS-terminating edge + static asset serving
+#    cron      — sidecar running Magento cron + queue consumers
+#    db        — MySQL 8.0
+#    redis     — sessions + default cache + page cache
+#    opensearch — search engine (Magento 2.4.7+)
+#    certbot   — Let's Encrypt issuance + renewal
+#
+#  All non-public ports are bridged inside the magento-net network and
+#  NOT exposed to the host. Only nginx publishes 80/443.
+#
+#  Persistent state lives in named volumes so docker compose down
+#  does NOT lose data. To wipe state intentionally: `docker compose
+#  down -v`.
+# =====================================================================
+
+name: pvmodern
+
+networks:
+  magento-net:
+    driver: bridge
+
+volumes:
+  db-data:
+  redis-data:
+  opensearch-data:
+  magento-var:        # var/ — logs, sessions, cache (some still on disk)
+  magento-media:      # pub/media — user-uploaded product images
+  magento-static:     # pub/static — deployed frontend bundles
+  magento-generated:  # generated/ — DI compiled code
+  letsencrypt-data:
+  letsencrypt-www:    # ACME http-01 challenge webroot
+
+services:
+
+  # ─── PHP application ────────────────────────────────────────────
+  app:
+    image: pvmodern-app:latest
+    build:
+      context: .
+      dockerfile: docker/php-fpm/Dockerfile
+    restart: unless-stopped
+    networks: [magento-net]
+    expose: ["9000"]
+    env_file: [.env]
+    environment:
+      MAGE_MODE: production
+      MYSQL_HOST: db
+      MYSQL_PORT: 3306
+      OPENSEARCH_HOST: opensearch
+    volumes:
+      - magento-var:/srv/magento/var
+      - magento-media:/srv/magento/pub/media
+      - magento-static:/srv/magento/pub/static
+      - magento-generated:/srv/magento/generated
+    depends_on:
+      db:         { condition: service_healthy }
+      redis:      { condition: service_healthy }
+      opensearch: { condition: service_started }
+    healthcheck:
+      test: ["CMD", "php-fpm", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ─── Edge / TLS / static ────────────────────────────────────────
+  nginx:
+    image: pvmodern-nginx:latest
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    restart: unless-stopped
+    networks: [magento-net]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      MAGENTO_DOMAIN: ${MAGENTO_DOMAIN}
+    volumes:
+      # Read-only mount of the app's pub/ so nginx can serve static files
+      # directly without bouncing through php-fpm.
+      - magento-static:/srv/magento/pub/static:ro
+      - magento-media:/srv/magento/pub/media:ro
+      - magento-var:/srv/magento/var:ro
+      - letsencrypt-data:/etc/letsencrypt
+      - letsencrypt-www:/var/www/certbot
+    depends_on:
+      app: { condition: service_started }
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsk https://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ─── Cron + queue consumers ─────────────────────────────────────
+  # Reuses the same pvmodern-app image (no separate build target) and
+  # just overrides the CMD to run cron in the foreground. The Magento
+  # crontab is baked into /etc/cron.d/magento in the app image.
+  cron:
+    image: pvmodern-app:latest
+    restart: unless-stopped
+    networks: [magento-net]
+    env_file: [.env]
+    environment:
+      MAGE_MODE: production
+      MYSQL_HOST: db
+      OPENSEARCH_HOST: opensearch
+    volumes:
+      - magento-var:/srv/magento/var
+      - magento-media:/srv/magento/pub/media
+      - magento-generated:/srv/magento/generated
+    entrypoint: ["tini", "--", "/usr/local/bin/entrypoint.sh"]
+    command: ["cron", "-f", "-L", "15"]
+    depends_on:
+      app: { condition: service_started }
+      db:  { condition: service_healthy }
+
+  # ─── MySQL ──────────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    networks: [magento-net]
+    expose: ["3306"]
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --max_allowed_packet=64M
+      - --innodb_buffer_pool_size=1G
+      - --innodb_log_file_size=256M
+      - --innodb_flush_log_at_trx_commit=2
+      - --innodb_flush_method=O_DIRECT
+      - --skip-name-resolve
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE:      ${MYSQL_DATABASE}
+      MYSQL_USER:          ${MYSQL_USER}
+      MYSQL_PASSWORD:      ${MYSQL_PASSWORD}
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ─── Redis ──────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks: [magento-net]
+    expose: ["6379"]
+    command:
+      - redis-server
+      - --save
+      - "300 10"
+      - --maxmemory
+      - "512mb"
+      - --maxmemory-policy
+      - "allkeys-lru"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── OpenSearch (Magento 2.4.7+ search engine) ──────────────────
+  opensearch:
+    image: opensearchproject/opensearch:2.13.0
+    restart: unless-stopped
+    networks: [magento-net]
+    expose: ["9200"]
+    environment:
+      cluster.name:                 pvmodern-cluster
+      node.name:                    pvmodern-node-1
+      discovery.type:               single-node
+      bootstrap.memory_lock:        "true"
+      DISABLE_SECURITY_PLUGIN:      "true"
+      OPENSEARCH_JAVA_OPTS:         "-Xms1g -Xmx1g"
+      DISABLE_INSTALL_DEMO_CONFIG:  "true"
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+      nofile:  { soft: 65536, hard: 65536 }
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+
+  # ─── Certbot (Let's Encrypt) ────────────────────────────────────
+  # One-shot service. Run manually:
+  #   docker compose run --rm certbot certonly --webroot -w /var/www/certbot \
+  #     -d $MAGENTO_DOMAIN -d www.$MAGENTO_DOMAIN \
+  #     --email $LETSENCRYPT_EMAIL --agree-tos --no-eff-email --non-interactive
+  # Or use the make targets in the Makefile.
+  certbot:
+    image: certbot/certbot:latest
+    networks: [magento-net]
+    volumes:
+      - letsencrypt-data:/etc/letsencrypt
+      - letsencrypt-www:/var/www/certbot
+    entrypoint: "/bin/sh -c"
+    command: "echo 'Run via: make ssl-init or make ssl-renew'"

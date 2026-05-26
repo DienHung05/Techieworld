@@ -58,8 +58,8 @@ $getPurchaseCode = static function ($order): string {
                     <?= $block->getChildHtml('extra.column.header') ?>
                     <th scope="col" class="col total"><?= $block->escapeHtml(__('Order Total')) ?></th>
                     <th scope="col" class="col status"><?= $block->escapeHtml(__('Status')) ?></th>
-                    <th scope="col" class="col pv-order-code">Mã đơn hàng</th>
-                    <th scope="col" class="col pv-purchase-code">Mã bảo hành</th>
+                    <th scope="col" class="col pv-order-code">Order code</th>
+                    <th scope="col" class="col pv-purchase-code">Warranty code</th>
                     <th scope="col" class="col actions"><?= $block->escapeHtml(__('Action')) ?></th>
                 </tr>
             </thead>
@@ -77,10 +77,10 @@ $getPurchaseCode = static function ($order): string {
                         <?php endif; ?>
                         <td data-th="<?= $block->escapeHtml(__('Order Total')) ?>" class="col total"><?= /* @noEscape */ $_order->formatPrice($_order->getGrandTotal()) ?></td>
                         <td data-th="<?= $block->escapeHtml(__('Status')) ?>" class="col status"><?= $block->escapeHtml($_order->getStatusLabel()) ?></td>
-                        <td data-th="Mã đơn hàng" class="col pv-order-code">
+                        <td data-th="Order code" class="col pv-order-code">
                             <span class="pv-order-code-badge"><?= $block->escapeHtml($orderCode) ?></span>
                         </td>
-                        <td data-th="Mã bảo hành" class="col pv-purchase-code">
+                        <td data-th="Warranty code" class="col pv-purchase-code">
                             <span class="pv-pc-badge"><?= $block->escapeHtml($purchaseCode) ?></span>
                         </td>
                         <td data-th="<?= $block->escapeHtml(__('Actions')) ?>" class="col actions">
@@ -91,7 +91,7 @@ $getPurchaseCode = static function ($order): string {
                                class="action pv-order-track"
                                data-order-id="<?= $block->escapeHtmlAttr($_order->getRealOrderId()) ?>"
                                data-provider="spx">
-                                <span><?= $block->escapeHtml(__('Theo dõi đơn hàng')) ?></span>
+                                <span><?= $block->escapeHtml(__('Track order')) ?></span>
                             </a>
                             <?php if ($this->helper(\Magento\Sales\Helper\Reorder::class)->canReorder($_order->getEntityId())) : ?>
                                 <a href="#" data-post='<?= /* @noEscape */

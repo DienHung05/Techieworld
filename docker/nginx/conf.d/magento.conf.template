@@ -1,0 +1,70 @@
+# =====================================================================
+#  PVModern Magento 2 — nginx production server
+# =====================================================================
+#  Variables ${MAGENTO_DOMAIN} substituted at boot by envsubst.
+#  Listens 80 (ACME + redirect) + 443 (real site with HTTP/2).
+#  Includes the Magento-shipped nginx.conf.sample for all the standard
+#  Magento routing (fastcgi_pass to upstream, static rewrites, etc.)
+# =====================================================================
+
+upstream fastcgi_backend {
+    # In host-network mode, services share the host's network stack and
+    # there is no Docker-managed DNS to resolve "app". Use 127.0.0.1
+    # which works in both host-network and bridge-network modes (in
+    # bridge mode each container also has its own loopback that maps to
+    # localhost, but since nginx and php-fpm share a network namespace
+    # in host mode, this is correct).
+    server 127.0.0.1:9000;
+    keepalive 32;
+}
+
+# --- HTTP: ACME challenge + redirect to HTTPS ---
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${MAGENTO_DOMAIN} www.${MAGENTO_DOMAIN};
+
+    # Let's Encrypt webroot challenges live here.
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        default_type "text/plain";
+    }
+
+    # Everything else: hard redirect to HTTPS.
+    location / {
+        return 301 https://${MAGENTO_DOMAIN}$request_uri;
+    }
+}
+
+# --- HTTPS: the real site ---
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name ${MAGENTO_DOMAIN} www.${MAGENTO_DOMAIN};
+
+    ssl_certificate     /etc/letsencrypt/live/${MAGENTO_DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${MAGENTO_DOMAIN}/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5:!3DES;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache   shared:SSL:50m;
+    ssl_session_timeout 1d;
+    ssl_stapling        on;
+    ssl_stapling_verify on;
+
+    # Canonicalize: www → apex.
+    if ($host = www.${MAGENTO_DOMAIN}) {
+        return 301 https://${MAGENTO_DOMAIN}$request_uri;
+    }
+
+    # NOTE: removed special location blocks for /api/paymentSessions/events
+    # and /api/webhooks/ — they tried to `include` a magento-pub-entry.conf
+    # snippet that doesn't exist. The Magento nginx.conf.sample below has a
+    # catch-all that routes /api/* to PHP-FPM correctly; the SSE + webhook
+    # optimizations weren't required and were causing nginx to crash-loop.
+
+    set $MAGE_ROOT /srv/magento;
+    set $MAGE_MODE production;
+    include /srv/magento/nginx.conf.sample;
+}

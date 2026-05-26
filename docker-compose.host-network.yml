@@ -1,0 +1,120 @@
+# =====================================================================
+#  Override: host networking with default service ports
+# =====================================================================
+#  Used because Docker bridge networking is broken on this VPS (ckey.vn
+#  hypervisor drops bridge-NAT'd traffic). All services use host network.
+#
+#  We use the STANDARD ports (3306, 6379, 9200) instead of custom ones
+#  because Magento's setup:install + Zend_Db_Adapter has a bug parsing
+#  custom-port DSNs in some PHP/PDO combinations. Standard ports just
+#  work without any DSN gymnastics.
+#
+#  Service-to-service communication uses 172.17.0.1 (docker bridge
+#  gateway, always available on the host) — a non-loopback IP so PDO's
+#  MySQL driver uses TCP instead of falling back to Unix socket.
+#
+#  Apply:
+#    docker compose -f docker-compose.yml -f docker-compose.host-network.yml up -d
+# =====================================================================
+
+services:
+  app:
+    network_mode: host
+    networks: !reset null
+    environment:
+      MYSQL_HOST:      172.17.0.1
+      MYSQL_PORT:      "3306"
+      OPENSEARCH_HOST: 172.17.0.1
+      REDIS_HOST:      172.17.0.1
+      REDIS_PORT:      "6379"
+    # Override env.php with the production-tuned one (correct DB host/password,
+    # production admin frontname, real domain in downloadable_domains).
+    # Bind-mounting just the single file leaves the rest of app/etc/ from the
+    # image intact.
+    volumes:
+      - ./app/etc/env.php:/srv/magento/app/etc/env.php:rw
+
+  nginx:
+    network_mode: host
+    networks: !reset null
+    # Bind-mount the Magento project tree from the host so nginx can:
+    #  1. include /srv/magento/nginx.conf.sample (Magento ships this)
+    #  2. Serve static / media files directly without proxying through PHP
+    # Read-only because nginx never writes to these paths.
+    volumes:
+      - .:/srv/magento:ro
+
+  cron:
+    network_mode: host
+    networks: !reset null
+    environment:
+      MYSQL_HOST:      172.17.0.1
+      MYSQL_PORT:      "3306"
+      OPENSEARCH_HOST: 172.17.0.1
+      REDIS_HOST:      172.17.0.1
+      REDIS_PORT:      "6379"
+    volumes:
+      - ./app/etc/env.php:/srv/magento/app/etc/env.php:rw
+
+  db:
+    network_mode: host
+    networks: !reset null
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --max_allowed_packet=64M
+      - --innodb_buffer_pool_size=1G
+      - --innodb_log_file_size=256M
+      - --innodb_flush_log_at_trx_commit=2
+      - --innodb_flush_method=O_DIRECT
+      - --skip-name-resolve
+      # Magento creates triggers during setup:upgrade. MySQL 8's default
+      # log_bin_trust_function_creators=0 blocks this for non-SUPER users.
+      - --log_bin_trust_function_creators=1
+
+  redis:
+    network_mode: host
+    networks: !reset null
+    command:
+      - redis-server
+      - --save
+      - "300 10"
+      - --maxmemory
+      - "512mb"
+      - --maxmemory-policy
+      - "allkeys-lru"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  opensearch:
+    network_mode: host
+    networks: !reset null
+    environment:
+      cluster.name:                 pvmodern-cluster
+      node.name:                    pvmodern-node-1
+      discovery.type:               single-node
+      bootstrap.memory_lock:        "true"
+      DISABLE_SECURITY_PLUGIN:      "true"
+      OPENSEARCH_JAVA_OPTS:         "-Xms1g -Xmx1g"
+      DISABLE_INSTALL_DEMO_CONFIG:  "true"
+
+  certbot:
+    network_mode: host
+    networks: !reset null
+
+  # ─── Cloudflare Tunnel ──────────────────────────────────────────
+  # Connects out to Cloudflare's edge so visitors can reach this
+  # private (NAT'd) VPS without inbound 80/443. The TUNNEL_TOKEN is
+  # provisioned in Cloudflare Zero Trust dashboard.
+  # NOTE: --protocol http2 forces TCP (not QUIC/UDP). ckey.vn's NAT
+  # blocks outbound UDP to Cloudflare edge ports, so without this flag
+  # cloudflared keeps timing out.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    network_mode: host
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --protocol http2 run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARED_TUNNEL_TOKEN}

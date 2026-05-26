@@ -6,10 +6,14 @@
  */
 $actionUrl      = $escaper->escapeUrl($block->getPostActionUrl());
 $forgotPostUrl  = $escaper->escapeUrl($block->getUrl('customer/account/forgotpasswordpost'));
-$createUrl      = $escaper->escapeUrl($block->getCreateAccountUrl());
-$savedEmail     = $escaper->escapeHtmlAttr($block->getUsername());
+$createPostUrl  = $escaper->escapeUrl($block->getUrl('customer/account/createpost'));
+$savedUsername  = $escaper->escapeHtmlAttr((string) $block->getUsername());
 $formKeyHtml    = $block->getBlockHtml('formkey');
 $noAC           = $block->isAutocompleteDisabled() ? 'autocomplete="off"' : '';
+$homeUrl        = $escaper->escapeUrl($block->getUrl(''));
+$initialView    = (string) $block->getData('initial_view');
+$initialView    = in_array($initialView, ['login', 'signup'], true) ? $initialView : 'login';
+$showSignup     = $initialView === 'signup';
 
 /* Capture flash messages (wrong password etc.) */
 $serverMsgs = '';
@@ -18,316 +22,6 @@ try {
     if ($mb) { $serverMsgs = $mb->toHtml(); }
 } catch (\Throwable $e) {}
 ?>
-<!-- ═══════════════════════════════════════════════════════ STYLES ═══ -->
-<style>
-/* ── Google Font ───────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-/* ── Magento chrome hiding ─────────────────────────────────────────── */
-body.customer-account-login .page-header,
-body.customer-account-login .page-footer,
-body.customer-account-login .breadcrumbs,
-body.customer-account-login .nav-sections,
-body.customer-account-login .nav-toggle,
-body.customer-account-login .page-title-wrapper { display:none!important; }
-body.customer-account-login { margin:0; overflow:hidden; background:#f0f2f5; }
-body.customer-account-login .page-wrapper { min-height:unset; }
-body.customer-account-login .page-main     { padding:0; max-width:none; }
-body.customer-account-login .columns       { max-width:none; padding:0; margin:0; }
-body.customer-account-login .column.main   { padding:0; width:100%; }
-body.customer-account-login .login-container { margin:0; }
-
-/* ── CSS Variables ─────────────────────────────────────────────────── */
-:root {
-    --pv-grad-a: #667eea; --pv-grad-b: #764ba2; --pv-grad-c: #0d9488;
-    --pv-primary: #667eea; --pv-primary-dark: #5a6fd6;
-    --pv-error: #e74c3c; --pv-success: #2ecc71;
-    --pv-text: #1a1a2e; --pv-muted: #6c757d;
-    --pv-border: #e2e8f0; --pv-card-bg: rgba(255,255,255,0.9);
-    --pv-input-h: 50px; --pv-radius-input: 12px; --pv-radius-card: 16px;
-    --pv-transition: 0.3s ease;
-}
-
-/* ── Page layout ───────────────────────────────────────────────────── */
-.pv-auth-page {
-    display:flex; height:100vh; width:100%;
-    font-family:'Inter', sans-serif; color:var(--pv-text);
-    position:fixed; top:0; left:0; z-index:9000;
-}
-
-/* ── Hero panel (left 45%) ─────────────────────────────────────────── */
-.pv-hero {
-    width:45%; flex-shrink:0;
-    background:linear-gradient(135deg,#667eea,#764ba2,#1a1a2e,#0d9488,#667eea);
-    background-size:400% 400%;
-    animation:pvGrad 8s ease infinite;
-    display:flex; align-items:center; justify-content:center;
-    position:relative; overflow:hidden;
-}
-@keyframes pvGrad {
-    0%  { background-position:0% 50%; }
-    50% { background-position:100% 50%; }
-    100%{ background-position:0% 50%; }
-}
-
-/* Floating decorative circles */
-.pv-hero-circle {
-    position:absolute; border-radius:50%;
-    border:1px solid rgba(255,255,255,0.15);
-}
-.pv-hero-circle--1 { width:300px; height:300px; top:-80px; right:-80px; animation:pvFloat 6s ease-in-out infinite; }
-.pv-hero-circle--2 { width:200px; height:200px; bottom:-60px; left:-60px; animation:pvFloat 8s ease-in-out infinite reverse; }
-.pv-hero-circle--3 { width:120px; height:120px; top:50%; left:10%; animation:pvFloat 5s ease-in-out infinite 1s; background:rgba(255,255,255,0.04); }
-.pv-hero-circle--4 { width:60px;  height:60px;  top:25%; right:20%; animation:pvFloat 7s ease-in-out infinite 2s; background:rgba(255,255,255,0.06); }
-@keyframes pvFloat {
-    0%,100% { transform:translateY(0) rotate(0deg); }
-    50%     { transform:translateY(-20px) rotate(5deg); }
-}
-
-.pv-hero-content { position:relative; z-index:1; text-align:center; padding:2rem; }
-.pv-hero-logo {
-    font-size:clamp(28px,4vw,48px); font-weight:800; color:#fff;
-    letter-spacing:-0.04em; line-height:1.1; margin-bottom:12px;
-}
-.pv-hero-logo span { opacity:0.7; font-weight:400; }
-.pv-hero-tag {
-    font-size:15px; color:rgba(255,255,255,0.72); font-weight:400;
-    line-height:1.5; max-width:280px; margin:0 auto 32px;
-}
-.pv-hero-badge {
-    display:inline-flex; align-items:center; gap:8px;
-    background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2);
-    color:rgba(255,255,255,0.9); border-radius:999px;
-    padding:8px 18px; font-size:13px; font-weight:500;
-    backdrop-filter:blur(8px);
-}
-.pv-hero-badge::before { content:'●'; color:#2ecc71; font-size:8px; }
-
-/* ── Form panel (right 55%) ────────────────────────────────────────── */
-.pv-form-panel {
-    flex:1; background:#f0f2f5;
-    display:flex; align-items:center; justify-content:center;
-    padding:2rem; overflow-y:auto;
-}
-
-/* ── Card ──────────────────────────────────────────────────────────── */
-.pv-card {
-    width:100%; max-width:420px;
-    background:var(--pv-card-bg);
-    backdrop-filter:blur(10px);
-    border:1px solid rgba(255,255,255,0.4);
-    box-shadow:0 20px 60px rgba(0,0,0,0.1),0 1px 2px rgba(0,0,0,0.06);
-    border-radius:var(--pv-radius-card); padding:2.5rem;
-    animation:pvCardIn 0.5s ease-out;
-}
-@keyframes pvCardIn {
-    from { opacity:0; transform:translateY(20px); }
-    to   { opacity:1; transform:translateY(0); }
-}
-
-/* ── View transitions ──────────────────────────────────────────────── */
-.pv-view { transition:opacity var(--pv-transition),transform var(--pv-transition); }
-.pv-view--hidden { display:none!important; }
-
-/* ── Server messages ───────────────────────────────────────────────── */
-.pv-server-msgs .message { border-radius:10px; padding:12px 14px; margin-bottom:16px; font-size:14px; }
-.pv-server-msgs .message.error { background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; }
-.pv-server-msgs .message.success { background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; }
-
-/* ── Heading / subtitle ────────────────────────────────────────────── */
-.pv-heading { font-size:26px; font-weight:700; color:var(--pv-text); margin:0 0 4px; letter-spacing:-0.02em; }
-.pv-subtitle { font-size:14px; color:var(--pv-muted); margin:0 0 24px; }
-
-/* ── Input fields ──────────────────────────────────────────────────── */
-.pv-field { position:relative; margin-bottom:16px; }
-.pv-field label { display:block; font-size:13px; font-weight:600; color:var(--pv-text); margin-bottom:6px; }
-
-.pv-input-wrap { position:relative; }
-.pv-input-wrap input {
-    width:100%; height:var(--pv-input-h);
-    border:1.5px solid var(--pv-border); border-radius:var(--pv-radius-input);
-    background:#fff; color:var(--pv-text); font-family:'Inter',sans-serif;
-    font-size:15px; font-weight:400;
-    padding:0 44px 0 14px;
-    outline:none; box-sizing:border-box;
-    transition:border-color 0.2s, box-shadow 0.2s;
-}
-.pv-input-wrap input:focus {
-    border-color:var(--pv-primary);
-    box-shadow:0 0 0 3px rgba(102,126,234,0.15);
-}
-.pv-input-wrap input.pv-valid   { border-color:var(--pv-success); }
-.pv-input-wrap input.pv-invalid { border-color:var(--pv-error); }
-
-/* Password toggle */
-.pv-eye {
-    position:absolute; right:12px; top:50%; transform:translateY(-50%);
-    background:none; border:none; cursor:pointer;
-    color:#adb5bd; padding:4px; display:flex; align-items:center;
-    transition:color 0.2s; line-height:1;
-}
-.pv-eye svg { display:block; }
-.pv-eye:hover { color:var(--pv-primary); }
-.pv-eye:focus-visible { outline:2px solid var(--pv-primary); border-radius:4px; }
-
-/* Error / success messages */
-.pv-err, .pv-ok {
-    font-size:12px; margin-top:4px;
-    display:none; align-items:center; gap:4px;
-}
-.pv-err { color:var(--pv-error); }
-.pv-ok  { color:var(--pv-success); }
-.pv-field.has-error .pv-err { display:flex; }
-.pv-field.has-ok    .pv-ok  { display:flex; }
-
-/* ── Remember / Forgot row ─────────────────────────────────────────── */
-.pv-meta {
-    display:flex; align-items:center; justify-content:space-between;
-    margin:2px 0 20px; font-size:13px;
-}
-.pv-remember { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; }
-.pv-remember input[type=checkbox] {
-    width:16px; height:16px; accent-color:var(--pv-primary); cursor:pointer;
-}
-.pv-remember span { color:var(--pv-muted); font-weight:500; }
-.pv-link {
-    color:var(--pv-primary); font-weight:600; text-decoration:none; cursor:pointer;
-    background:none; border:none; font-size:13px; font-family:'Inter',sans-serif;
-    transition:opacity 0.2s;
-}
-.pv-link:hover { opacity:0.75; text-decoration:underline; }
-
-/* ── Primary button ────────────────────────────────────────────────── */
-.pv-btn {
-    width:100%; height:48px; border:none; border-radius:12px; cursor:pointer;
-    font-family:'Inter',sans-serif; font-size:15px; font-weight:700;
-    background:linear-gradient(135deg,#667eea,#764ba2);
-    color:#fff; letter-spacing:0.01em;
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    transition:all 0.3s ease; position:relative; overflow:hidden;
-}
-.pv-btn:hover   { filter:brightness(1.1); transform:translateY(-1px); box-shadow:0 8px 24px rgba(102,126,234,0.35); }
-.pv-btn:active  { transform:scale(0.98); }
-.pv-btn:disabled{ opacity:0.5; cursor:not-allowed; transform:none; filter:none; box-shadow:none; }
-.pv-btn:focus-visible { outline:2px solid var(--pv-primary); outline-offset:2px; }
-
-/* Spinner */
-.pv-spinner {
-    display:none; width:18px; height:18px;
-    border:2px solid rgba(255,255,255,0.4);
-    border-top-color:#fff; border-radius:50%;
-    animation:pvSpin 0.7s linear infinite;
-}
-@keyframes pvSpin { to { transform:rotate(360deg); } }
-.pv-btn.loading .pv-btn-label { display:none; }
-.pv-btn.loading .pv-spinner   { display:block; }
-
-/* ── Divider ───────────────────────────────────────────────────────── */
-.pv-divider {
-    display:flex; align-items:center; gap:12px;
-    margin:20px 0; color:#cbd5e1; font-size:12px; font-weight:500;
-    text-transform:uppercase; letter-spacing:0.05em;
-}
-.pv-divider::before, .pv-divider::after {
-    content:''; flex:1; height:1px; background:#e2e8f0;
-}
-
-/* ── Social buttons ────────────────────────────────────────────────── */
-.pv-socials {
-    display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
-    margin-bottom:20px;
-}
-.pv-social-btn {
-    height:48px; border:1.5px solid var(--pv-border); border-radius:12px;
-    background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center;
-    font-size:18px; transition:all 0.25s ease; position:relative;
-}
-.pv-social-btn:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,0.1); border-color:#c7d2fe; }
-.pv-social-btn:focus-visible { outline:2px solid var(--pv-primary); }
-.pv-social-btn--github { background:#24292e; border-color:#24292e; color:#fff; }
-.pv-social-btn--email  { background:#f0f9ff; border-color:#bae6fd; color:#0369a1; }
-.pv-social-btn--phone  { background:#f0fdf4; border-color:#bbf7d0; color:#15803d; }
-
-/* Google G */
-.pv-google-g {
-    width:20px; height:20px; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23EA4335' d='M24 9.5c3.5 0 6.6 1.2 9 3.2l6.8-6.8C35.7 2.4 30.2 0 24 0 14.7 0 6.8 5.4 2.9 13.3l7.9 6.1C12.5 13.3 17.8 9.5 24 9.5z'/%3E%3Cpath fill='%234285F4' d='M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.5-4.1 7-10.2 7-17.1z'/%3E%3Cpath fill='%23FBBC05' d='M10.8 28.6c-.6-1.8-1-3.7-1-5.6s.4-3.8 1-5.6L2.9 11.3A23.9 23.9 0 0 0 0 24c0 3.9.9 7.6 2.9 10.7l7.9-6.1z'/%3E%3Cpath fill='%2334A853' d='M24 48c6.2 0 11.4-2 15.2-5.5l-7.6-5.9c-2 1.3-4.6 2.1-7.6 2.1-6.2 0-11.5-3.8-13.2-9.1l-7.9 6.1C6.8 42.6 14.7 48 24 48z'/%3E%3C/svg%3E") center/contain no-repeat;
-}
-
-/* ── Bottom link ───────────────────────────────────────────────────── */
-.pv-bottom-link { text-align:center; font-size:13px; color:var(--pv-muted); margin-top:20px; }
-
-/* ── Password strength ─────────────────────────────────────────────── */
-.pv-strength { margin-top:8px; }
-.pv-strength-bar-wrap { height:4px; background:#e2e8f0; border-radius:2px; overflow:hidden; }
-.pv-strength-bar { height:100%; width:0; border-radius:2px; transition:width 0.4s, background 0.4s; }
-.pv-strength-label { font-size:11px; color:var(--pv-muted); margin-top:4px; font-weight:600; }
-
-/* ── Phone OTP ─────────────────────────────────────────────────────── */
-.pv-otp-hint { font-size:12px; color:var(--pv-muted); text-align:center; margin-top:10px; }
-
-/* ── Success state (forgot password) ──────────────────────────────── */
-.pv-success-box {
-    text-align:center; padding:2rem 1rem;
-}
-.pv-success-icon {
-    width:56px; height:56px; border-radius:50%;
-    background:linear-gradient(135deg,#2ecc71,#0d9488);
-    display:flex; align-items:center; justify-content:center;
-    margin:0 auto 16px; font-size:24px; color:#fff;
-}
-.pv-success-box h3 { font-size:18px; font-weight:700; margin:0 0 8px; }
-.pv-success-box p  { font-size:14px; color:var(--pv-muted); line-height:1.6; }
-
-/* ── Back link ─────────────────────────────────────────────────────── */
-.pv-back-wrap { text-align:center; margin-top:16px; }
-
-/* ── Phone flag selector (simple) ─────────────────────────────────── */
-.pv-phone-row { display:flex; gap:8px; }
-.pv-phone-row .pv-flag {
-    height:var(--pv-input-h); padding:0 12px; border:1.5px solid var(--pv-border);
-    border-radius:var(--pv-radius-input); background:#fff; font-size:14px;
-    font-family:'Inter',sans-serif; cursor:pointer; flex-shrink:0;
-    display:flex; align-items:center; gap:6px;
-}
-.pv-phone-row .pv-input-wrap { flex:1; }
-.pv-phone-row .pv-input-wrap input { padding-right:14px; }
-
-/* ── OTP boxes ─────────────────────────────────────────────────────── */
-.pv-otp-row { display:flex; gap:8px; justify-content:center; margin:16px 0; }
-.pv-otp-box {
-    width:48px; height:56px; border:1.5px solid var(--pv-border);
-    border-radius:10px; text-align:center; font-size:22px; font-weight:700;
-    background:#fff; outline:none; font-family:'Inter',sans-serif;
-    transition:border-color 0.2s, box-shadow 0.2s;
-}
-.pv-otp-box:focus { border-color:var(--pv-primary); box-shadow:0 0 0 3px rgba(102,126,234,0.15); }
-
-/* ── Signup — terms checkbox ───────────────────────────────────────── */
-.pv-terms { display:flex; align-items:flex-start; gap:10px; font-size:13px; color:var(--pv-muted); margin:16px 0; }
-.pv-terms input { margin-top:2px; accent-color:var(--pv-primary); }
-
-/* ── Responsive – Tablet ───────────────────────────────────────────── */
-@media (max-width:1024px) {
-    .pv-auth-page { flex-direction:column; }
-    .pv-hero { width:100%; height:28vh; flex-shrink:0; }
-    .pv-hero-logo { font-size:28px; }
-    .pv-hero-tag   { display:none; }
-    .pv-form-panel { flex:1; padding:1.5rem 2rem; align-items:flex-start; padding-top:2rem; }
-}
-
-/* ── Responsive – Mobile ───────────────────────────────────────────── */
-@media (max-width:767px) {
-    .pv-hero { display:none; }
-    .pv-auth-page {
-        background:linear-gradient(135deg,#667eea,#764ba2,#1a1a2e,#0d9488,#667eea);
-        background-size:400% 400%; animation:pvGrad 8s ease infinite;
-    }
-    .pv-form-panel { background:transparent; padding:1rem; align-items:center; }
-    .pv-card { background:rgba(255,255,255,0.92); backdrop-filter:blur(20px); padding:2rem 1.5rem; }
-    .pv-socials { grid-template-columns:repeat(2,1fr); }
-}
-</style>
-
 <!-- ═══════════════════════════════════════════════════════ HTML ════ -->
 <div class="pv-auth-page" id="pvAuthPage">
 
@@ -338,7 +32,7 @@ body.customer-account-login .login-container { margin:0; }
         <div class="pv-hero-circle pv-hero-circle--3"></div>
         <div class="pv-hero-circle pv-hero-circle--4"></div>
         <div class="pv-hero-content">
-            <div class="pv-hero-logo">Techie<span>World</span></div>
+            <a class="pv-hero-logo" href="<?= $homeUrl ?>" aria-label="Back to homepage" style="text-decoration:none;cursor:pointer;">Techie<span>World</span></a>
             <p class="pv-hero-tag">The premium destination for cutting-edge technology, components, and innovation.</p>
             <span class="pv-hero-badge">Trusted by 50,000+ customers</span>
         </div>
@@ -349,31 +43,37 @@ body.customer-account-login .login-container { margin:0; }
         <div class="pv-card" id="pvCard">
 
             <!-- ════════════════ VIEW: LOGIN ════════════════ -->
-            <div class="pv-view" id="viewLogin">
+            <div class="pv-view<?= $showSignup ? ' pv-view--hidden' : '' ?>" id="viewLogin">
                 <!-- Server messages (wrong password etc.) -->
                 <?php if ($serverMsgs): ?>
                 <div class="pv-server-msgs"><?= $serverMsgs ?></div>
                 <?php endif; ?>
+                <!-- Cookie-based error surface: Magento stores post-redirect
+                     login errors in the `mage-messages` cookie. The custom
+                     template renders before the standard messages widget can
+                     consume it, so a small inline script reads + clears it. -->
+                <div id="pvCookieMsgs" class="pv-server-msgs" style="display:none;"></div>
 
                 <h1 class="pv-heading">Welcome back</h1>
                 <p class="pv-subtitle">Sign in to your account</p>
 
                 <form id="loginForm" action="<?= $actionUrl ?>" method="post" novalidate>
                     <?= $formKeyHtml ?>
+                    <?= $block->getChildHtml('form_additional_info') ?>
 
-                    <!-- Email field -->
-                    <div class="pv-field" id="fldEmail">
-                        <label for="pvEmail">Email address</label>
+                    <!-- Username field -->
+                    <div class="pv-field" id="fldUser">
+                        <label for="pvUser">Username</label>
                         <div class="pv-input-wrap">
-                            <input type="email" id="pvEmail" name="login[username]"
-                                   value="<?= $savedEmail ?>"
-                                   placeholder="you@example.com"
-                                   autocomplete="email"
+                            <input type="text" id="pvUser" name="login[username]"
+                                   value="<?= $savedUsername ?>"
+                                   placeholder="your username"
+                                   autocomplete="username"
                                    <?= $noAC ?>
-                                   aria-label="Email address"
+                                   aria-label="Username"
                                    aria-required="true"/>
                         </div>
-                        <div class="pv-err" id="errEmail"><i class="fa-solid fa-circle-exclamation"></i><span>Please enter a valid email.</span></div>
+                        <div class="pv-err" id="errUser"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg><span>Please enter your username.</span></div>
                     </div>
 
                     <!-- Password field -->
@@ -391,7 +91,7 @@ body.customer-account-login .login-container { margin:0; }
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             </button>
                         </div>
-                        <div class="pv-err" id="errPass"><i class="fa-solid fa-circle-exclamation"></i><span>Password must be at least 6 characters.</span></div>
+                        <div class="pv-err" id="errPass"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg><span>Password must be at least 6 characters.</span></div>
                     </div>
 
                     <!-- Remember + Forgot row -->
@@ -439,21 +139,22 @@ body.customer-account-login .login-container { margin:0; }
                 </div>
             </div><!-- /viewLogin -->
 
-            <!-- ════════════════ VIEW: EMAIL LOGIN ════════════════ -->
+            <!-- ════════════════ VIEW: EMAIL/USERNAME LOGIN ════════════════ -->
             <div class="pv-view pv-view--hidden" id="viewEmail">
-                <h1 class="pv-heading">Sign in with email</h1>
-                <p class="pv-subtitle">Use your registered email and password</p>
+                <h1 class="pv-heading">Sign in</h1>
+                <p class="pv-subtitle">Use your username (or email) and password</p>
 
                 <form id="emailLoginForm" action="<?= $actionUrl ?>" method="post" novalidate>
                     <?= $formKeyHtml ?>
+                    <?= $block->getChildHtml('form_additional_info') ?>
                     <div class="pv-field" id="fldEmail2">
-                        <label for="pvEmail2">Email address</label>
+                        <label for="pvEmail2">Username or email</label>
                         <div class="pv-input-wrap">
-                            <input type="email" id="pvEmail2" name="login[username]"
-                                   placeholder="you@example.com" autocomplete="email"
-                                   aria-label="Email address" aria-required="true"/>
+                            <input type="text" id="pvEmail2" name="login[username]"
+                                   placeholder="username or you@example.com" autocomplete="username"
+                                   aria-label="Username or email" aria-required="true"/>
                         </div>
-                        <div class="pv-err" id="errEmail2"><i class="fa-solid fa-circle-exclamation"></i><span>Please enter a valid email.</span></div>
+                        <div class="pv-err" id="errEmail2"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg><span>Please enter your username or email.</span></div>
                     </div>
                     <div class="pv-field" id="fldPass2">
                         <label for="pvPass2">Password</label>
@@ -465,7 +166,7 @@ body.customer-account-login .login-container { margin:0; }
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             </button>
                         </div>
-                        <div class="pv-err" id="errPass2"><i class="fa-solid fa-circle-exclamation"></i><span>Password must be at least 6 characters.</span></div>
+                        <div class="pv-err" id="errPass2"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg><span>Password must be at least 6 characters.</span></div>
                     </div>
                     <button type="submit" class="pv-btn" id="emailLoginBtn" style="margin-top:8px">
                         <div class="pv-spinner"></div>
@@ -491,7 +192,7 @@ body.customer-account-login .login-container { margin:0; }
                                        aria-label="Phone number" aria-required="true"/>
                             </div>
                         </div>
-                        <div class="pv-err" id="errPhone"><i class="fa-solid fa-circle-exclamation"></i><span>Please enter a valid phone number.</span></div>
+                        <div class="pv-err" id="errPhone"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg><span>Please enter a valid phone number.</span></div>
                     </div>
                     <button type="button" class="pv-btn" id="sendOtpBtn" onclick="pvSendOtp()">
                         <div class="pv-spinner"></div>
@@ -536,7 +237,7 @@ body.customer-account-login .login-container { margin:0; }
                                        placeholder="you@example.com" autocomplete="email"
                                        aria-label="Email address" aria-required="true"/>
                             </div>
-                            <div class="pv-err" id="errForgotEmail"><i class="fa-solid fa-circle-exclamation"></i><span>Please enter a valid email.</span></div>
+                            <div class="pv-err" id="errForgotEmail"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg><span>Please enter a valid email.</span></div>
                         </div>
                         <button type="submit" class="pv-btn" id="forgotBtn">
                             <div class="pv-spinner"></div>
@@ -546,7 +247,7 @@ body.customer-account-login .login-container { margin:0; }
                 </div>
                 <div id="forgotSuccess" class="pv-view pv-view--hidden">
                     <div class="pv-success-box">
-                        <div class="pv-success-icon" aria-hidden="true"><i class="fa-solid fa-check"></i></div>
+                        <div class="pv-success-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="26" height="26" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
                         <h3>Check your email!</h3>
                         <p>We've sent a password reset link to<br><strong id="resetSentTo"></strong></p>
                     </div>
@@ -555,80 +256,85 @@ body.customer-account-login .login-container { margin:0; }
             </div><!-- /viewForgot -->
 
             <!-- ════════════════ VIEW: SIGN UP ════════════════ -->
-            <div class="pv-view pv-view--hidden" id="viewSignup">
+            <div class="pv-view<?= $showSignup ? '' : ' pv-view--hidden' ?>" id="viewSignup">
                 <h1 class="pv-heading">Create account</h1>
                 <p class="pv-subtitle">Join TechieWorld today — it's free</p>
 
-                <div style="max-height:calc(100vh - 260px);overflow-y:auto;padding-right:4px">
-                    <div class="pv-field" id="fldFullName">
-                        <label for="pvFullName">Full name</label>
-                        <div class="pv-input-wrap">
-                            <input type="text" id="pvFullName" name="firstname" placeholder="Điền Mạnh Hùng" autocomplete="name" aria-label="Full name" aria-required="true"/>
+                <form id="signupForm" action="<?= $createPostUrl ?>" method="post" novalidate>
+                    <?= $formKeyHtml ?>
+
+                    <div class="pv-signup-scroll">
+                        <div class="pv-field" id="fldFirstName">
+                            <label for="pvFirstName">First name</label>
+                            <div class="pv-input-wrap">
+                                <input type="text" id="pvFirstName" name="firstname" placeholder="John" autocomplete="given-name" aria-label="First name" aria-required="true"/>
+                            </div>
+                            <div class="pv-err" id="errFirstName"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg><span>First name is required.</span></div>
                         </div>
-                        <div class="pv-err" id="errFullName"><i class="fa-solid fa-circle-exclamation"></i><span>Full name is required.</span></div>
+
+                        <div class="pv-field" id="fldLastName">
+                            <label for="pvLastName">Last name</label>
+                            <div class="pv-input-wrap">
+                                <input type="text" id="pvLastName" name="lastname" placeholder="Smith" autocomplete="family-name" aria-label="Last name" aria-required="true"/>
+                            </div>
+                            <div class="pv-err" id="errLastName"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg><span>Last name is required.</span></div>
+                        </div>
+
+                        <div class="pv-field" id="fldRegEmail">
+                            <label for="pvRegEmail">Email address</label>
+                            <div class="pv-input-wrap">
+                                <input type="email" id="pvRegEmail" name="email" placeholder="you@example.com" autocomplete="email" aria-label="Email address" aria-required="true"/>
+                            </div>
+                            <div class="pv-err" id="errRegEmail"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg><span>Please enter a valid email.</span></div>
+                            <div class="pv-ok"  id="okRegEmail"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg><span>Looks good!</span></div>
+                        </div>
+
+                        <div class="pv-field" id="fldRegUser">
+                            <label for="pvRegUser">Username</label>
+                            <div class="pv-input-wrap">
+                                <input type="text" id="pvRegUser" name="pv_username" placeholder="techie_user" autocomplete="username" aria-label="Username" aria-required="true"/>
+                            </div>
+                            <div class="pv-err" id="errRegUser"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg><span>Username is required (letters, numbers, _ . -, 3-32 chars).</span></div>
+                        </div>
+
+                        <div class="pv-field" id="fldRegPass">
+                            <label for="pvRegPass">Password</label>
+                            <div class="pv-input-wrap">
+                                <input type="password" id="pvRegPass" name="password" placeholder="••••••••" autocomplete="new-password" aria-label="Password" aria-required="true" oninput="pvStrength(this.value);pvCheckMatch()"/>
+                                <button type="button" class="pv-eye" id="eyeRegPass" aria-label="Show password">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                            <div class="pv-err" id="errRegPass"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg><span>Password must be at least 8 characters with letters and numbers.</span></div>
+                            <div class="pv-strength" id="strengthWrap">
+                                <div class="pv-strength-bar-wrap"><div class="pv-strength-bar" id="strengthBar"></div></div>
+                                <div class="pv-strength-label" id="strengthLabel" aria-live="polite"></div>
+                            </div>
+                        </div>
+
+                        <div class="pv-field" id="fldConfPass">
+                            <label for="pvConfPass">Confirm password</label>
+                            <div class="pv-input-wrap">
+                                <input type="password" id="pvConfPass" name="password_confirmation" placeholder="••••••••" autocomplete="new-password" aria-label="Confirm password" aria-required="true" oninput="pvCheckMatch()"/>
+                                <button type="button" class="pv-eye" id="eyeConfPass" aria-label="Show password">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                            <div class="pv-err" id="errConfPass"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg><span>Passwords do not match.</span></div>
+                            <div class="pv-ok"  id="okConfPass"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg><span>Passwords match!</span></div>
+                        </div>
+
+                        <label class="pv-terms">
+                            <input type="checkbox" id="termsCheck" aria-label="Agree to terms" onchange="pvToggleRegBtn()"/>
+                            <span>I agree to the <a href="#" class="pv-link" style="font-size:13px">Terms of Service</a> and <a href="#" class="pv-link" style="font-size:13px">Privacy Policy</a></span>
+                        </label>
                     </div>
 
-                    <div class="pv-field" id="fldRegEmail">
-                        <label for="pvRegEmail">Email address</label>
-                        <div class="pv-input-wrap">
-                            <input type="email" id="pvRegEmail" name="email" placeholder="you@example.com" autocomplete="email" aria-label="Email address" aria-required="true"/>
-                        </div>
-                        <div class="pv-err" id="errRegEmail"><i class="fa-solid fa-circle-exclamation"></i><span>Please enter a valid email.</span></div>
-                        <div class="pv-ok"  id="okRegEmail"><i class="fa-solid fa-circle-check"></i><span>Looks good!</span></div>
-                    </div>
-
-                    <div class="pv-field">
-                        <label for="pvRegPhone">Phone number <span style="color:var(--pv-muted);font-weight:400">(optional)</span></label>
-                        <div class="pv-input-wrap">
-                            <input type="tel" id="pvRegPhone" name="phone" placeholder="09x xxx xxxx" autocomplete="tel" aria-label="Phone number"/>
-                        </div>
-                    </div>
-
-                    <div class="pv-field" id="fldRegUser">
-                        <label for="pvRegUser">Username</label>
-                        <div class="pv-input-wrap">
-                            <input type="text" id="pvRegUser" name="username" placeholder="techie_user" autocomplete="username" aria-label="Username" aria-required="true"/>
-                        </div>
-                        <div class="pv-err" id="errRegUser"><i class="fa-solid fa-circle-exclamation"></i><span>Username is required.</span></div>
-                    </div>
-
-                    <div class="pv-field" id="fldRegPass">
-                        <label for="pvRegPass">Password</label>
-                        <div class="pv-input-wrap">
-                            <input type="password" id="pvRegPass" name="password" placeholder="••••••••" autocomplete="new-password" aria-label="Password" aria-required="true" oninput="pvStrength(this.value)"/>
-                            <button type="button" class="pv-eye" id="eyeRegPass" aria-label="Show password">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            </button>
-                        </div>
-                        <div class="pv-err" id="errRegPass"><i class="fa-solid fa-circle-exclamation"></i><span>Password must be at least 6 characters.</span></div>
-                        <div class="pv-strength" id="strengthWrap">
-                            <div class="pv-strength-bar-wrap"><div class="pv-strength-bar" id="strengthBar"></div></div>
-                            <div class="pv-strength-label" id="strengthLabel" aria-live="polite"></div>
-                        </div>
-                    </div>
-
-                    <div class="pv-field" id="fldConfPass">
-                        <label for="pvConfPass">Confirm password</label>
-                        <div class="pv-input-wrap">
-                            <input type="password" id="pvConfPass" name="confirm_password" placeholder="••••••••" autocomplete="new-password" aria-label="Confirm password" aria-required="true" oninput="pvCheckMatch()"/>
-                            <button type="button" class="pv-eye" id="eyeConfPass" aria-label="Show password">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            </button>
-                        </div>
-                        <div class="pv-err" id="errConfPass"><i class="fa-solid fa-circle-exclamation"></i><span>Passwords do not match.</span></div>
-                        <div class="pv-ok"  id="okConfPass"><i class="fa-solid fa-circle-check"></i><span>Passwords match!</span></div>
-                    </div>
-
-                    <label class="pv-terms">
-                        <input type="checkbox" id="termsCheck" aria-label="Agree to terms" onchange="pvToggleRegBtn()"/>
-                        <span>I agree to the <a href="#" class="pv-link" style="font-size:13px">Terms of Service</a> and <a href="#" class="pv-link" style="font-size:13px">Privacy Policy</a></span>
-                    </label>
-                </div>
-
-                <button type="button" class="pv-btn" id="regBtn" disabled onclick="pvStartReg()">
-                    <div class="pv-spinner"></div>
-                    <span class="pv-btn-label">Create account</span>
-                </button>
+                    <button type="submit" class="pv-btn" id="regBtn" disabled>
+                        <div class="pv-spinner"></div>
+                        <span class="pv-btn-label">Create account</span>
+                    </button>
+                </form>
 
                 <div class="pv-bottom-link">
                     Already have an account?
@@ -640,25 +346,56 @@ body.customer-account-login .login-container { margin:0; }
     </div><!-- /pv-form-panel -->
 </div><!-- /pv-auth-page -->
 
-<!-- Font Awesome CDN -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
-
 <!-- ═══════════════════════════════════════════════════════ SCRIPT ══ -->
 <script>
 (function(){
 'use strict';
 
 /* ── PHP data passed to JS ── */
-var CREATE_URL   = '<?= $createUrl ?>';
 var FORGOT_POST  = '<?= $forgotPostUrl ?>';
+
+/* ── Cookie-based error surface ──
+   Magento stores post-redirect login errors (wrong password, CAPTCHA,
+   invalid form key) in the `mage-messages` cookie. Render them here so
+   users always see why a login attempt failed instead of a silent reload. */
+(function(){
+    var match = document.cookie.match(/(?:^|;\s*)mage-messages=([^;]+)/);
+    if (!match) return;
+    var raw;
+    try { raw = decodeURIComponent(match[1]); } catch (e) { return; }
+    var msgs;
+    try { msgs = JSON.parse(raw); } catch (e) { return; }
+    if (!Array.isArray(msgs) || !msgs.length) return;
+
+    var box = document.getElementById('pvCookieMsgs');
+    if (!box) return;
+    // Dedupe identical messages — the cookie can accumulate repeats.
+    var seen = {};
+    var html = msgs.filter(function(m){
+        var k = (m.type || 'error') + '|' + (m.text || '');
+        if (seen[k]) return false;
+        seen[k] = 1;
+        return !!(m.text);
+    }).map(function(m){
+        var safe = String(m.text)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        return '<div class="message message-' + (m.type || 'error') + ' ' + (m.type || 'error') + '">' + safe + '</div>';
+    }).join('');
+    if (!html) return;
+    box.innerHTML = html;
+    box.style.display = 'block';
+
+    // Clear the cookie so the messages don't reappear on the next visit.
+    document.cookie = 'mage-messages=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+})();
 
 /* ── Remember me: pre-fill on load ── */
 (function(){
-    var saved = localStorage.getItem('pvLoginEmail');
+    var saved = localStorage.getItem('pvLoginUsername');
     if (saved) {
-        var el = document.getElementById('pvEmail');
+        var el = document.getElementById('pvUser');
         var cb = document.getElementById('rememberMe');
-        if (el) el.value = saved;
+        if (el && !el.value) el.value = saved;
         if (cb) cb.checked = true;
     }
 })();
@@ -739,26 +476,34 @@ function onBlurValidate(inputId, fieldId, fn) {
     }
 }
 
+/* Username validation: 3-32 chars, letters/numbers/_.- */
+function isUsername(v) { return /^[a-zA-Z0-9_.\-]{3,32}$/.test((v||'').trim()); }
+/* Login identifier: accept username OR email */
+function isLoginId(v)  { return isUsername(v) || isEmail(v); }
+/* Password rule (signup): >=8 chars, has letter AND digit */
+function isStrongPassword(v) { return (v||'').length >= 8 && /[A-Za-z]/.test(v) && /[0-9]/.test(v); }
+
 /* Login form */
-onBlurValidate('pvEmail', 'fldEmail', function(v){
-    setValid('fldEmail', isEmail(v));
+onBlurValidate('pvUser', 'fldUser', function(v){
+    setValid('fldUser', (v||'').trim().length > 0);
 });
 onBlurValidate('pvPass', 'fldPass', function(v){
-    setValid('fldPass', v.length >= 6);
+    setValid('fldPass', (v||'').length > 0);
 });
 
-/* Email login form */
-onBlurValidate('pvEmail2', 'fldEmail2', function(v){ setValid('fldEmail2', isEmail(v)); });
-onBlurValidate('pvPass2',  'fldPass2',  function(v){ setValid('fldPass2',  v.length >= 6); });
+/* Email/username login form */
+onBlurValidate('pvEmail2', 'fldEmail2', function(v){ setValid('fldEmail2', isLoginId(v)); });
+onBlurValidate('pvPass2',  'fldPass2',  function(v){ setValid('fldPass2',  (v||'').length > 0); });
 
 /* Phone form */
 onBlurValidate('pvPhone', 'fldPhone', function(v){ setValid('fldPhone', isPhone(v)); });
 
 /* Signup form */
-onBlurValidate('pvFullName', 'fldFullName', function(v){ setValid('fldFullName', v.trim().length >= 2); });
-onBlurValidate('pvRegEmail', 'fldRegEmail', function(v){ setValid('fldRegEmail', isEmail(v)); });
-onBlurValidate('pvRegUser',  'fldRegUser',  function(v){ setValid('fldRegUser',  v.trim().length >= 2); });
-onBlurValidate('pvRegPass',  'fldRegPass',  function(v){ setValid('fldRegPass',  v.length >= 6); });
+onBlurValidate('pvFirstName', 'fldFirstName', function(v){ setValid('fldFirstName', (v||'').trim().length >= 1); });
+onBlurValidate('pvLastName',  'fldLastName',  function(v){ setValid('fldLastName',  (v||'').trim().length >= 1); });
+onBlurValidate('pvRegEmail',  'fldRegEmail',  function(v){ setValid('fldRegEmail',  isEmail(v)); });
+onBlurValidate('pvRegUser',   'fldRegUser',   function(v){ setValid('fldRegUser',   isUsername(v)); });
+onBlurValidate('pvRegPass',   'fldRegPass',   function(v){ setValid('fldRegPass',   isStrongPassword(v)); });
 
 /* Forgot password */
 onBlurValidate('pvForgotEmail', 'fldForgotEmail', function(v){ setValid('fldForgotEmail', isEmail(v)); });
@@ -767,41 +512,36 @@ onBlurValidate('pvForgotEmail', 'fldForgotEmail', function(v){ setValid('fldForg
 var loginForm = document.getElementById('loginForm');
 if (loginForm) {
     loginForm.addEventListener('submit', function(e){
-        var email = document.getElementById('pvEmail').value;
-        var pass  = document.getElementById('pvPass').value;
-        var ok    = true;
+        var user = document.getElementById('pvUser').value;
+        var pass = document.getElementById('pvPass').value;
+        var ok   = true;
 
-        if (!isEmail(email)) { setValid('fldEmail', false); ok = false; }
-        if (pass.length < 6) { setValid('fldPass',  false); ok = false; }
+        if ((user||'').trim().length === 0) { setValid('fldUser', false); ok = false; }
+        if ((pass||'').length === 0)        { setValid('fldPass', false); ok = false; }
         if (!ok) { e.preventDefault(); return; }
 
         /* Remember me */
-        if (document.getElementById('rememberMe').checked) {
-            localStorage.setItem('pvLoginEmail', email);
-        } else {
-            localStorage.removeItem('pvLoginEmail');
-        }
+        var rm = document.getElementById('rememberMe');
+        if (rm && rm.checked) { localStorage.setItem('pvLoginUsername', user.trim()); }
+        else                  { localStorage.removeItem('pvLoginUsername'); }
 
-        /* Loading state then submit */
-        e.preventDefault();
-        pvBtnLoading('loginBtn', true);
-        setTimeout(function(){ loginForm.submit(); }, 800);
+        /* Defer the loading state — disabling the submit button synchronously
+           cancels native form submission in some browsers. */
+        setTimeout(function(){ pvBtnLoading('loginBtn', true); }, 0);
     });
 }
 
-/* ── Email login form submit ── */
+/* ── Email/username login form submit ── */
 var emailLoginForm = document.getElementById('emailLoginForm');
 if (emailLoginForm) {
     emailLoginForm.addEventListener('submit', function(e){
-        var email = document.getElementById('pvEmail2').value;
-        var pass  = document.getElementById('pvPass2').value;
-        var ok    = true;
-        if (!isEmail(email)) { setValid('fldEmail2', false); ok = false; }
-        if (pass.length < 6) { setValid('fldPass2',  false); ok = false; }
+        var user = document.getElementById('pvEmail2').value;
+        var pass = document.getElementById('pvPass2').value;
+        var ok   = true;
+        if (!isLoginId(user))      { setValid('fldEmail2', false); ok = false; }
+        if ((pass||'').length===0) { setValid('fldPass2',  false); ok = false; }
         if (!ok) { e.preventDefault(); return; }
-        e.preventDefault();
-        pvBtnLoading('emailLoginBtn', true);
-        setTimeout(function(){ emailLoginForm.submit(); }, 800);
+        setTimeout(function(){ pvBtnLoading('emailLoginBtn', true); }, 0);
     });
 }
 
@@ -887,27 +627,38 @@ window.pvToggleRegBtn = function() {
     if (btn && terms) btn.disabled = !terms.checked;
 };
 
-/* ── Signup create account → redirect ── */
-window.pvStartReg = function() {
-    var name  = document.getElementById('pvFullName')  ? document.getElementById('pvFullName').value.trim()  : '';
-    var email = document.getElementById('pvRegEmail')  ? document.getElementById('pvRegEmail').value.trim()  : '';
-    var user  = document.getElementById('pvRegUser')   ? document.getElementById('pvRegUser').value.trim()   : '';
-    var pass  = document.getElementById('pvRegPass')   ? document.getElementById('pvRegPass').value          : '';
-    var ok    = true;
-    if (name.length < 2)  { setValid('fldFullName', false); ok = false; }
-    if (!isEmail(email))  { setValid('fldRegEmail', false); ok = false; }
-    if (user.length < 2)  { setValid('fldRegUser',  false); ok = false; }
-    if (pass.length < 6)  { setValid('fldRegPass',  false); ok = false; }
-    if (!ok) return;
+/* ── Signup form submit ── */
+var signupForm = document.getElementById('signupForm');
+if (signupForm) {
+    signupForm.addEventListener('submit', function(e){
+        var first = (document.getElementById('pvFirstName') || {}).value || '';
+        var last  = (document.getElementById('pvLastName')  || {}).value || '';
+        var email = (document.getElementById('pvRegEmail')  || {}).value || '';
+        var user  = (document.getElementById('pvRegUser')   || {}).value || '';
+        var pass  = (document.getElementById('pvRegPass')   || {}).value || '';
+        var conf  = (document.getElementById('pvConfPass')  || {}).value || '';
+        var ok    = true;
 
-    pvBtnLoading('regBtn', true);
-    setTimeout(function(){ window.location.href = CREATE_URL; }, 600);
-};
+        if (first.trim().length < 1)   { setValid('fldFirstName', false); ok = false; }
+        if (last.trim().length < 1)    { setValid('fldLastName',  false); ok = false; }
+        if (!isEmail(email))           { setValid('fldRegEmail',  false); ok = false; }
+        if (!isUsername(user))         { setValid('fldRegUser',   false); ok = false; }
+        if (!isStrongPassword(pass))   { setValid('fldRegPass',   false); ok = false; }
+        if (pass !== conf || conf===''){ setValid('fldConfPass',  false); ok = false; }
+
+        if (!ok) { e.preventDefault(); return; }
+        pvBtnLoading('regBtn', true);
+        /* Native form POST — Magento's customer/account/createpost will redirect on success. */
+    });
+}
 
 /* ── Social login click ── */
 window.pvSocialClick = function(provider) {
-    var labels = { google:'Google', github:'GitHub' };
-    /* In production, redirect to OAuth endpoint here */
+    if (provider === 'github') {
+        window.location.href = '<?= $block->escapeJs($block->getUrl('pvmodern/auth/github')) ?>';
+        return;
+    }
+    var labels = { google:'Google' };
     alert('OAuth sign-in via ' + (labels[provider] || provider) + ' is not configured on this store. Please use email & password.');
 };
 

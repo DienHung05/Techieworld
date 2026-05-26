@@ -24,7 +24,6 @@ use Magento\Store\Model\StoreManagerInterface;
 
 class EnrichTechCatalog implements DataPatchInterface
 {
-    private const USD_DIVISOR = 26336.0;
 
     public function __construct(
         private readonly ModuleDataSetupInterface $moduleDataSetup,
@@ -527,15 +526,12 @@ class EnrichTechCatalog implements DataPatchInterface
 
     private function normalizeUsdPrice(float $value): float
     {
+        // Store currency is VND. Prices in the catalog definitions are already VND
+        // integers (e.g. 19,890,000). Clamp to the displayable range and return as-is.
         if ($value <= 0) {
             return 0.0;
         }
-
-        if ($value > 10000) {
-            $value /= self::USD_DIVISOR;
-        }
-
-        return round($value, 2);
+        return round($value, 0);
     }
 
     private function buildTechSpecs(array $definition): string

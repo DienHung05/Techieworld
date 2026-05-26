@@ -140,15 +140,12 @@ $_activeStr        = $block->escapeHtmlAttr($_activeCat);
         <div class="pv3-container pv3-header-row">
 
             <!-- LOGO ──────────────────────────────────────────────────────── -->
-            <a class="pv3-brand" href="<?= $block->escapeUrl($block->getUrl('')) ?>">
-                <span class="pv3-brand-mark">
-                    <img src="<?= $block->escapeUrl($block->getViewFileUrl('YourVendor_PVModern::images/icon.svg')) ?>"
-                         alt="Techieworld" width="20" height="20" />
-                    <span class="pv3-brand-status"></span>
-                </span>
-                <span class="pv3-brand-copy">
-                    <strong class="text-gradient">Techieworld</strong>
-                    <small>Premium Hardware</small>
+            <a class="pv3-brand" href="<?= $block->escapeUrl($block->getUrl('')) ?>" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
+                <img src="<?= $block->escapeUrl($block->getViewFileUrl('YourVendor_PVModern::images/logo-technology.png')) ?>"
+                     alt="Techieworld logo" height="44" style="display:block;height:44px;width:44px;flex-shrink:0;border-radius:16px;object-fit:cover;" />
+                <span class="pv3-brand-copy" style="display:flex;flex-direction:column;line-height:1.2;">
+                    <strong class="text-gradient" style="font-size:1.6rem;font-weight:800;letter-spacing:-.01em;">Techieworld</strong>
+                    <small style="font-size:.85rem;opacity:.65;font-weight:500;letter-spacing:.04em;text-transform:uppercase;">Premium Hardware</small>
                 </span>
             </a>
 
@@ -163,7 +160,7 @@ $_activeStr        = $block->escapeHtmlAttr($_activeCat);
                   data-min-length="1"
                   aria-expanded="false">
                 <span class="pv3-search-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                         <circle cx="11" cy="11" r="8"/>
                         <path d="m21 21-4.35-4.35"/>
                     </svg>
@@ -214,7 +211,7 @@ $_activeStr        = $block->escapeHtmlAttr($_activeCat);
                        aria-haspopup="true">
                         <?= $block->escapeHtml($_menu['label']) ?>
                         <span class="pv3-nav-caret" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
                                 <path d="m6 9 6 6 6-6"/>
                             </svg>
                         </span>
@@ -268,7 +265,7 @@ $_activeStr        = $block->escapeHtmlAttr($_activeCat);
 
             <a class="pv3-tracking-button"
                     href="<?= $_trackingPageUrl ?>"
-                    aria-label="Theo dõi đơn hàng">
+                    aria-label="Track order">
                 <span class="pv3-tracking-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M10 17h4V5H2v12h3"/>
@@ -277,19 +274,19 @@ $_activeStr        = $block->escapeHtmlAttr($_activeCat);
                         <circle cx="16.5" cy="17.5" r="2.5"/>
                     </svg>
                 </span>
-                <span>Theo dõi đơn hàng</span>
+                <span>Track order</span>
             </a>
 
             <a class="pv3-tracking-button pv3-warranty-button"
                     href="<?= $_warrantyUrl ?>"
-                    aria-label="Tra cứu bảo hành">
+                    aria-label="Warranty lookup">
                 <span class="pv3-tracking-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                         <path d="m9 12 2 2 4-4"/>
                     </svg>
                 </span>
-                <span>Bảo hành</span>
+                <span>Warranty</span>
             </a>
 
             <!-- ACTIONS ────────────────────────────────────────────────────── -->
@@ -338,6 +335,7 @@ $_activeStr        = $block->escapeHtmlAttr($_activeCat);
                    href="<?= $_logoutUrl ?>"
                    aria-label="Sign out"
                    title="Sign out"
+                   style="margin-left:8px;"
                    <?= $_isLoggedIn ? '' : 'hidden' ?>>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -384,9 +382,9 @@ $_activeStr        = $block->escapeHtmlAttr($_activeCat);
             <div class="pv3-tracking-head">
                 <div>
                     <span class="pv3-tracking-kicker">GHN / GHTK / Shopee Express</span>
-                    <h2 id="pv3-tracking-title">Theo dõi đơn hàng</h2>
+                    <h2 id="pv3-tracking-title">Track your order</h2>
                 </div>
-                <button class="pv3-tracking-close" type="button" data-tracking-close aria-label="Đóng">
+                <button class="pv3-tracking-close" type="button" data-tracking-close aria-label="Close">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
                     </svg>
@@ -394,23 +392,23 @@ $_activeStr        = $block->escapeHtmlAttr($_activeCat);
             </div>
             <form class="pv3-tracking-form" data-tracking-form>
                 <label>
-                    <span>Mã đơn hàng</span>
-                    <input type="text" name="order_id" placeholder="VD: 000000123 hoặc #SHOP-..." required />
+                    <span>Order ID</span>
+                    <input type="text" name="order_id" placeholder="e.g. 000000123 or #SHOP-..." required />
                 </label>
                 <label>
-                    <span>Đơn vị vận chuyển</span>
+                    <span>Shipping carrier</span>
                     <select name="provider">
                         <option value="spx">Shopee Express / SPX</option>
-                        <option value="ghn">Giao Hàng Nhanh</option>
-                        <option value="ghtk">Giao Hàng Tiết Kiệm</option>
+                        <option value="ghn">GHN Express</option>
+                        <option value="ghtk">GHTK</option>
                     </select>
                 </label>
                 <label>
-                    <span>Mã vận đơn nếu có</span>
-                    <input type="text" name="tracking_number" placeholder="Tự tạo mã demo nếu để trống" />
+                    <span>Tracking number (optional)</span>
+                    <input type="text" name="tracking_number" placeholder="Leave blank to generate a demo code" />
                 </label>
                 <button class="pv3-tracking-submit" type="submit">
-                    <span data-tracking-submit-label>Kiểm tra trạng thái</span>
+                    <span data-tracking-submit-label>Check status</span>
                 </button>
             </form>
             <div class="pv3-tracking-result" data-tracking-result hidden></div>
@@ -425,7 +423,7 @@ $_activeStr        = $block->escapeHtmlAttr($_activeCat);
         <div class="pv3-container">
             <form class="pv3-mobile-search" action="<?= $_searchUrl ?>" method="get">
                 <span class="pv3-search-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                         <circle cx="11" cy="11" r="8"/>
                         <path d="m21 21-4.35-4.35"/>
                     </svg>

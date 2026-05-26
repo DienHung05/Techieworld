@@ -30,6 +30,7 @@
 
 .checkout-cart-index .pvcart-page {
     min-height: 100vh !important;
+    min-height: 100dvh !important;
     padding: 0 !important;
     color: #0f172a !important;
     background: transparent !important;
@@ -88,7 +89,7 @@
 .checkout-cart-index .cart-container {
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) 360px !important;
-    gap: 24px !important;
+    gap: 40px !important;
     align-items: start !important;
     margin: 0 !important;
 }
@@ -563,8 +564,16 @@
 
 .checkout-cart-index .pvcart-empty-layout {
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) 360px !important;
-    gap: 24px !important;
+    grid-template-columns: minmax(0, 1fr) 320px !important;
+    gap: 32px !important;
+    align-items: start !important;
+}
+
+.checkout-cart-index .pvcart-empty-layout > .pvcart-list-card {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
 }
 
 .checkout-cart-index .pvcart-empty {
@@ -576,11 +585,9 @@
     .checkout-cart-index .cart-container,
     .checkout-cart-index .pvcart-empty-layout {
         grid-template-columns: 1fr !important;
+        gap: 32px !important;
     }
-
-    .checkout-cart-index .pvcart-summary-card {
-        position: static !important;
-    }
+    /* summary keeps its rendered position on mobile — no sticky, no shift */
 }
 
 @media (max-width: 768px) {
@@ -667,7 +674,7 @@
 /* PVModern final refinements: cart coupon, 5-step checkout, payment confirmation. */
 .checkout-cart-index .cart-container {
     grid-template-columns: minmax(0, 1fr) 360px !important;
-    gap: 24px !important;
+    gap: 40px !important;
 }
 .checkout-cart-index .cart-summary {
     align-self: start !important;
@@ -1032,7 +1039,7 @@
     border-radius: 12px !important;
     background: #fff !important;
     color: #0f172a !important;
-    font-size: 14px !important;
+    font-size: 16px !important;
     outline: none !important;
     box-shadow: none !important;
     box-sizing: border-box !important;
@@ -2056,12 +2063,21 @@
 }
 .pvco2 .pvco3-ship-radio {
     flex-shrink: 0 !important;
-    width: 20px !important;
-    height: 20px !important;
+    flex-grow: 0 !important;
+    align-self: center !important;
+    display: block !important;
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+    max-width: 16px !important;
+    max-height: 16px !important;
+    aspect-ratio: 1 / 1 !important;
     border-radius: 50% !important;
     border: 2px solid #cbd5e1 !important;
     background: #fff !important;
     position: relative !important;
+    box-sizing: border-box !important;
 }
 .pvco2 .pvco3-ship-card.is-selected .pvco3-ship-radio {
     border-color: #0b63d8 !important;
@@ -2069,12 +2085,16 @@
 .pvco2 .pvco3-ship-card.is-selected .pvco3-ship-radio::after {
     content: '' !important;
     position: absolute !important;
-    top: 3px !important;
-    left: 3px !important;
-    width: 10px !important;
-    height: 10px !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 7px !important;
+    height: 7px !important;
+    min-width: 7px !important;
+    min-height: 7px !important;
     border-radius: 50% !important;
     background: #0b63d8 !important;
+    box-sizing: border-box !important;
 }
 .pvco2 .pvco3-ship-info {
     flex: 1 !important;
@@ -2657,10 +2677,20 @@
     color: #fff !important;
 }
 .checkout-cart-index .pvcart-summary-total {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     padding: 18px !important;
     border: 1px solid rgba(108, 92, 231, .20) !important;
     border-radius: 16px !important;
     background: linear-gradient(135deg, rgba(108, 92, 231, .09), rgba(6, 182, 212, .08), rgba(236, 72, 153, .07)) !important;
+}
+.checkout-cart-index .pvcart-summary-total .pvcart-summary-row--total {
+    display: flex !important;
+    width: 100% !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin: 0 !important;
 }
 .checkout-cart-index .pvcart-coupon-button,
 .checkout-cart-index .pvcart-primary-btn {
@@ -3548,10 +3578,10 @@
     width: 100% !important;
     max-width: 100% !important;
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) 376px !important;
-    column-gap: 40px !important;
+    grid-template-columns: minmax(0, 1fr) 320px !important;
+    column-gap: 32px !important;
     row-gap: 28px !important;
-    align-items: start !important;
+    align-items: stretch !important;
     overflow: visible !important;
 }
 
@@ -3580,6 +3610,7 @@
     width: 100% !important;
     max-width: 376px !important;
     margin: 0 !important;
+    align-self: start !important;
     position: sticky !important;
     top: 96px !important;
     z-index: 2 !important;
@@ -3590,7 +3621,8 @@
 }
 
 .checkout-cart-index .pvcart-empty-layout .pvcart-list-card {
-    min-height: 560px !important;
+    align-self: stretch !important;
+    min-height: 0 !important;
     display: grid !important;
     place-items: center !important;
     padding: clamp(32px, 7vw, 72px) !important;
@@ -4187,6 +4219,164 @@
     margin: 0;
 }
 
+/* ── DEMO MODE banner (rendered only when PVMODERN_PAYMENT_DEMO=true) ── */
+.pvco3-demo-banner {
+    max-width: 880px;
+    margin: 0 auto 16px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: linear-gradient(90deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #f59e0b;
+    border-radius: 12px;
+    color: #78350f;
+    font-size: 13.5px;
+    line-height: 1.4;
+    box-shadow: 0 1px 2px rgba(245, 158, 11, 0.08);
+}
+.pvco3-demo-banner .pvco3-demo-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #f59e0b;
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.25);
+    animation: pvco3-demo-pulse 1.6s ease-in-out infinite;
+}
+.pvco3-demo-banner .pvco3-demo-title {
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    color: #92400e;
+}
+.pvco3-demo-banner .pvco3-demo-sub {
+    color: #78350f;
+    opacity: 0.92;
+}
+@keyframes pvco3-demo-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.55; transform: scale(0.85); }
+}
+
+/* ── Unified payment panel (single source for all 4 methods) ── */
+.pvco3-pcp--unified {
+    max-width: 880px;
+    margin: 0 auto;
+}
+
+.pvco3-pcp-grid--centered {
+    grid-template-columns: 320px 1fr;
+}
+
+.pvco3-pcp-qr-wrap--unified {
+    width: 280px;
+    height: 280px;
+}
+
+.pvco3-pcp-qr-wrap--unified .pvco3-pcp-qr-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.pvco3-pcp-brand-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px rgba(15,23,42,.04);
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.pvco3-pcp-brand-pill .pvco3-pcp-brand-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+}
+
+.pvco3-pcp-qr-hint {
+    margin: 0;
+    font-size: 12px;
+    color: #64748b;
+    text-align: center;
+    max-width: 240px;
+}
+
+.pvco3-pcp-warning {
+    margin: 4px 0 0;
+    padding: 10px 12px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: #92400e;
+    line-height: 1.5;
+}
+
+.pvco3-pcp-bank-grid {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 4px 14px;
+    margin-top: 6px;
+}
+
+.pvco3-pcp-bank-key {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.pvco3-pcp-bank-val {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.pvco3-btn--mock {
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+    padding: 10px 14px;
+    background: #faf5ff;
+    border: 1px dashed #c084fc;
+    border-radius: 8px;
+    color: #7c3aed;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+}
+
+.pvco3-btn--mock:hover {
+    background: #f3e8ff;
+    border-color: #a855f7;
+}
+
+.pvco3-btn--mock:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+}
+
+.pvco3-pcp-qr-loading {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    background: linear-gradient(110deg, #f1f5f9 8%, #e2e8f0 18%, #f1f5f9 33%);
+    background-size: 200% 100%;
+    animation: pvco3-shimmer 1.4s linear infinite;
+}
+
+@keyframes pvco3-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
 /* Status overlay */
 .pvco3-pcp-overlay {
     position: absolute;
@@ -4476,6 +4666,9 @@
     padding: 24px 0 !important;
     color: #64748b !important;
     font-size: 14px !important;
+}
+.pvco2 .pvco3-ship-loading[hidden] {
+    display: none !important;
 }
 .pvco2 .pvco3-ship-error {
     padding: 12px 16px !important;
@@ -4895,6 +5088,68 @@
         flex-direction: column !important;
         align-items: flex-start !important;
         gap: 12px !important;
+    }
+}
+
+
+
+/* ── Cart layout: guaranteed gap between list card and summary card ── */
+.checkout-cart-index .cart-container,
+.checkout-cart-index .pvcart-empty-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 320px !important;
+    column-gap: 32px !important;
+    row-gap: 28px !important;
+    align-items: stretch !important;
+}
+
+/* ── Visual separator: right side of list card gets padding + border ── */
+.checkout-cart-index .cart-container > .pvcart-list-card,
+.checkout-cart-index .pvcart-empty-layout > .pvcart-list-card,
+.checkout-cart-index .cart-container > .form-cart,
+.checkout-cart-index .cart-container > .pvcart-form {
+    padding-right: 28px !important;
+    border-right: 2px solid #e2e8f0 !important;
+    margin-right: 0 !important;
+}
+
+/* ── Summary card + its wrapper share the same width so no grey leaks behind ── */
+.checkout-cart-index .cart-summary {
+    width: 360px !important;
+    max-width: 360px !important;
+    min-width: 0 !important;
+}
+.checkout-cart-index .pvcart-summary-card {
+    align-self: start !important;
+    position: sticky !important;
+    top: 96px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+}
+
+.checkout-cart-index .pvcart-empty-layout .pvcart-list-card {
+    align-self: stretch !important;
+}
+
+@media (max-width: 1100px) {
+    .checkout-cart-index .cart-container,
+    .checkout-cart-index .pvcart-empty-layout {
+        grid-template-columns: 1fr !important;
+        column-gap: 0 !important;
+        gap: 28px !important;
+    }
+    /* Remove divider on mobile — stacked layout doesn't need it */
+    .checkout-cart-index .cart-container > .pvcart-list-card,
+    .checkout-cart-index .pvcart-empty-layout > .pvcart-list-card,
+    .checkout-cart-index .cart-container > .form-cart,
+    .checkout-cart-index .cart-container > .pvcart-form {
+        padding-right: 0 !important;
+        border-right: none !important;
+    }
+    .checkout-cart-index .pvcart-summary-card {
+        margin-left: 0 !important;
+        position: static !important;
     }
 }
 

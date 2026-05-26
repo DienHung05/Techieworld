@@ -195,59 +195,69 @@ body.catalog-product-view .product.info.detailed {
     margin-top: 40px;
 }
 
-/* Tab nav wrapper — all title pills sit on one row, flush against content */
+/* ─── ONE clean rule: items container = horizontal flex row that wraps ─── */
 body.catalog-product-view .product.data.items {
-    display: flex;
-    flex-direction: column;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: flex-end !important;
+    justify-content: flex-start !important;  /* tabs start at LEFT */
+    gap: 0 !important;
 }
 
-/* Each tab button: inline pill that sits in the nav row */
+/* Each tab TITLE button: sits inline, left-to-right */
 body.catalog-product-view .product.info.detailed .data.item.title {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: auto;
-    margin: 0 4px 0 0;
-    padding: 0;
-    border: none;
-    background: transparent;
-    float: left;
-    clear: none;
+    display: inline-flex !important;
+    float: none !important;
+    clear: none !important;
+    width: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    order: 1 !important;  /* all titles come first */
+    flex: 0 0 auto !important;
 }
 
 body.catalog-product-view .product.info.detailed .data.item.title a,
 body.catalog-product-view .product.info.detailed .data.item.title strong {
-    display: inline-flex;
-    align-items: center;
-    height: 44px;
-    padding: 0 22px;
-    border: 1.5px solid rgba(124, 92, 255, 0.22);
-    border-bottom: none;
-    border-radius: 12px 12px 0 0;
-    background: rgba(248, 250, 252, 0.9);
-    color: #475569;
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    text-decoration: none;
-    white-space: nowrap;
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 44px !important;
+    padding: 0 22px !important;
+    margin-right: 4px !important;
+    border: 1.5px solid rgba(124, 92, 255, 0.22) !important;
+    border-bottom: none !important;
+    border-radius: 12px 12px 0 0 !important;
+    background: rgba(248, 250, 252, 0.9) !important;
+    color: #475569 !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    position: relative !important;
+    bottom: -1.5px !important;
 }
 
 body.catalog-product-view .product.info.detailed .data.item.title.active a,
 body.catalog-product-view .product.info.detailed .data.item.title.active strong {
-    background: #ffffff;
-    color: #6d5dfc;
-    border-color: rgba(124, 92, 255, 0.35);
+    background: #ffffff !important;
+    color: #6d5dfc !important;
+    border-color: rgba(124, 92, 255, 0.35) !important;
+    z-index: 1 !important;
 }
 
-/* Tab content panel — full width, clearly separated from buttons above */
+/* Content panel: forced to its own full-width row, always BELOW the tab buttons */
 body.catalog-product-view .product.info.detailed .data.item.content {
-    clear: both;
-    width: 100%;
-    padding: 28px;
-    margin: 0;
-    border: 1.5px solid rgba(124, 92, 255, 0.22);
-    border-radius: 0 12px 12px 12px;
-    background: #ffffff;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    order: 2 !important;          /* comes after all order:1 titles */
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    clear: none !important;
+    padding: 28px !important;
+    margin: 0 !important;
+    border: 1.5px solid rgba(124, 92, 255, 0.22) !important;
+    border-radius: 0 12px 12px 12px !important;
+    background: #ffffff !important;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06) !important;
 }

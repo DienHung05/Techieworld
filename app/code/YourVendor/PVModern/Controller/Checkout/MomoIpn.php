@@ -14,6 +14,7 @@ use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollection
 use Psr\Log\LoggerInterface;
 use YourVendor\PVModern\Model\Checkout\OrderPaymentStatus;
 use YourVendor\PVModern\Model\IntegrationConfig;
+use YourVendor\PVModern\Model\Payment\PaymentAttemptService;
 
 class MomoIpn implements HttpPostActionInterface, CsrfAwareActionInterface
 {
@@ -24,6 +25,7 @@ class MomoIpn implements HttpPostActionInterface, CsrfAwareActionInterface
         private readonly IntegrationConfig $integrationConfig,
         private readonly OrderCollectionFactory $orderCollectionFactory,
         private readonly OrderRepositoryInterface $orderRepository,
+        private readonly PaymentAttemptService $paymentAttemptService,
         private readonly LoggerInterface $logger
     ) {
     }
@@ -31,10 +33,44 @@ class MomoIpn implements HttpPostActionInterface, CsrfAwareActionInterface
     public function execute()
     {
         $result = $this->resultJsonFactory->create();
+        $raw = (string) $this->request->getContent();
         $payload = $this->readPayload();
         $isValid = $this->verifySignature($payload);
-        if ($isValid) {
-            $this->updateOrderPayment($payload);
+        $attempt = $this->paymentAttemptService->findAttemptForProvider(
+            'momo',
+            (string) ($payload['orderId'] ?? ''),
+            (string) ($payload['requestId'] ?? ''),
+            (string) ($payload['transId'] ?? ''),
+            $this->extractIncrementId((string) ($payload['orderId'] ?? ''))
+        );
+        $eventId = $this->paymentAttemptService->recordEvent(
+            $attempt,
+            'momo',
+            'legacy_ipn',
+            (string) ($payload['requestId'] ?? '') ?: null,
+            (string) ($payload['transId'] ?? '') ?: null,
+            $isValid,
+            isset($payload['amount']) ? (float) $payload['amount'] : null,
+            'VND',
+            $raw !== '' ? $raw : $this->json->serialize($payload)
+        );
+
+        if ($isValid && $attempt) {
+            $this->paymentAttemptService->applyProviderResult(
+                $attempt,
+                $eventId,
+                'momo',
+                ((string) ($payload['resultCode'] ?? '')) === '0' ? 'success' : 'failed',
+                (string) ($payload['requestId'] ?? '') ?: null,
+                (string) ($payload['transId'] ?? '') ?: null,
+                (float) ($payload['amount'] ?? 0),
+                'VND',
+                true
+            );
+        } elseif (!$isValid) {
+            $this->paymentAttemptService->finishEvent($eventId, 'rejected', 'Invalid MoMo signature.');
+        } else {
+            $this->paymentAttemptService->finishEvent($eventId, 'rejected', 'Payment attempt not found.');
         }
 
         $this->logger->info('[PVModern][MoMo] IPN received', [

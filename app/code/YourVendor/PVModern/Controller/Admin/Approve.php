@@ -9,6 +9,7 @@ use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Serialize\Serializer\Json;
 use YourVendor\PVModern\Helper\PaymentDb;
+use YourVendor\PVModern\Model\Payment\PaymentAttemptService;
 
 class Approve implements HttpPostActionInterface, CsrfAwareActionInterface
 {
@@ -17,6 +18,7 @@ class Approve implements HttpPostActionInterface, CsrfAwareActionInterface
         private readonly JsonFactory $resultJsonFactory,
         private readonly Json $json,
         private readonly PaymentDb $paymentDb,
+        private readonly PaymentAttemptService $paymentAttemptService,
         private readonly Login $loginHelper
     ) {}
 
@@ -47,6 +49,30 @@ class Approve implements HttpPostActionInterface, CsrfAwareActionInterface
         }
         if ($pvOrder['payment_status'] === 'paid') {
             return $result->setData(['success' => true, 'message' => 'Already paid']);
+        }
+
+        $attempt = $this->paymentDb->findLatestAttemptForIncrement((string)$pvOrder['magento_increment_id']);
+        if ($attempt) {
+            $eventId = $this->paymentAttemptService->recordEvent(
+                $attempt,
+                (string)($attempt['provider'] ?? 'manual'),
+                'manual_admin',
+                null,
+                null,
+                true,
+                (float)$pvOrder['total_amount'],
+                (string)($pvOrder['currency'] ?? 'VND'),
+                $this->json->serialize(['note' => $note])
+            );
+            $this->paymentAttemptService->confirmPaid(
+                $attempt,
+                $eventId,
+                (string)($attempt['provider'] ?? 'manual'),
+                '',
+                (float)$pvOrder['total_amount'],
+                (string)($pvOrder['currency'] ?? 'VND')
+            );
+            return $result->setData(['success' => true, 'message' => 'Order approved']);
         }
 
         $this->paymentDb->updateOrder($id, [

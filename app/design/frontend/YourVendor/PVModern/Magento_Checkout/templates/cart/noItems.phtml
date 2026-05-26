@@ -1,48 +1,45 @@
 <?php
 /**
- * Cart empty state — reference-faithful.
- * Keeps the 2-column cart shell even when there are no items.
- *
  * @var \Magento\Checkout\Block\Cart\Crosssell $block
  * @var \Magento\Framework\Escaper $escaper
  */
 $priceHelper = $this->helper(Magento\Framework\Pricing\Helper\Data::class);
 ?>
-<div class="cart-container pvcart-empty-layout">
+<div class="pvcart-empty-layout">
     <div class="pvcart-list-card">
         <div class="pvcart-empty">
             <div class="pvcart-empty-icon">🛒</div>
-            <h3 class="pvcart-empty-title"><?= $escaper->escapeHtml(__('Giỏ hàng trống')) ?></h3>
-            <p class="pvcart-empty-sub"><?= $escaper->escapeHtml(__('Thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm')) ?></p>
+            <h3 class="pvcart-empty-title"><?= $escaper->escapeHtml(__('Your cart is empty')) ?></h3>
+            <p class="pvcart-empty-sub"><?= $escaper->escapeHtml(__('Add products to your cart to continue shopping')) ?></p>
             <a class="pvcart-empty-btn"
                href="<?= $escaper->escapeUrl($block->getUrl('')) ?>">
-                <?= $escaper->escapeHtml(__('Tiếp tục mua sắm')) ?>
+                <?= $escaper->escapeHtml(__('Continue shopping')) ?>
             </a>
         </div>
     </div>
 
-    <aside class="pvcart-summary-card pvcart-summary-card--empty" aria-label="<?= $escaper->escapeHtmlAttr(__('Tóm tắt đơn hàng')) ?>">
+    <aside class="pvcart-summary-card pvcart-summary-card--empty" aria-label="<?= $escaper->escapeHtmlAttr(__('Order summary')) ?>">
         <div class="pvcart-summary-head">
             <h2>
-                <span><?= $escaper->escapeHtml(__('Tóm tắt đơn hàng')) ?></span>
+                <span><?= $escaper->escapeHtml(__('Order summary')) ?></span>
                 <span class="pvcart-summary-count">0</span>
             </h2>
         </div>
 
         <div class="pvcart-summary-breakdown">
             <div class="pvcart-summary-row">
-                <span><?= $escaper->escapeHtml(__('Tạm tính (0 sản phẩm)')) ?></span>
+                <span><?= $escaper->escapeHtml(__('Subtotal (0 items)')) ?></span>
                 <strong><?= /* @noEscape */ $priceHelper->currency(0, true, false) ?></strong>
             </div>
             <div class="pvcart-summary-row">
-                <span><?= $escaper->escapeHtml(__('Phí vận chuyển')) ?></span>
+                <span><?= $escaper->escapeHtml(__('Shipping')) ?></span>
                 <strong><?= /* @noEscape */ $priceHelper->currency(0, true, false) ?></strong>
             </div>
         </div>
 
         <div class="pvcart-summary-total">
             <div class="pvcart-summary-row pvcart-summary-row--total">
-                <span><?= $escaper->escapeHtml(__('Tổng cộng')) ?></span>
+                <span><?= $escaper->escapeHtml(__('Grand total')) ?></span>
                 <strong><?= /* @noEscape */ $priceHelper->currency(0, true, false) ?></strong>
             </div>
         </div>
@@ -52,11 +49,11 @@ $priceHelper = $this->helper(Magento\Framework\Pricing\Helper\Data::class);
                     class="pvcart-primary-btn is-disabled"
                     disabled="disabled"
                     aria-disabled="true">
-                <span><?= $escaper->escapeHtml(__('Tiếp tục thanh toán')) ?></span>
+                <span><?= $escaper->escapeHtml(__('Proceed to checkout')) ?></span>
             </button>
             <a class="pvcart-secondary-btn"
                href="<?= $escaper->escapeUrl($block->getUrl('')) ?>">
-                <?= $escaper->escapeHtml(__('Tiếp tục mua sắm')) ?>
+                <?= $escaper->escapeHtml(__('Continue shopping')) ?>
             </a>
         </div>
     </aside>

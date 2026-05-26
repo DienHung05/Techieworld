@@ -46,6 +46,7 @@ class Orders extends Action
 
         $stats = [
             'pending_review' => $this->paymentDb->countOrders('pending_review'),
+            'manual_review'  => $this->paymentDb->countOrders('manual_review'),
             'paid'           => $this->paymentDb->countOrders('paid'),
             'total'          => $this->paymentDb->countOrders(),
         ];

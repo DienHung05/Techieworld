@@ -84,8 +84,8 @@ class Suggest implements HttpGetActionInterface
                     'sku'           => (string) $product->getSku(),
                     'url'           => (string) $product->getProductUrl(),
                     'image'         => $this->productVisualResolver->resolveProductImage($product, 'product_thumbnail_image'),
-                    'price'         => $this->priceCurrency->format($finalPrice, false),
-                    'original_price'=> $discount ? $this->priceCurrency->format($regularPrice, false) : null,
+                    'price'         => $this->stripDecimals((string) $this->priceCurrency->format($finalPrice, false)),
+                    'original_price'=> $discount ? $this->stripDecimals((string) $this->priceCurrency->format($regularPrice, false)) : null,
                     'discount'      => $discount,
                     '_score'        => $this->calculateScore($product, $q),
                 ];
@@ -123,6 +123,11 @@ class Suggest implements HttpGetActionInterface
         $query = trim(preg_replace('/\s+/', ' ', $query) ?? '');
 
         return $query;
+    }
+
+    private function stripDecimals(string $formatted): string
+    {
+        return (string) preg_replace('/[.,]0+(?=\s|[^\d.,]|$)/', '', $formatted);
     }
 
     private function calculateScore(\Magento\Catalog\Model\Product $product, string $query): int

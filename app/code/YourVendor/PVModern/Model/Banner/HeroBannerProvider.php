@@ -281,7 +281,9 @@ class HeroBannerProvider
                 'startDate' => null,
                 'endDate' => null,
                 'alt' => 'Banner ' . $name,
-                'price' => $price > 0 ? $this->priceCurrency->format($price, false) : '',
+                'price' => $price > 0
+                    ? (string) preg_replace('/[.,]0+(?=\s|[^\d.,]|$)/', '', (string) $this->priceCurrency->format($price, false))
+                    : '',
                 'theme' => $themes[$index % count($themes)],
                 'source' => 'catalog',
             ];

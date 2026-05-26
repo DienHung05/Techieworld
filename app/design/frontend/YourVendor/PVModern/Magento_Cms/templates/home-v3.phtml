@@ -303,9 +303,9 @@ try {
             'category_labels' => $categoryNames,
             'filter_slugs' => $filterSlugs,
             'price' => $finalPrice,
-            'price_html' => $priceCurrency->format($finalPrice, false),
+            'price_html' => preg_replace('/[.,]0+(?=\s|[^\d.,]|$)/', '', (string) $priceCurrency->format($finalPrice, false)),
             'original_price' => $regularPrice > $finalPrice ? $regularPrice : null,
-            'original_price_html' => $regularPrice > $finalPrice ? $priceCurrency->format($regularPrice, false) : null,
+            'original_price_html' => $regularPrice > $finalPrice ? preg_replace('/[.,]0+(?=\s|[^\d.,]|$)/', '', (string) $priceCurrency->format($regularPrice, false)) : null,
             'discount' => $regularPrice > $finalPrice && $regularPrice > 0 ? (int) round((1 - ($finalPrice / $regularPrice)) * 100) : null,
             'image' => $imageUrl,
             'url' => (string) $product->getProductUrl(),
@@ -395,7 +395,7 @@ $inStockCount = count(array_filter($products, static function ($item) {
 $lowStockCount = count(array_filter($products, static function ($item) {
     return $item['stock']['code'] === 'low_stock';
 }));
-$currencyHint = $priceCurrency->format($priceMax ?: 0, false);
+$currencyHint = preg_replace('/[.,]0+(?=\s|[^\d.,]|$)/', '', (string) $priceCurrency->format($priceMax ?: 0, false));
 
 $recentProducts = [];
 $recentIds = [];
@@ -429,11 +429,11 @@ if (empty($heroSlides)) {
         return [
             'id' => 'fallback_product_' . ($product['id'] ?? $index),
             'title' => (string) ($product['name'] ?? 'Tech collection update'),
-            'subtitle' => 'Sản phẩm công nghệ mới cập nhật trên Techieworld, sẵn sàng để xem nhanh thông số và giá.',
+            'subtitle' => 'New tech products just added to Techieworld — browse specs and prices at a glance.',
             'badge' => $index === 0 ? 'NEW ARRIVAL' : 'HOT DEAL',
             'image' => (string) ($product['image'] ?? ''),
             'mobileImage' => (string) ($product['image'] ?? ''),
-            'ctaLabel' => 'Xem sản phẩm',
+            'ctaLabel' => 'View product',
             'ctaLink' => (string) ($product['url'] ?? '#pv3-products'),
             'targetType' => 'product',
             'isActive' => true,
@@ -496,7 +496,7 @@ if (!empty($newsItems)) {
             <div class="pv3-hero-copy">
                 <div class="pv3-trusted-badge">
                     <span class="pv3-star-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 2.91 6.26 6.9.83-5.08 4.63 1.34 6.78L12 16.9 5.93 20.5l1.34-6.78L2.19 9.09l6.9-.83L12 2z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="m12 2 2.91 6.26 6.9.83-5.08 4.63 1.34 6.78L12 16.9 5.93 20.5l1.34-6.78L2.19 9.09l6.9-.83L12 2z"/></svg>
                     </span>
                     <span>Trusted by 50,000+ developers</span>
                 </div>
@@ -507,7 +507,7 @@ if (!empty($newsItems)) {
                 <div class="pv3-hero-actions">
                     <a class="pv3-btn pv3-btn--primary" href="#pv3-products">
                         <span>Shop Collection</span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                     </a>
                     <a class="pv3-btn pv3-btn--secondary" href="<?= $block->escapeUrl($pcBuilderUrl) ?>">Build Custom PC</a>
                 </div>
@@ -583,8 +583,8 @@ if (!empty($newsItems)) {
 
                 <?php if (empty($heroSlides)): ?>
                     <div class="pvhero-empty" data-hero-empty>
-                        <strong><?= $block->escapeHtml(__('Chưa có banner active')) ?></strong>
-                        <span><?= $block->escapeHtml(__('Bật CMS block hero_banner_slider trong admin hoặc thêm ảnh campaign để kích hoạt khu vực hero.')) ?></span>
+                        <strong><?= $block->escapeHtml(__('No active banners')) ?></strong>
+                        <span><?= $block->escapeHtml(__('Enable the hero_banner_slider CMS block in admin or add a campaign image to activate the hero area.')) ?></span>
                     </div>
 
                     <div class="pvhero-error" data-hero-error hidden>
@@ -614,7 +614,7 @@ if (!empty($newsItems)) {
                                     <div class="pvhero-actions">
                                         <a class="pvhero-cta" href="<?= $block->escapeUrl((string) ($slide['ctaLink'] ?? '#pv3-products')) ?>">
                                             <span><?= $block->escapeHtml((string) ($slide['ctaLabel'] ?? 'Xem ngay')) ?></span>
-                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                                         </a>
                                         <?php if (!empty($slide['price'])): ?>
                                             <span class="pvhero-price"><?= $block->escapeHtml((string) $slide['price']) ?></span>
@@ -636,10 +636,10 @@ if (!empty($newsItems)) {
                 </div>
 
                 <button class="pvhero-nav pvhero-nav--prev" type="button" data-hero-prev aria-label="<?= $block->escapeHtmlAttr(__('Previous banner')) ?>">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
                 </button>
                 <button class="pvhero-nav pvhero-nav--next" type="button" data-hero-next aria-label="<?= $block->escapeHtmlAttr(__('Next banner')) ?>">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
                 </button>
 
                 <div class="pvhero-dots" data-hero-dots aria-label="<?= $block->escapeHtmlAttr(__('Banner pagination')) ?>">
@@ -759,7 +759,7 @@ if (!empty($newsItems)) {
                             <div class="pv3-product-badges">
                                 <?php if (!empty($product['is_new'])): ?>
                                     <span class="badge is-new">
-                                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 9.5 8.5 4 9l4 4-.9 5.5 4.9-2.8 4.9 2.8L16 13l4-4-5.5-.5z"/></svg>
+                                        <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12" aria-hidden="true"><path d="M12 3 9.5 8.5 4 9l4 4-.9 5.5 4.9-2.8 4.9 2.8L16 13l4-4-5.5-.5z"/></svg>
                                         NEW
                                     </span>
                                 <?php endif; ?>
@@ -802,36 +802,35 @@ if (!empty($newsItems)) {
                                 </div>
 
                                 <div class="pv3-price-row">
-                                    <div>
+                                    <div class="pv3-price-col">
                                         <?php if (!empty($product['original_price_html'])): ?>
                                             <div class="pv3-price-old"><?= $block->escapeHtml($product['original_price_html']) ?></div>
                                         <?php endif; ?>
                                         <div class="pv3-price-current text-gradient"><?= $block->escapeHtml($product['price_html']) ?></div>
                                     </div>
-                                </div>
-
-                                <?php if ($product['can_direct_add']): ?>
-                                    <form class="pv3-card-form" action="<?= $block->escapeUrl($product['add_to_cart_url']) ?>" method="post">
-                                        <input type="hidden" name="form_key" value="<?= $block->escapeHtmlAttr($formKey) ?>" />
-                                        <input type="hidden" name="product" value="<?= $block->escapeHtmlAttr((string) $product['id']) ?>" />
-                                        <input type="hidden" name="uenc" value="<?= $block->escapeHtmlAttr($urlEncoder->encode($product['url'])) ?>" />
-                                        <input type="hidden" name="qty" value="1" />
-                                        <button type="submit" class="pv3-card-button">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.5 3H5l2.68 11.39a1 1 0 0 0 .97.76h9.72a1 1 0 0 0 .97-.79L21 6H6"/></svg>
-                                            Add to Cart
+                                    <?php if ($product['can_direct_add']): ?>
+                                        <form class="pv3-card-form" action="<?= $block->escapeUrl($product['add_to_cart_url']) ?>" method="post">
+                                            <input type="hidden" name="form_key" value="<?= $block->escapeHtmlAttr($formKey) ?>" />
+                                            <input type="hidden" name="product" value="<?= $block->escapeHtmlAttr((string) $product['id']) ?>" />
+                                            <input type="hidden" name="uenc" value="<?= $block->escapeHtmlAttr($urlEncoder->encode($product['url'])) ?>" />
+                                            <input type="hidden" name="qty" value="1" />
+                                            <button type="submit" class="pv3-card-button">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.5 3H5l2.68 11.39a1 1 0 0 0 .97.76h9.72a1 1 0 0 0 .97-.79L21 6H6"/></svg>
+                                                Add
+                                            </button>
+                                        </form>
+                                    <?php elseif ($product['is_saleable']): ?>
+                                        <a class="pv3-card-button" href="<?= $block->escapeUrl($product['url']) ?>">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                            Options
+                                        </a>
+                                    <?php else: ?>
+                                        <button type="button" class="pv3-card-button is-disabled" disabled>
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                                            Sold Out
                                         </button>
-                                    </form>
-                                <?php elseif ($product['is_saleable']): ?>
-                                    <a class="pv3-card-button" href="<?= $block->escapeUrl($product['url']) ?>">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                                        Choose Options
-                                    </a>
-                                <?php else: ?>
-                                    <button type="button" class="pv3-card-button is-disabled" disabled>
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
-                                        Sold Out
-                                    </button>
-                                <?php endif; ?>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
                     </article>
@@ -957,16 +956,16 @@ if (!empty($newsItems)) {
                 <div class="pv3-news-header">
                     <h2 class="pv3-news-title">TIN TỨC</h2>
 
-                    <!-- Xem tất cả + horizontal expanding reveal -->
+                    <!-- View all + horizontal expanding reveal -->
                     <div class="pv3-news-reveal-wrap"
                          data-news-reveal
                          role="group"
-                         aria-label="Tiện ích nhanh">
+                         aria-label="Quick tools">
                         <a href="<?= $block->escapeUrl($block->getUrl('news')) ?>"
                            class="pv3-news-viewall"
                            aria-expanded="false"
                            aria-controls="pv3-news-panel">
-                            <span>Xem tất cả</span>
+                            <span>View all</span>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
                                 <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
                             </svg>

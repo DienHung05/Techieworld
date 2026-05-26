@@ -29,7 +29,7 @@ $discountPct  = ($regularPrice > 0 && $regularPrice > $finalPrice)
 ?>
 <tbody class="cart item">
     <tr class="item-info">
-        <td data-th="<?= $escaper->escapeHtml(__('Sản phẩm')) ?>" class="col item">
+        <td data-th="<?= $escaper->escapeHtml(__('Product')) ?>" class="col item">
             <div class="pvcart-item-wrap">
 
                 <!-- Thumbnail -->
@@ -124,8 +124,8 @@ $discountPct  = ($regularPrice > 0 && $regularPrice > $finalPrice)
                             <button type="button"
                                     class="pvcart-stepper-btn"
                                     data-qty-step="-1"
-                                    aria-label="<?= $escaper->escapeHtmlAttr(__('Giảm số lượng')) ?>">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14"/></svg>
+                                    aria-label="<?= $escaper->escapeHtmlAttr(__('Decrease quantity')) ?>">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14" aria-hidden="true"><path d="M5 12h14"/></svg>
                             </button>
                             <label for="cart-<?= $escaper->escapeHtmlAttr($_item->getId()) ?>-qty">
                                 <span class="sr-only"><?= $escaper->escapeHtml(__('Qty')) ?></span>
@@ -146,8 +146,8 @@ $discountPct  = ($regularPrice > 0 && $regularPrice > $finalPrice)
                             <button type="button"
                                     class="pvcart-stepper-btn"
                                     data-qty-step="1"
-                                    aria-label="<?= $escaper->escapeHtmlAttr(__('Tăng số lượng')) ?>">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                                    aria-label="<?= $escaper->escapeHtmlAttr(__('Increase quantity')) ?>">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
                             </button>
                         </div>
                     </div>
@@ -155,7 +155,7 @@ $discountPct  = ($regularPrice > 0 && $regularPrice > $finalPrice)
 
                 <!-- Right: item total -->
                 <div class="pvcart-item-side">
-                    <p class="pvcart-total-label"><?= $escaper->escapeHtml(__('Tổng')) ?></p>
+                    <p class="pvcart-total-label"><?= $escaper->escapeHtml(__('Total')) ?></p>
                     <strong class="pvcart-total-value">
                         <?php if ($canApplyMsrp): ?>
                             --
@@ -167,13 +167,13 @@ $discountPct  = ($regularPrice > 0 && $regularPrice > $finalPrice)
                     <?php if ($removePostJson): ?>
                         <a href="#"
                            class="pvcart-remove-btn"
-                           title="<?= $escaper->escapeHtmlAttr(__('Xóa')) ?>"
+                           title="<?= $escaper->escapeHtmlAttr(__('Remove')) ?>"
                            data-post='<?= /* @noEscape */ $removePostJson ?>'>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17" aria-hidden="true">
                                 <path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/>
                                 <path d="M10 11v6"/><path d="M14 11v6"/>
                             </svg>
-                            <span class="sr-only"><?= $escaper->escapeHtml(__('Xóa')) ?></span>
+                            <span class="sr-only"><?= $escaper->escapeHtml(__('Remove')) ?></span>
                         </a>
                     <?php endif ?>
                 </div>

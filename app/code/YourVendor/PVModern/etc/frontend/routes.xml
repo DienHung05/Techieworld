@@ -62,5 +62,9 @@
         <route id="pvadmin" frontName="pvadmin">
             <module name="YourVendor_PVModern"/>
         </route>
+        <!-- /payment-confirmation — refresh-safe step-4 page (no empty-quote redirect) -->
+        <route id="payment_confirmation" frontName="payment-confirmation">
+            <module name="YourVendor_PVModern"/>
+        </route>
     </router>
 </config>

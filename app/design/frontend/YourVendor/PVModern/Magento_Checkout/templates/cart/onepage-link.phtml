@@ -13,12 +13,12 @@
     ?>
     <button type="button"
             data-role="proceed-to-checkout"
-            title="<?= $escaper->escapeHtmlAttr(__('Tiếp tục thanh toán')) ?>"
+            title="<?= $escaper->escapeHtmlAttr(__('Proceed to checkout')) ?>"
             data-mage-init='{"Magento_Checkout/js/proceed-to-checkout":{"checkoutUrl":"<?= $escaper->escapeJs($checkoutUrl) ?>"}}'
             class="pvcart-primary-btn<?= $block->isDisabled() ? ' disabled' : '' ?>"
             <?php if ($block->isDisabled()): ?>disabled="disabled"<?php endif; ?>>
-        <span><?= $escaper->escapeHtml(__('Tiếp tục thanh toán')) ?></span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <span><?= $escaper->escapeHtml(__('Proceed to checkout')) ?></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true">
             <path d="M5 12h14"/>
             <path d="m12 5 7 7-7 7"/>
         </svg>

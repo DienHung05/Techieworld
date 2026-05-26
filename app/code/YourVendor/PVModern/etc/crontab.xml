@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+    <group id="default">
+        <job name="pvmodern_payment_expiration" instance="YourVendor\PVModern\Model\Cron\PaymentExpiration" method="execute">
+            <schedule>*/5 * * * *</schedule>
+        </job>
+        <job name="pvmodern_payment_fallback_polling" instance="YourVendor\PVModern\Model\Cron\PaymentFallbackPolling" method="execute">
+            <schedule>*/10 * * * *</schedule>
+        </job>
+        <job name="pvmodern_bank_transfer_reconciliation" instance="YourVendor\PVModern\Model\Cron\BankTransferReconciliation" method="execute">
+            <schedule>*/10 * * * *</schedule>
+        </job>
+    </group>
+</config>

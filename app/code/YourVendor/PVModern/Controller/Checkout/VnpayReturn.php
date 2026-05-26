@@ -29,19 +29,17 @@ class VnpayReturn implements HttpGetActionInterface
         $params = $this->request->getParams();
         $isValid = $this->verifySignature($params);
         $isPaid = $isValid && (($params['vnp_ResponseCode'] ?? '') === '00');
-        if ($isValid) {
-            $this->updateOrderPayment($params, $isPaid);
-        }
 
         $this->logger->info('[PVModern][VNPay] return received', [
             'valid' => $isValid,
             'response_code' => $params['vnp_ResponseCode'] ?? null,
             'txn_ref' => $params['vnp_TxnRef'] ?? null,
+            'note' => 'Browser return is navigation-only; payment confirmation waits for verified IPN.',
         ]);
 
         return $this->redirectFactory->create()->setPath('checkout', [
             '_query' => [
-                'payment_result' => $isPaid ? 'success' : 'failed',
+                'payment_result' => $isPaid ? 'pending' : 'failed',
                 'gateway' => 'vnpay',
                 'txn' => (string) ($params['vnp_TxnRef'] ?? ''),
             ],

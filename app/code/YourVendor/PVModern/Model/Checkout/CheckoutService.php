@@ -14,6 +14,8 @@ use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Psr\Log\LoggerInterface;
+use YourVendor\PVModern\Model\IntegrationConfig;
+use YourVendor\PVModern\Model\Payment\PaymentAttemptService;
 use YourVendor\PVModern\Model\Payment\PaymentManager;
 use YourVendor\PVModern\Model\PurchaseCodeGenerator;
 use YourVendor\PVModern\Model\Shipping\PickupLocationProvider;
@@ -31,13 +33,15 @@ class CheckoutService
         private readonly CartManagementInterface $cartManagement,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly PaymentManager $paymentManager,
+        private readonly PaymentAttemptService $paymentAttemptService,
         private readonly PurchaseCodeGenerator $purchaseCodeGenerator,
         private readonly ShippingManager $shippingManager,
         private readonly PickupLocationProvider $pickupLocationProvider,
         private readonly PriceCurrencyInterface $priceCurrency,
         private readonly UrlInterface $urlBuilder,
         private readonly Json $json,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
+        private readonly IntegrationConfig $integrationConfig
     ) {
     }
 
@@ -63,6 +67,7 @@ class CheckoutService
                 'locations' => $this->urlBuilder->getUrl('pvmodern/api/locations'),
                 'payment_status' => $this->urlBuilder->getUrl('api/payments/status'),
                 'payment_create' => $this->urlBuilder->getUrl('api/payments/create'),
+                'payment_events' => $this->urlBuilder->getUrl('api/paymentSessions/events'),
             ],
             'customer' => [
                 'is_logged_in' => $this->customerSession->isLoggedIn(),
@@ -280,6 +285,16 @@ class CheckoutService
                 'card_last4' => $normalized['card_last4'],
             ]);
             $paymentInit = $this->normalizePaymentResponse($paymentInit);
+            $paymentInit['amount'] = (int) round((float) ($paymentInit['amount'] ?? $order->getGrandTotal()));
+            $frontendPaymentMethod = $this->resolveFrontendPaymentMethod($normalized);
+            if ($normalized['payment_method'] !== 'cod') {
+                $paymentInit = $this->paymentAttemptService->registerAttemptForOrder(
+                    $order,
+                    (string) ($paymentInit['provider'] ?? $this->resolveProviderForFrontendMethod($frontendPaymentMethod)),
+                    $paymentInit,
+                    $frontendPaymentMethod
+                );
+            }
 
             $orderPayment = $order->getPayment();
             if ($orderPayment) {
@@ -287,6 +302,12 @@ class CheckoutService
                 $orderPayment->setAdditionalInformation('pvmodern_payment_context', $this->json->serialize($paymentInit));
                 $orderPayment->setAdditionalInformation('gateway_channel', $normalized['gateway_channel']);
                 $orderPayment->setAdditionalInformation('wallet_id', $normalized['wallet_id']);
+                $orderPayment->setAdditionalInformation('pvmodern_shipping_provider', (string) ($selectedShipping['provider'] ?? 'pickup'));
+                $orderPayment->setAdditionalInformation('pvmodern_shipping_context', $this->json->serialize([
+                    'order_increment_id' => $order->getIncrementId(),
+                    'shipping' => $selectedShipping,
+                    'customer' => $normalized,
+                ]));
             }
 
             if (!empty($normalized['note'])) {
@@ -295,7 +316,8 @@ class CheckoutService
             }
 
             $shipment = null;
-            if (($selectedShipping['provider'] ?? 'pickup') !== 'pickup') {
+            $fulfillImmediately = $normalized['payment_method'] === 'cod';
+            if ($fulfillImmediately && ($selectedShipping['provider'] ?? 'pickup') !== 'pickup') {
                 $shipment = $this->shippingManager->createShipment((string) $selectedShipping['provider'], [
                     'order_increment_id' => $order->getIncrementId(),
                     'shipping' => $selectedShipping,
@@ -310,8 +332,10 @@ class CheckoutService
                         )
                     );
                 }
-            } else {
+            } elseif ($fulfillImmediately) {
                 $order->addCommentToStatusHistory('Customer selected store pickup.');
+            } else {
+                $order->addCommentToStatusHistory('Fulfillment is deferred until a verified server-side payment confirmation is received.');
             }
 
             $order->addCommentToStatusHistory(
@@ -497,7 +521,19 @@ class CheckoutService
 
     private function formatPrice(float $amount): string
     {
-        return (string) $this->priceCurrency->format($amount, false);
+        $formatted = (string) $this->priceCurrency->format($amount, false);
+        return $this->stripRedundantDecimals($formatted);
+    }
+
+    /**
+     * Strip the redundant ",00" / ".00" decimal tail that Magento appends for
+     * VND-style integer currencies (e.g. "10.000,00 ₫" → "10.000 ₫").
+     * Anchored to either end-of-string or a currency suffix so that
+     * thousands separators (which always have more digits after them) survive.
+     */
+    private function stripRedundantDecimals(string $formatted): string
+    {
+        return (string) preg_replace('/[.,]0+(?=\s|[^\d.,]|$)/', '', $formatted);
     }
 
     /**
@@ -533,9 +569,53 @@ class CheckoutService
         return $payment;
     }
 
+    /**
+     * Build a same-origin QR image URL. If the payload looks like a bare ORD
+     * transfer code (no scheme), wrap it into the demo scanpaid URL so phones
+     * scanning the QR can actually open something. Routes through our
+     * /api/qr/url proxy so CSP `img-src 'self'` always permits the image.
+     */
     private function buildQrCodeUrl(string $payload): string
     {
-        return 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=10&data=' . rawurlencode($payload);
+        $payload = trim($payload);
+        if ($payload === '') {
+            return '';
+        }
+        if (!preg_match('#^[a-z][a-z0-9+.-]*://#i', $payload)) {
+            // Bare reference like "ORD000000076" — turn it into a scannable URL
+            // pointing at the demo scanpaid endpoint on the current store host.
+            $base = rtrim((string) $this->urlBuilder->getBaseUrl(['_secure' => true]), '/');
+            $payload = $base . '/api/qr/scanpaid?order=' . rawurlencode($payload);
+        }
+        return '/api/qr/url?size=540&data=' . rawurlencode($payload);
+    }
+
+    /**
+     * @param array<string, string> $normalized
+     */
+    private function resolveFrontendPaymentMethod(array $normalized): string
+    {
+        $walletId = strtolower((string) ($normalized['wallet_id'] ?? ''));
+        if (in_array($walletId, ['momo', 'vnpay', 'card', 'bank_qr'], true)) {
+            return $walletId;
+        }
+
+        if (($normalized['payment_method'] ?? '') === 'bank_transfer') {
+            return 'bank_qr';
+        }
+
+        return (string) ($normalized['payment_method'] ?? '');
+    }
+
+    private function resolveProviderForFrontendMethod(string $frontendPaymentMethod): string
+    {
+        return match ($frontendPaymentMethod) {
+            'momo' => 'momo',
+            'vnpay' => 'vnpay',
+            'card' => 'stripe',
+            'bank_qr' => 'bank_transfer',
+            default => $frontendPaymentMethod,
+        };
     }
 
     private function normalizeString(mixed $value): string

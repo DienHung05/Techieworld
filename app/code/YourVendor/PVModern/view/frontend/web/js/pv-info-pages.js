@@ -355,9 +355,14 @@
                 var points = data.points || [];
                 var max = Math.max.apply(null, points.map(function (p) { return Number(p.value); })) || 1;
                 var min = Math.min.apply(null, points.map(function (p) { return Number(p.value); })) || 0;
-                $('[data-currency-chart]', root).innerHTML = points.map(function (p) {
-                    var h = 20 + ((Number(p.value) - min) / Math.max(1, max - min)) * 80;
-                    return '<span class="pvcurrency-bar" style="height:' + h + '%" title="' + esc(p.label) + ': ' + esc(p.value) + '"></span>';
+                $('[data-currency-chart]', root).innerHTML = points.map(function (p, i) {
+                    var v = Number(p.value);
+                    var h = 20 + ((v - min) / Math.max(1, max - min)) * 80;
+                    var prev = i > 0 ? Number(points[i - 1].value) : v;
+                    var cls = 'pvcurrency-bar';
+                    if (v > prev) { cls += ' is-up'; }
+                    else if (v < prev) { cls += ' is-down'; }
+                    return '<span class="' + cls + '" style="height:' + h + '%" title="' + esc(p.label) + ': ' + esc(p.value) + '"></span>';
                 }).join('');
             });
         }
@@ -971,9 +976,12 @@
             var first = values[0] || 0;
             var last = values[values.length - 1] || first;
             $('[data-chart-meta]', root).innerHTML = '<span>High ' + currency(max, 'VND') + '</span><span>Low ' + currency(min, 'VND') + '</span><span class="' + (last >= first ? 'is-up' : 'is-down') + '">' + ((last >= first ? '+' : '') + (((last - first) / Math.max(1, first)) * 100).toFixed(2)) + '%</span>';
-            $('[data-currency-chart]', root).innerHTML = points.map(function (point) {
-                var height = 18 + ((Number(point.value) - min) / Math.max(1, max - min)) * 82;
-                return '<span style="height:' + height + '%" title="' + esc(point.label) + ': ' + esc(point.value) + '"><i>' + esc(point.label) + '</i></span>';
+            $('[data-currency-chart]', root).innerHTML = points.map(function (point, i) {
+                var v = Number(point.value);
+                var height = 18 + ((v - min) / Math.max(1, max - min)) * 82;
+                var prev = i > 0 ? Number(points[i - 1].value) : v;
+                var cls = v > prev ? 'is-up' : (v < prev ? 'is-down' : '');
+                return '<span class="' + cls + '" style="height:' + height + '%" title="' + esc(point.label) + ': ' + esc(point.value) + '"><i>' + esc(point.label) + '</i></span>';
             }).join('');
             $all('[data-range]', root).forEach(function (button) {
                 button.classList.toggle('is-active', button.getAttribute('data-range') === range);

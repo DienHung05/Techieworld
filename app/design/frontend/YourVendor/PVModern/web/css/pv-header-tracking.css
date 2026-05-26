@@ -1,6 +1,40 @@
 body.pvmodern-v3 .pv3-search {
     max-width: 380px !important;
     flex: 0 1 380px !important;
+    min-width: 0 !important;
+    position: relative !important;
+}
+body.pvmodern-v3 .pv3-header-shell,
+body.pvmodern-v3 .pv3-header-row {
+    overflow: visible !important;
+}
+body.pvmodern-v3 .pv3-search-dropdown {
+    left: 50% !important;
+    width: min(720px, calc(100vw - 32px)) !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: min(70vh, 560px) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    transform: translateX(-50%) !important;
+    z-index: 10050 !important;
+}
+body.pvmodern-v3 .pv3-search-item {
+    min-width: 0 !important;
+}
+body.pvmodern-v3 .pv3-search-info {
+    min-width: 0 !important;
+    max-width: 100% !important;
+}
+body.pvmodern-v3 .pv3-search-name {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    line-height: 1.32 !important;
+}
+body.pvmodern-v3 .pv3-search-price {
+    flex-wrap: wrap !important;
+    white-space: normal !important;
+    line-height: 1.35 !important;
 }
 body.pvmodern-v3 .pv3-product-card.is-page-hidden {
     display: none !important;
@@ -59,19 +93,36 @@ body.pvmodern-v3 .pv3-tracking-button > span:last-child {
 body.pvmodern-v3 .pv3-actions {
     gap: 8px !important;
     padding-right: 2px !important;
+    position: relative !important;
 }
 body.pvmodern-v3 .pv3-signout-button[hidden] {
     display: none !important;
 }
+/* Sign-out floats out of the actions row and sits centered between
+   the cart's right edge (= page container's right edge) and the
+   viewport's right edge. Computed as half of the empty gutter. */
 body.pvmodern-v3 .pv3-signout-button {
+    position: absolute !important;
+    top: 50% !important;
+    left: calc(100% + (100vw - 1400px) / 4 + 8px) !important;
+    transform: translate(-50%, -50%) !important;
     width: 46px !important;
     height: 46px !important;
-    flex: 0 0 46px !important;
-    margin-left: 0 !important;
+    margin: 0 !important;
     border-radius: 16px !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
+}
+/* On screens narrower than the container (<=1400px) there's no gutter,
+   so fall back to a normal inline position next to the cart. */
+@media (max-width: 1400px) {
+    body.pvmodern-v3 .pv3-signout-button {
+        position: static !important;
+        transform: none !important;
+        margin-left: 8px !important;
+        flex: 0 0 46px !important;
+    }
 }
 body.pvmodern-v3 .pv3-signout-button span {
     position: absolute !important;
@@ -320,8 +371,66 @@ body.pvmodern-v3 .pv-order-track::before {
     }
 }
 @media (max-width: 767px) {
+    body.pvmodern-v3 .pv3-header-row {
+        flex-wrap: wrap !important;
+        gap: 10px 8px !important;
+    }
+    body.pvmodern-v3 .pv3-brand {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+    }
+    body.pvmodern-v3 .pv3-brand-copy {
+        min-width: 0 !important;
+    }
+    body.pvmodern-v3 .pv3-brand-copy strong {
+        display: block !important;
+        max-width: min(45vw, 180px) !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        font-size: 1.18rem !important;
+    }
+    body.pvmodern-v3 .pv3-brand-copy small {
+        display: none !important;
+    }
+    body.pvmodern-v3 .pv3-actions {
+        flex: 0 0 auto !important;
+        gap: 6px !important;
+        margin-left: auto !important;
+    }
+    body.pvmodern-v3 .pv3-search {
+        order: 3 !important;
+        flex: 0 0 100% !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+    }
+    body.pvmodern-v3 .pv3-search-dropdown {
+        top: calc(100% + 8px) !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: min(68vh, 560px) !important;
+        border-radius: 18px !important;
+        transform: none !important;
+    }
+    body.pvmodern-v3 .pv3-search-item {
+        align-items: flex-start !important;
+        gap: 12px !important;
+        min-height: 86px !important;
+        padding: 12px !important;
+    }
+    body.pvmodern-v3 .pv3-search-thumb {
+        width: 64px !important;
+        height: 64px !important;
+        flex: 0 0 64px !important;
+    }
+    body.pvmodern-v3 .pv3-search-price {
+        gap: 5px !important;
+    }
     body.pvmodern-v3 .pv3-tracking-drawer {
-        width: calc(100vw - 16px);
+        width: calc(100vw - 32px);
         height: calc(100% - 16px);
         margin: 8px;
         padding: 18px;

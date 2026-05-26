@@ -6,7 +6,7 @@ return;
 <?php
 /** @var \Magento\Framework\View\Element\Template $block */
 $tabs = [
-    ['label' => 'Xem tất cả', 'url' => $block->getUrl('news'), 'active' => false],
+    ['label' => 'All', 'url' => $block->getUrl('news'), 'active' => false],
     ['label' => 'Weather', 'url' => $block->getUrl('weather'), 'active' => true],
     ['label' => 'Currency Rate', 'url' => $block->getUrl('currency-rate'), 'active' => false],
 ];
@@ -27,7 +27,7 @@ $tabs = [
         <section class="pvinfo-hero-copy">
             <span class="pvinfo-kicker">Forecast center</span>
             <h1>Weather</h1>
-            <p>Cập nhật thời tiết hiện tại, dự báo, cảnh báo và tin tức thời tiết mới nhất.</p>
+            <p>Current conditions, forecasts, alerts, and the latest weather news.</p>
         </section>
 
         <form class="pvweather-search surface-card" data-weather-form>
@@ -51,8 +51,8 @@ $tabs = [
             <span></span><span></span><span></span>
         </div>
         <div class="pvinfo-state pvinfo-error" data-weather-error hidden>
-            <strong>Không tải được thời tiết.</strong>
-            <button type="button" data-weather-retry>Thử lại</button>
+            <strong>Could not load weather data.</strong>
+            <button type="button" data-weather-retry>Try again</button>
         </div>
 
         <div data-weather-content hidden>
@@ -67,14 +67,14 @@ $tabs = [
             </section>
 
             <section class="surface-card">
-                <h2>Daily forecast 8 ngày</h2>
+                <h2>8-day daily forecast</h2>
                 <div class="pvweather-daily" data-daily-forecast></div>
             </section>
 
             <section class="surface-card">
                 <div class="pvinfo-section-head">
                     <h2>Weather chart</h2>
-                    <p>Nhiệt độ và xác suất mưa theo giờ</p>
+                    <p>Hourly temperature and precipitation probability</p>
                 </div>
                 <div class="pvweather-chart" data-weather-chart></div>
             </section>
@@ -82,7 +82,7 @@ $tabs = [
             <section class="surface-card">
                 <div class="pvinfo-section-head">
                     <h2>Weather news</h2>
-                    <p>Bão, mưa lớn, nắng nóng và khí hậu.</p>
+                    <p>Storms, heavy rain, heat waves, and climate updates.</p>
                 </div>
                 <div class="pvweather-news" data-weather-news></div>
             </section>

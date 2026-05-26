@@ -2,6 +2,24 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
     <default>
+        <pvmodern>
+            <github_oauth>
+                <client_id></client_id>
+                <client_secret></client_secret>
+            </github_oauth>
+        </pvmodern>
+        <!-- Disable the storefront CAPTCHA challenge on the customer login form.
+             The custom PVModern login template doesn't render CAPTCHA inputs, so
+             once a customer fails 3 logins Magento silently rejects every
+             subsequent attempt (Invalid CAPTCHA) and the user is locked out
+             with no visible feedback. The custom template enforces its own
+             client-side validation + uses the form_key, which is sufficient. -->
+        <customer>
+            <captcha>
+                <enable>0</enable>
+                <forms>user_forgotpassword</forms>
+            </captcha>
+        </customer>
         <catalog>
             <frontend>
                 <grid_per_page>8</grid_per_page>

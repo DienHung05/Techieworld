@@ -9,6 +9,8 @@ use Magento\Framework\Controller\Result\JsonFactory;
 
 class News implements HttpGetActionInterface
 {
+    private const RSS_URL = 'https://vnexpress.net/rss/kinh-doanh.rss';
+
     private const CATEGORIES = [
         'all', 'general', 'business', 'technology', 'science', 'health', 'sports', 'entertainment',
         'politics', 'world', 'finance', 'ai', 'local', 'startup', 'mobile', 'gadgets',
@@ -31,9 +33,12 @@ class News implements HttpGetActionInterface
         $sort = strtolower(trim((string) $this->request->getParam('sort', 'latest')));
         $perPage = 12;
 
-        $articles = $this->fetchExternalArticles($category, $query, $region, $sort) ?: $this->buildArticles();
+        $liveArticles = $this->fetchVnExpressBusinessRss();
+        $articles = $liveArticles ?: $this->buildArticles();
         $filtered = array_values(array_filter($articles, static function (array $article) use ($category, $query): bool {
-            $matchesCategory = $category === 'all' || strtolower((string) $article['category_slug']) === $category;
+            $categorySlug = strtolower((string) $article['category_slug']);
+            $businessCategories = ['all', 'general', 'business', 'finance', 'fintech', 'startup', 'local'];
+            $matchesCategory = in_array($category, $businessCategories, true) || $categorySlug === $category;
             $haystack = strtolower((string) $article['title'] . ' ' . $article['summary'] . ' ' . $article['source']);
             return $matchesCategory && ($query === '' || str_contains($haystack, $query));
         }));
@@ -61,87 +66,46 @@ class News implements HttpGetActionInterface
                 'sorts' => ['latest', 'popular', 'relevant'],
             ],
             'updated_at' => gmdate('d/m/Y H:i'),
-            'mock' => getenv('NEWSAPI_KEY') ? false : true,
+            'source' => 'VnExpress Kinh doanh RSS',
+            'source_url' => $this->rssUrl(),
+            'mock' => !$liveArticles,
         ]);
     }
 
     /**
      * @return array<int, array<string, string>>
      */
-    private function fetchExternalArticles(string $category, string $query, string $region, string $sort): array
+    private function fetchVnExpressBusinessRss(): array
     {
-        $apiKey = $this->env('NEWS_API_KEY');
-        if ($apiKey === '') {
+        $body = $this->httpGetText($this->rssUrl());
+        if ($body === '' || !function_exists('simplexml_load_string')) {
             return [];
         }
 
-        $countryMap = ['vn' => 'vn', 'us' => 'us', 'gb' => 'gb', 'jp' => 'jp', 'kr' => 'kr', 'sg' => 'sg'];
-        $newsCategoryMap = [
-            'business' => 'business',
-            'general' => 'general',
-            'science' => 'science',
-            'health' => 'health',
-            'sports' => 'sports',
-            'entertainment' => 'entertainment',
-            'politics' => 'general',
-            'world' => 'general',
-            'finance' => 'business',
-            'local' => 'general',
-            'technology' => 'technology',
-            'gaming' => 'technology',
-            'mobile' => 'technology',
-            'gadgets' => 'technology',
-            'cybersecurity' => 'technology',
-            'software' => 'technology',
-            'startup' => 'business',
-            'fintech' => 'business',
-            'ai' => 'technology',
-            'all' => 'technology',
-        ];
-        $sortMap = ['popular' => 'popularity', 'relevant' => 'relevancy', 'latest' => 'publishedAt'];
-        $base = rtrim($this->env('NEWS_API_BASE_URL') ?: 'https://newsapi.org/v2', '/');
-        $endpoint = $query !== '' || $region === 'global' ? '/everything' : '/top-headlines';
-        $params = [
-            'apiKey' => $apiKey,
-            'pageSize' => '24',
-            'language' => $region === 'vn' ? 'vi' : 'en',
-        ];
-
-        if ($endpoint === '/top-headlines') {
-            $params['country'] = $countryMap[$region] ?? 'us';
-            $params['category'] = $newsCategoryMap[$category] ?? 'technology';
-            if ($query !== '') {
-                $params['q'] = $query;
-            }
-        } else {
-            $keyword = $query !== '' ? $query : ($category === 'all' ? 'technology OR AI OR gadget' : $category . ' technology');
-            $params['q'] = $keyword;
-            $params['sortBy'] = $sortMap[$sort] ?? 'publishedAt';
+        $xml = @simplexml_load_string($body, 'SimpleXMLElement', LIBXML_NOCDATA | LIBXML_NONET);
+        if (!$xml || count($xml->channel->item) === 0) {
+            return [];
         }
 
-        $data = $this->httpGetJson($base . $endpoint . '?' . http_build_query($params));
-        $rows = is_array($data['articles'] ?? null) ? $data['articles'] : [];
         $normalized = [];
-        foreach ($rows as $index => $row) {
-            if (!is_array($row)) {
+        foreach ($xml->channel->item as $index => $item) {
+            $title = trim((string) $item->title);
+            $url = trim((string) $item->link);
+            if ($title === '' || $url === '') {
                 continue;
             }
-            $title = trim((string) ($row['title'] ?? ''));
-            if ($title === '' || stripos($title, '[removed]') !== false) {
-                continue;
-            }
-            $source = is_array($row['source'] ?? null) ? (string) ($row['source']['name'] ?? 'News source') : 'News source';
+            $description = (string) $item->description;
             $normalized[] = [
-                'category_slug' => $category === 'all' ? 'technology' : $category,
-                'category' => $category === 'all' ? 'Technology' : strtoupper(substr($category, 0, 1)) . substr($category, 1),
-                'time' => $this->formatTime((string) ($row['publishedAt'] ?? '')),
+                'category_slug' => 'business',
+                'category' => 'Kinh doanh',
+                'time' => $this->formatTime((string) $item->pubDate),
                 'title' => $title,
-                'summary' => trim((string) ($row['description'] ?? '')) ?: 'Bài viết đang được cập nhật mô tả.',
-                'source' => $source,
-                'author' => (string) ($row['author'] ?? 'Unknown author'),
-                'image' => (string) ($row['urlToImage'] ?? ''),
-                'url' => (string) ($row['url'] ?? '#'),
-                'id' => 'news-' . md5($title . $index),
+                'summary' => $this->summaryFromDescription($description),
+                'source' => 'VnExpress Kinh doanh',
+                'author' => 'VnExpress',
+                'image' => $this->imageFromItem($item, $description),
+                'url' => $url,
+                'id' => 'vnexpress-business-' . md5($url . $index),
             ];
         }
 
@@ -157,34 +121,67 @@ class News implements HttpGetActionInterface
     /**
      * @return array<string, mixed>
      */
-    private function httpGetJson(string $url): array
+    private function httpGetText(string $url): string
     {
-        if (!function_exists('curl_init')) {
-            return [];
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            if (!$ch) {
+                return '';
+            }
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 8,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTPHEADER => ['User-Agent: Techieworld/1.0 (+https://techieworld.site)'],
+            ]);
+            $body = curl_exec($ch);
+            $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+            curl_close($ch);
+            return ($code >= 200 && $code < 300 && is_string($body)) ? $body : '';
         }
-        $ch = curl_init($url);
-        if (!$ch) {
-            return [];
-        }
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 8,
-            CURLOPT_HTTPHEADER => ['User-Agent: Techieworld/1.0'],
-        ]);
-        $body = curl_exec($ch);
-        $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-        curl_close($ch);
-        if ($code < 200 || $code >= 300 || !is_string($body)) {
-            return [];
-        }
-        $decoded = json_decode($body, true);
-        return is_array($decoded) ? $decoded : [];
+
+        $body = @file_get_contents($url, false, stream_context_create([
+            'http' => [
+                'timeout' => 8,
+                'header' => "User-Agent: Techieworld/1.0 (+https://techieworld.site)\r\n",
+            ],
+        ]));
+        return is_string($body) ? $body : '';
     }
 
     private function formatTime(string $iso): string
     {
-        $time = strtotime($iso);
-        return $time ? gmdate('d/m/Y H:i', $time) : gmdate('d/m/Y');
+        try {
+            $date = new \DateTimeImmutable($iso);
+            return $date->setTimezone(new \DateTimeZone('Asia/Ho_Chi_Minh'))->format('d/m/Y H:i');
+        } catch (\Exception) {
+            return gmdate('d/m/Y');
+        }
+    }
+
+    private function summaryFromDescription(string $description): string
+    {
+        $description = preg_replace('/<a\b[^>]*>.*?<\/a>\s*(?:<br\s*\/?>|<\/br>)?/is', '', $description) ?? $description;
+        $summary = trim(html_entity_decode(strip_tags(str_replace(['</br>', '<br/>', '<br>'], ' ', $description)), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        return $summary !== '' ? $summary : 'Bài viết đang được cập nhật mô tả.';
+    }
+
+    private function imageFromItem(\SimpleXMLElement $item, string $description): string
+    {
+        $enclosure = $item->enclosure;
+        $image = isset($enclosure['url']) ? trim((string) $enclosure['url']) : '';
+        if ($image !== '') {
+            return $image;
+        }
+        if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $description, $matches)) {
+            return html_entity_decode((string) $matches[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
+        return 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1400&q=82';
+    }
+
+    private function rssUrl(): string
+    {
+        return $this->env('VNEXPRESS_BUSINESS_RSS_URL') ?: self::RSS_URL;
     }
 
     /**

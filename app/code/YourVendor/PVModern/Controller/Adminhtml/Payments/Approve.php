@@ -8,6 +8,7 @@ use Magento\Backend\App\Action\Context;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Serialize\Serializer\Json;
 use YourVendor\PVModern\Helper\PaymentDb;
+use YourVendor\PVModern\Model\Payment\PaymentAttemptService;
 
 class Approve extends Action
 {
@@ -17,7 +18,8 @@ class Approve extends Action
         Context $context,
         private readonly JsonFactory $resultJsonFactory,
         private readonly Json $json,
-        private readonly PaymentDb $paymentDb
+        private readonly PaymentDb $paymentDb,
+        private readonly PaymentAttemptService $paymentAttemptService
     ) {
         parent::__construct($context);
     }
@@ -48,6 +50,29 @@ class Approve extends Action
         }
 
         $adminUser = $this->_auth->getUser()->getUserName();
+        $attempt = $this->paymentDb->findLatestAttemptForIncrement((string)$pvOrder['magento_increment_id']);
+        if ($attempt) {
+            $eventId = $this->paymentAttemptService->recordEvent(
+                $attempt,
+                (string)($attempt['provider'] ?? 'manual'),
+                'manual_admin',
+                null,
+                null,
+                true,
+                (float)$pvOrder['total_amount'],
+                (string)($pvOrder['currency'] ?? 'VND'),
+                $this->json->serialize(['admin_user' => $adminUser, 'note' => $note])
+            );
+            $this->paymentAttemptService->confirmPaid(
+                $attempt,
+                $eventId,
+                (string)($attempt['provider'] ?? 'manual'),
+                '',
+                (float)$pvOrder['total_amount'],
+                (string)($pvOrder['currency'] ?? 'VND')
+            );
+            return $result->setData(['success' => true, 'message' => 'Đã xác nhận thanh toán thành công']);
+        }
 
         $this->paymentDb->updateOrder($id, [
             'payment_status' => 'paid',

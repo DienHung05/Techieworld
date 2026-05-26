@@ -30,7 +30,7 @@ $methodsHtml = $block->getChildHtml('checkout.cart.methods.bottom')
     <!-- Header: title + item count badge -->
     <div class="pvcart-summary-head">
         <h2>
-            <span><?= $escaper->escapeHtml(__('Tóm tắt đơn hàng')) ?></span>
+            <span><?= $escaper->escapeHtml(__('Order summary')) ?></span>
             <span class="pvcart-summary-count"><?= $escaper->escapeHtml($itemCount) ?></span>
         </h2>
     </div>
@@ -38,24 +38,24 @@ $methodsHtml = $block->getChildHtml('checkout.cart.methods.bottom')
     <!-- Pricing breakdown -->
     <div class="pvcart-summary-breakdown">
         <div class="pvcart-summary-row">
-            <span><?= $escaper->escapeHtml(__('Tạm tính (%1 sản phẩm)', $itemCount)) ?></span>
+            <span><?= $escaper->escapeHtml(__('Subtotal (%1 items)', $itemCount)) ?></span>
             <strong><?= /* @noEscape */ $priceHelper->currency($subtotal, true, false) ?></strong>
         </div>
         <div class="pvcart-summary-row">
-            <span><?= $escaper->escapeHtml(__('Phí vận chuyển')) ?></span>
+            <span><?= $escaper->escapeHtml(__('Shipping')) ?></span>
             <strong class="pvcart-ship-amount"><?= /* @noEscape */ $priceHelper->currency($shippingAmount, true, false) ?></strong>
         </div>
         <?php if ($discountAmount > 0): ?>
             <div class="pvcart-summary-row pvcart-summary-row--discount"
                  data-summary-discount-row>
-                <span><?= $escaper->escapeHtml(__('Giảm giá')) ?></span>
+                <span><?= $escaper->escapeHtml(__('Discount')) ?></span>
                 <strong data-summary-discount>-<?= /* @noEscape */ $priceHelper->currency($discountAmount, true, false) ?></strong>
             </div>
         <?php else: ?>
             <div class="pvcart-summary-row pvcart-summary-row--discount"
                  data-summary-discount-row
                  hidden="hidden">
-                <span><?= $escaper->escapeHtml(__('Giảm giá')) ?></span>
+                <span><?= $escaper->escapeHtml(__('Discount')) ?></span>
                 <strong data-summary-discount></strong>
             </div>
         <?php endif ?>
@@ -70,13 +70,13 @@ $methodsHtml = $block->getChildHtml('checkout.cart.methods.bottom')
                 <input type="text"
                        class="pvcart-coupon-input"
                        id="pvcart-coupon-field"
-                       placeholder="<?= $escaper->escapeHtmlAttr(__('Nhập mã khuyến mãi')) ?>"
+                       placeholder="<?= $escaper->escapeHtmlAttr(__('Enter promo code')) ?>"
                        maxlength="30"
                        autocomplete="off"/>
                 <button type="button"
                         class="pvcart-coupon-button"
                         id="pvcart-coupon-apply">
-                    <?= $escaper->escapeHtml(__('Dùng')) ?>
+                    <?= $escaper->escapeHtml(__('Apply')) ?>
                 </button>
             </div>
             <p class="pvcart-coupon-error" id="pvcart-coupon-error" hidden></p>
@@ -86,7 +86,7 @@ $methodsHtml = $block->getChildHtml('checkout.cart.methods.bottom')
     <!-- Grand total box -->
     <div class="pvcart-summary-total">
         <div class="pvcart-summary-row pvcart-summary-row--total">
-            <span><?= $escaper->escapeHtml(__('Tổng cộng')) ?></span>
+            <span><?= $escaper->escapeHtml(__('Grand total')) ?></span>
             <strong data-summary-grand><?= /* @noEscape */ $priceHelper->currency(max(0, $grandTotal), true, false) ?></strong>
         </div>
     </div>
@@ -96,7 +96,7 @@ $methodsHtml = $block->getChildHtml('checkout.cart.methods.bottom')
         <?= /* @noEscape */ $methodsHtml ?>
         <a class="pvcart-secondary-btn"
            href="<?= $escaper->escapeUrl($block->getContinueShoppingUrl()) ?>">
-            <?= $escaper->escapeHtml(__('Tiếp tục mua sắm')) ?>
+            <?= $escaper->escapeHtml(__('Continue shopping')) ?>
         </a>
     </div>
 

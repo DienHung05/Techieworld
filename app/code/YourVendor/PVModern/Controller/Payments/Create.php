@@ -10,6 +10,7 @@ use Magento\Framework\App\CsrfAwareActionInterface;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
+use YourVendor\PVModern\Model\Payment\PaymentAttemptService;
 use YourVendor\PVModern\Model\Payment\PaymentManager;
 
 class Create implements HttpPostActionInterface, CsrfAwareActionInterface
@@ -19,7 +20,8 @@ class Create implements HttpPostActionInterface, CsrfAwareActionInterface
         private readonly JsonFactory $resultJsonFactory,
         private readonly Json $json,
         private readonly OrderCollectionFactory $orderCollectionFactory,
-        private readonly PaymentManager $paymentManager
+        private readonly PaymentManager $paymentManager,
+        private readonly PaymentAttemptService $paymentAttemptService
     ) {
     }
 
@@ -27,9 +29,15 @@ class Create implements HttpPostActionInterface, CsrfAwareActionInterface
     {
         $result = $this->resultJsonFactory->create();
         $payload = $this->readPayload();
-        $method = strtolower(trim((string) ($payload['method'] ?? '')));
+        $method = strtolower(trim((string) ($payload['selectedMethod'] ?? $payload['selected_method'] ?? $payload['method'] ?? '')));
         $orderId = preg_replace('/[^A-Za-z0-9_-]/', '', (string) ($payload['orderId'] ?? $payload['order_id'] ?? '')) ?: '';
         $currency = strtoupper(trim((string) ($payload['currency'] ?? 'VND')));
+
+        $gatewayOverride = '';
+        if (in_array($method, ['momo', 'vnpay', 'stripe'], true)) {
+            $gatewayOverride = $method;
+            $method = $method === 'stripe' ? 'card' : 'wallet';
+        }
 
         if (!in_array($method, ['bank', 'bank_transfer', 'card', 'wallet'], true)) {
             return $result->setHttpResponseCode(422)->setData(['success' => false, 'message' => 'Unsupported payment method.']);
@@ -50,9 +58,9 @@ class Create implements HttpPostActionInterface, CsrfAwareActionInterface
             return $result->setHttpResponseCode(503)->setData(['success' => false, 'message' => 'Payment provider unavailable.']);
         }
 
-        $gatewayChannel = $method === 'wallet'
+        $gatewayChannel = $gatewayOverride ?: ($method === 'wallet'
             ? strtolower((string) ($payload['wallet'] ?? $payload['gateway_channel'] ?? 'momo'))
-            : 'vnpay';
+            : ($method === 'card' ? 'stripe' : 'vnpay'));
         $payment = $provider->initialize([
             'order_increment_id' => $order ? (string) $order->getIncrementId() : ($orderId ?: 'PENDING-' . time()),
             'amount' => $amount,
@@ -60,6 +68,26 @@ class Create implements HttpPostActionInterface, CsrfAwareActionInterface
             'wallet_id' => $gatewayChannel,
             'bank_id' => (string) ($payload['bank_id'] ?? ''),
         ]);
+        $frontendMethod = match ($gatewayChannel) {
+            'momo' => 'momo',
+            'vnpay' => 'vnpay',
+            'stripe' => 'card',
+            default => in_array($method, ['bank', 'bank_transfer'], true) ? 'bank_qr' : $method,
+        };
+        if ($order) {
+            $payment = $this->paymentAttemptService->registerAttemptForOrder(
+                $order,
+                (string) ($payment['provider'] ?? match ($frontendMethod) {
+                    'momo' => 'momo',
+                    'vnpay' => 'vnpay',
+                    'card' => 'stripe',
+                    'bank_qr' => 'bank_transfer',
+                    default => 'online_gateway',
+                }),
+                $payment,
+                $frontendMethod
+            );
+        }
 
         $reference = (string) ($payment['reference'] ?? ('PAY-' . time()));
         $qrPayload = $this->buildQrPayload($method, $payment, $amount, $reference);
@@ -75,9 +103,10 @@ class Create implements HttpPostActionInterface, CsrfAwareActionInterface
         return $result->setData([
             'success' => true,
             'paymentId' => $reference,
+            'paymentAttemptId' => $payment['paymentAttemptId'] ?? $payment['payment_attempt_id'] ?? null,
             'orderId' => $order ? (string) $order->getIncrementId() : $orderId,
             'status' => (string) ($payment['status'] ?? 'pending'),
-            'method' => $method,
+            'method' => $frontendMethod,
             'amount' => $amount,
             'currency' => 'VND',
             'paymentUrl' => $paymentUrl,
@@ -87,6 +116,16 @@ class Create implements HttpPostActionInterface, CsrfAwareActionInterface
             'qrPayload' => $qrPayload,
             'qr_payload' => $qrPayload,
             'expiresAt' => gmdate('c', time() + 15 * 60),
+            'step4Payload' => [
+                'qrCodeUrl' => $qrCodeUrl,
+                'qrCodePayload' => $qrPayload,
+                'paymentUrl' => $paymentUrl,
+                'deeplinkUrl' => (string) ($payment['deeplink_url'] ?? ''),
+                'amount' => $amount,
+                'transferCode' => (string) ($payment['reference'] ?? ''),
+            ],
+            'statusEndpoint' => (string) ($payment['statusEndpoint'] ?? ''),
+            'eventsEndpoint' => (string) ($payment['eventsEndpoint'] ?? ''),
             'mock' => (bool) ($payment['mock'] ?? !$order),
             'message' => $payment['message'] ?? ($order ? 'Payment session created.' : 'Demo payment session created; no order was marked paid.'),
         ]);

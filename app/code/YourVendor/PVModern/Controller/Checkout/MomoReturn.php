@@ -29,20 +29,18 @@ class MomoReturn implements HttpGetActionInterface
         $params = $this->request->getParams();
         $isValid = $this->verifySignature($params);
         $isPaid = $isValid && ((string) ($params['resultCode'] ?? '')) === '0';
-        if ($isValid) {
-            $this->updateOrderPayment($params, $isPaid);
-        }
 
         $this->logger->info('[PVModern][MoMo] return received', [
             'valid' => $isValid,
             'result_code' => $params['resultCode'] ?? null,
             'order_id' => $params['orderId'] ?? null,
             'trans_id' => $params['transId'] ?? null,
+            'note' => 'Browser return is navigation-only; payment confirmation waits for verified IPN.',
         ]);
 
         return $this->redirectFactory->create()->setPath('checkout', [
             '_query' => [
-                'payment_result' => $isPaid ? 'success' : 'failed',
+                'payment_result' => $isPaid ? 'pending' : 'failed',
                 'gateway' => 'momo',
                 'txn' => (string) ($params['orderId'] ?? ''),
             ],

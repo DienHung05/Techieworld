@@ -31,6 +31,10 @@ class Upload implements HttpPostActionInterface, CsrfAwareActionInterface
     public function execute()
     {
         $result = $this->resultJsonFactory->create();
+        return $result->setHttpResponseCode(410)->setData([
+            'success' => false,
+            'message' => 'Screenshot upload has been removed. Payments are now confirmed automatically via Casso webhook.',
+        ]);
 
         $pvOrderId = (int)($this->request->getParam('pv_order_id') ?? 0);
         if ($pvOrderId <= 0) {

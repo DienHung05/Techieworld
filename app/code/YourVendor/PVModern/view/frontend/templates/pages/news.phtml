@@ -6,7 +6,7 @@ return;
 <?php
 /** @var \Magento\Framework\View\Element\Template $block */
 $tabs = [
-    ['label' => 'Xem tất cả', 'url' => $block->getUrl('news'), 'active' => true],
+    ['label' => 'All', 'url' => $block->getUrl('news'), 'active' => true],
     ['label' => 'Weather', 'url' => $block->getUrl('weather'), 'active' => false],
     ['label' => 'Currency Rate', 'url' => $block->getUrl('currency-rate'), 'active' => false],
 ];
@@ -27,8 +27,8 @@ $apiUrl = $block->getUrl('pvmodern/api/news');
 
         <section class="pvinfo-hero-copy">
             <span class="pvinfo-kicker">Tech briefing</span>
-            <h1>Tin tức công nghệ</h1>
-            <p>Cập nhật AI, startup, gadget, cybersecurity, software và các xu hướng công nghệ mới nhất.</p>
+            <h1>Tech news</h1>
+            <p>Stay updated on AI, startups, gadgets, cybersecurity, software, and the latest tech trends.</p>
         </section>
 
         <form class="pvinfo-searchbar surface-card" data-news-search-form role="search">
@@ -51,16 +51,16 @@ $apiUrl = $block->getUrl('pvmodern/api/news');
             <label>
                 <span>Sort</span>
                 <select name="sort" aria-label="Sort news">
-                    <option value="latest">Mới nhất</option>
-                    <option value="popular">Phổ biến</option>
-                    <option value="relevant">Liên quan nhất</option>
+                    <option value="latest">Latest</option>
+                    <option value="popular">Most popular</option>
+                    <option value="relevant">Most relevant</option>
                 </select>
             </label>
             <button type="button" data-news-clear>Clear</button>
         </form>
 
         <nav class="pvnews-cats" data-news-categories aria-label="News categories">
-            <?php foreach (['all' => 'Tất cả', 'ai' => 'AI', 'startup' => 'Startup', 'mobile' => 'Mobile', 'gadgets' => 'Gadgets', 'cybersecurity' => 'Cybersecurity', 'software' => 'Software', 'gaming' => 'Gaming', 'fintech' => 'Fintech', 'science' => 'Science', 'business' => 'Business'] as $slug => $label): ?>
+            <?php foreach (['all' => 'All', 'ai' => 'AI', 'startup' => 'Startup', 'mobile' => 'Mobile', 'gadgets' => 'Gadgets', 'cybersecurity' => 'Cybersecurity', 'software' => 'Software', 'gaming' => 'Gaming', 'fintech' => 'Fintech', 'science' => 'Science', 'business' => 'Business'] as $slug => $label): ?>
                 <button type="button" data-category="<?= $block->escapeHtmlAttr($slug) ?>"><?= $block->escapeHtml($label) ?></button>
             <?php endforeach; ?>
         </nav>
@@ -69,8 +69,8 @@ $apiUrl = $block->getUrl('pvmodern/api/news');
             <span></span><span></span><span></span>
         </div>
         <div class="pvinfo-state pvinfo-error" data-news-error hidden>
-            <strong>Không tải được tin tức.</strong>
-            <button type="button" data-news-retry>Thử lại</button>
+            <strong>Could not load news.</strong>
+            <button type="button" data-news-retry>Try again</button>
         </div>
 
         <div data-news-content hidden>
@@ -94,14 +94,14 @@ $apiUrl = $block->getUrl('pvmodern/api/news');
 
                     <section class="pvnews-latest">
                         <div class="pvinfo-section-head">
-                            <h2>Mới nhất</h2>
+                            <h2>Latest</h2>
                             <p data-news-count></p>
                             <button class="pvinfo-refresh" type="button" data-news-refresh>Refresh</button>
                         </div>
                         <div class="pvnews-grid" data-latest-news></div>
                         <div class="pvinfo-empty surface-card" data-news-empty hidden>
-                            <strong>Không có bài viết phù hợp.</strong>
-                            <p>Thử đổi keyword, category hoặc khu vực.</p>
+                            <strong>No matching articles found.</strong>
+                            <p>Try a different keyword, category, or region.</p>
                             <button type="button" data-news-reset>Reset filter</button>
                         </div>
                         <div class="pvinfo-pagination" data-news-pagination></div>
@@ -110,16 +110,16 @@ $apiUrl = $block->getUrl('pvmodern/api/news');
 
                 <aside class="pvnews-sidebar">
                     <section class="surface-card">
-                        <h2>Đọc nhiều</h2>
+                        <h2>Most read</h2>
                         <div data-popular-news></div>
                     </section>
                     <section class="surface-card">
-                        <h2>Chủ đề nóng</h2>
+                        <h2>Trending topics</h2>
                         <div class="pvtopic-list" data-hot-topics></div>
                     </section>
                     <section class="surface-card pvnewsletter-mini">
                         <h2>Newsletter</h2>
-                        <p>Nhận bản tin công nghệ ngắn gọn mỗi tuần.</p>
+                        <p>Get a concise weekly tech digest in your inbox.</p>
                         <label>
                             <span>Email</span>
                             <input type="email" placeholder="you@example.com">

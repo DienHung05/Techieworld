@@ -45,13 +45,11 @@ $_homeFilterUrl = static function (string $category = '') use ($_homeUrl, $_norm
                     <li><a href="<?= $block->escapeUrl($block->getUrl('contact')) ?>">Contact</a></li>
                     <li>
                         <a href="<?= $block->escapeUrl($block->getUrl('order-tracking')) ?>" class="pv3-footer-link-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                             Track order
                         </a>
                     </li>
                     <li>
                         <a href="<?= $block->escapeUrl($block->getUrl('warranty')) ?>" class="pv3-footer-link-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
                             Warranty Lookup
                         </a>
                     </li>
@@ -71,50 +69,58 @@ $_homeFilterUrl = static function (string $category = '') use ($_homeUrl, $_norm
             </div>
             <div>
                 <div class="pv3-footer-brand">
-                    <span class="pv3-footer-logo"><img src="<?= $block->escapeUrl($block->getViewFileUrl('YourVendor_PVModern::images/icon.svg')) ?>" alt="Techieworld" /></span>
-                    <strong>Techieworld</strong>
+                    <span style="display:flex;align-items:center;gap:10px;">
+                        <img src="<?= $block->escapeUrl($block->getViewFileUrl('YourVendor_PVModern::images/logo-technology.png')) ?>" alt="Techieworld logo" style="height:44px;width:auto;display:block;flex-shrink:0;" />
+                        <strong style="font-size:1.6rem;font-weight:800;letter-spacing:-.01em;">Techieworld</strong>
+                    </span>
                 </div>
                 <div class="pv3-footer-payment">
                     <h3>Payment methods</h3>
                     <div class="pv3-payment-grid" aria-label="Supported payment methods">
+                        <!-- MoMo: hot-pink background, white "MoMo" wordmark M shape -->
                         <span class="pv3-payment-pill is-momo" aria-label="MoMo">
-                            <svg viewBox="0 0 48 48" aria-hidden="true">
-                                <rect x="4" y="4" width="40" height="40" rx="14" fill="currentColor"/>
-                                <path d="M14 31V17h5l5 7 5-7h5v14h-4V23l-6 8-6-8v8h-4Z" fill="#fff"/>
+                            <svg viewBox="0 0 56 40" width="56" height="40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="56" height="40" rx="8" fill="#ae2070"/>
+                                <!-- MoMo signature double-circle + M lettering -->
+                                <circle cx="18" cy="20" r="9" fill="none" stroke="#fff" stroke-width="3"/>
+                                <circle cx="38" cy="20" r="9" fill="none" stroke="#fff" stroke-width="3"/>
+                                <circle cx="18" cy="20" r="3.5" fill="#fff"/>
+                                <circle cx="38" cy="20" r="3.5" fill="#fff"/>
+                                <line x1="27" y1="20" x2="29" y2="20" stroke="#fff" stroke-width="3"/>
                             </svg>
                         </span>
+                        <!-- VNPay: blue background, VNPay wordmark -->
                         <span class="pv3-payment-pill is-vnpay" aria-label="VNPay">
-                            <svg viewBox="0 0 48 48" aria-hidden="true">
-                                <rect x="4" y="4" width="40" height="40" rx="14" fill="currentColor"/>
-                                <path d="M14 18h6l4 12 4-12h6l-7 14h-6l-7-14Zm22 0h4v14h-4V18Z" fill="#fff"/>
+                            <svg viewBox="0 0 56 40" width="56" height="40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="56" height="40" rx="8" fill="#0066cc"/>
+                                <!-- VNPay: "VN" bold text style -->
+                                <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle"
+                                      font-family="Arial Black, Arial, sans-serif" font-weight="900"
+                                      font-size="15" fill="#fff" letter-spacing="1">VNPay</text>
                             </svg>
                         </span>
-                        <span class="pv3-payment-pill is-bank" aria-label="Banks">
-                            <svg viewBox="0 0 48 48" aria-hidden="true">
-                                <path d="M24 10 10 16v3h28v-3L24 10Zm-9 12h4v11h-4V22Zm7 0h4v11h-4V22Zm7 0h4v11h-4V22Zm7 0h4v11h-4V22ZM9 36h30v3H9v-3Z" fill="currentColor"/>
+                        <!-- Visa: classic Visa blue/white/gold -->
+                        <span class="pv3-payment-pill is-visa" aria-label="Visa">
+                            <svg viewBox="0 0 56 40" width="56" height="40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="56" height="40" rx="8" fill="#1a1f71"/>
+                                <text x="50%" y="52%" dominant-baseline="central" text-anchor="middle"
+                                      font-family="Arial, sans-serif" font-weight="900" font-style="italic"
+                                      font-size="22" fill="#f7b600" letter-spacing="-0.5">VISA</text>
                             </svg>
                         </span>
-                        <span class="pv3-payment-pill is-qr" aria-label="VietQR">
-                            <svg viewBox="0 0 48 48" aria-hidden="true">
-                                <rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="4" fill="none"/>
-                                <rect x="28" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="4" fill="none"/>
-                                <rect x="8" y="28" width="12" height="12" rx="2" stroke="currentColor" stroke-width="4" fill="none"/>
-                                <path d="M29 29h4v4h-4zM35 29h4v4h-4zM29 35h10" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-                            </svg>
-                        </span>
-                        <span class="pv3-payment-pill is-card" aria-label="Cards">
-                            <svg viewBox="0 0 48 48" aria-hidden="true">
-                                <rect x="8" y="13" width="32" height="22" rx="5" fill="currentColor"/>
-                                <path d="M8 20h32" stroke="#fff" stroke-width="4"/>
-                                <path d="M14 29h8" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
-                            </svg>
-                        </span>
-                        <span class="pv3-payment-pill is-cod" aria-label="Cash on delivery">
-                            <svg viewBox="0 0 48 48" aria-hidden="true">
-                                <circle cx="24" cy="24" r="16" fill="currentColor"/>
-                                <path d="M19 20c0-2.2 2.2-4 5-4 2.6 0 4.7 1.2 5 3.2" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>
-                                <path d="M29 28c0 2.2-2.2 4-5 4-2.6 0-4.7-1.2-5-3.2" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>
-                                <path d="M24 14v20" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>
+                        <!-- Bank transfer: white background, bank pillars icon -->
+                        <span class="pv3-payment-pill is-bank" aria-label="Bank transfer">
+                            <svg viewBox="0 0 56 40" width="56" height="40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="56" height="40" rx="8" fill="#e8f0fe"/>
+                                <!-- bank roof -->
+                                <polygon points="28,7 10,16 46,16" fill="#1a73e8"/>
+                                <!-- columns -->
+                                <rect x="13" y="18" width="4" height="13" rx="1" fill="#1a73e8"/>
+                                <rect x="21" y="18" width="4" height="13" rx="1" fill="#1a73e8"/>
+                                <rect x="31" y="18" width="4" height="13" rx="1" fill="#1a73e8"/>
+                                <rect x="39" y="18" width="4" height="13" rx="1" fill="#1a73e8"/>
+                                <!-- base -->
+                                <rect x="10" y="32" width="36" height="3" rx="1" fill="#1a73e8"/>
                             </svg>
                         </span>
                     </div>

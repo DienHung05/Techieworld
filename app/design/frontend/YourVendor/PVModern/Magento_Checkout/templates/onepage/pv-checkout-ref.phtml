@@ -19,23 +19,23 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
         <div class="pvco3-stepper" data-stepper>
             <div class="pvco3-step is-current" data-step="1">
                 <span class="pvco3-step-circle" data-step-circle>1</span>
-                <strong>Giao hàng</strong>
-                <span>Địa chỉ &amp; phương thức</span>
+                <strong>Shipping</strong>
+                <span>Address &amp; method</span>
             </div>
             <div class="pvco3-step" data-step="2">
                 <span class="pvco3-step-circle" data-step-circle>2</span>
-                <strong>Thanh toán</strong>
-                <span>Phương thức thanh toán</span>
+                <strong>Payment</strong>
+                <span>Payment method</span>
             </div>
             <div class="pvco3-step" data-step="3">
                 <span class="pvco3-step-circle" data-step-circle>3</span>
-                <strong>Xác nhận</strong>
-                <span>Kiểm tra đơn hàng</span>
+                <strong>Review</strong>
+                <span>Check your order</span>
             </div>
             <div class="pvco3-step" data-step="4">
                 <span class="pvco3-step-circle" data-step-circle>4</span>
-                <strong>Hoàn thành</strong>
-                <span>Đơn hàng thành công</span>
+                <strong>Complete</strong>
+                <span>Order placed</span>
             </div>
         </div>
 
@@ -53,17 +53,17 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
 
                 <div class="pvco3-panel is-active" data-step-panel="1">
                     <div class="pvco3-card">
-                        <h2 class="pvco3-card-title">Thông tin giao hàng</h2>
+                        <h2 class="pvco3-card-title">Shipping information</h2>
 
                         <div class="pvco3-field-grid pvco3-field-grid--2">
                             <label class="pvco3-field">
-                                <span>Họ và tên *</span>
-                                <input type="text" data-field="full_name" placeholder="Nguyễn Văn A" autocomplete="name"/>
+                                <span>Full name *</span>
+                                <input type="text" data-field="full_name" placeholder="John Smith" autocomplete="name"/>
                                 <small data-error-for="full_name"></small>
                             </label>
 
                             <label class="pvco3-field">
-                                <span>Số điện thoại *</span>
+                                <span>Phone number *</span>
                                 <input type="tel" data-field="phone" placeholder="0912345678" autocomplete="tel"/>
                                 <small data-error-for="phone"></small>
                             </label>
@@ -75,64 +75,64 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
                             </label>
 
                             <label class="pvco3-field pvco3-field--full">
-                                <span>Địa chỉ *</span>
-                                <input type="text" data-field="address" placeholder="123 Đường Nguyễn Huệ" autocomplete="street-address"/>
+                                <span>Address *</span>
+                                <input type="text" data-field="address" placeholder="123 Main Street" autocomplete="street-address"/>
                                 <small data-error-for="address"></small>
                             </label>
 
                             <label class="pvco3-field pvco3-field--full">
-                                <span>Địa chỉ thêm (tùy chọn)</span>
-                                <input type="text" data-field="address_extra" placeholder="Căn hộ, tầng, v.v..."/>
+                                <span>Additional address (optional)</span>
+                                <input type="text" data-field="address_extra" placeholder="Apartment, floor, etc..."/>
                             </label>
 
                             <label class="pvco3-field">
-                                <span>Tỉnh/Thành phố *</span>
+                                <span>Province/City *</span>
                                 <select data-field="city" data-role="province-select">
-                                    <option value="">Chọn tỉnh/thành phố</option>
+                                    <option value="">Select province/city</option>
                                 </select>
                                 <small data-error-for="city"></small>
                             </label>
 
                             <label class="pvco3-field">
-                                <span>Quận/Huyện *</span>
+                                <span>District *</span>
                                 <select data-field="region" data-role="district-select" disabled="disabled">
-                                    <option value="">Chọn tỉnh/thành phố trước</option>
+                                    <option value="">Select province/city first</option>
                                 </select>
                                 <small data-error-for="region"></small>
                             </label>
 
                             <label class="pvco3-field">
-                                <span>Phường/Xã *</span>
+                                <span>Ward *</span>
                                 <select data-field="ward" data-role="ward-select" disabled="disabled">
-                                    <option value="">Chọn quận/huyện trước</option>
+                                    <option value="">Select district first</option>
                                 </select>
                                 <small data-error-for="ward"></small>
                             </label>
 
                             <label class="pvco3-field pvco3-field--full">
-                                <span>Ghi chú đặc biệt (tùy chọn)</span>
-                                <textarea rows="4" data-field="note" placeholder="Ví dụ: Giao giờ hành chính, gọi trước khi đến"></textarea>
+                                <span>Special note (optional)</span>
+                                <textarea rows="4" data-field="note" placeholder="e.g. Business hours delivery, call before arriving"></textarea>
                             </label>
                         </div>
 
                         <label class="pvco3-check">
                             <input type="checkbox" data-field="save_address" value="1"/>
-                            <span>Lưu làm địa chỉ mặc định</span>
+                            <span>Save as default address</span>
                         </label>
                     </div>
 
                     <div class="pvco3-card">
-                        <h2 class="pvco3-card-title">Chọn phương thức vận chuyển</h2>
+                        <h2 class="pvco3-card-title">Select shipping method</h2>
 
                         <div class="pvco3-state pvco3-state--loading" data-shipping-loading hidden>
                             <span class="pvco3-spinner" aria-hidden="true"></span>
-                            <span>Đang tải đơn vị vận chuyển…</span>
+                            <span>Loading carriers…</span>
                         </div>
 
                         <div class="pvco3-state pvco3-state--error" data-shipping-error hidden></div>
 
                         <div class="pvco3-state pvco3-state--empty" data-shipping-empty hidden>
-                            <p>Vui lòng điền địa chỉ giao hàng để xem đơn vị vận chuyển phù hợp.</p>
+                            <p>Please fill in your delivery address to see available carriers.</p>
                         </div>
 
                         <div class="pvco3-shipping-list" data-shipping-list></div>
@@ -141,14 +141,14 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
 
                     <div class="pvco3-nav">
                         <a class="pvco3-btn pvco3-btn--ghost" href="<?= $cartUrl ?>">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true">
                                 <path d="M15 18 9 12l6-6"/>
                             </svg>
-                            Quay lại
+                            Back to cart
                         </a>
                         <button type="button" class="pvco3-btn pvco3-btn--primary" data-step-next="2">
-                            Tiếp theo
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            Continue
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true">
                                 <path d="M9 6l6 6-6 6"/>
                             </svg>
                         </button>
@@ -157,25 +157,25 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
 
                 <div class="pvco3-panel" data-step-panel="2">
                     <div class="pvco3-card">
-                        <h2 class="pvco3-card-title">Chọn phương thức thanh toán</h2>
+                        <h2 class="pvco3-card-title">Select payment method</h2>
 
                         <div class="pvco3-tabstrip" role="tablist">
                             <button type="button" class="pvco3-tab is-active" data-pay-tab="card">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" aria-hidden="true">
                                     <rect x="3" y="5" width="18" height="14" rx="2"/>
                                     <path d="M3 10h18"/>
                                 </svg>
-                                <span>Thẻ</span>
+                                <span>Card</span>
                             </button>
                             <button type="button" class="pvco3-tab" data-pay-tab="wallet">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" aria-hidden="true">
                                     <rect x="7" y="2" width="10" height="20" rx="2"/>
                                     <path d="M11 18h2"/>
                                 </svg>
-                                <span>Ví điện tử</span>
+                                <span>E-wallet</span>
                             </button>
                             <button type="button" class="pvco3-tab" data-pay-tab="bank">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" aria-hidden="true">
                                     <path d="m3 9 9-5 9 5"/>
                                     <path d="M5 10h14"/>
                                     <path d="M7 10v7"/>
@@ -183,19 +183,19 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
                                     <path d="M17 10v7"/>
                                     <path d="M4 19h16"/>
                                 </svg>
-                                <span>Ngân hàng</span>
+                                <span>Bank</span>
                             </button>
                         </div>
 
                         <div class="pvco3-payment-panel is-active" data-pay-panel="card">
-                            <button type="button" class="pvco3-link-btn" data-toggle-saved-cards>Sử dụng thẻ đã lưu</button>
+                            <button type="button" class="pvco3-link-btn" data-toggle-saved-cards>Use saved card</button>
 
                             <div class="pvco3-saved-cards" data-saved-cards hidden>
                                 <button type="button" class="pvco3-saved-card" data-saved-card="visa-4242">
                                     <span class="pvco3-saved-card-chip">VI</span>
                                     <span class="pvco3-saved-card-copy">
                                         <strong>Visa •••• 4242</strong>
-                                        <small>Hết hạn 12/25</small>
+                                        <small>Expires 12/25</small>
                                     </span>
                                     <span class="pvco3-saved-card-check">✓</span>
                                 </button>
@@ -203,19 +203,19 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
 
                             <div class="pvco3-field-grid pvco3-field-grid--2">
                                 <label class="pvco3-field pvco3-field--full">
-                                    <span>Số thẻ *</span>
+                                    <span>Card number *</span>
                                     <input type="text" data-field="card_number" placeholder="1234 5678 9012 3456" inputmode="numeric"/>
                                     <small data-error-for="card_number"></small>
                                 </label>
 
                                 <label class="pvco3-field pvco3-field--full">
-                                    <span>Tên chủ thẻ *</span>
+                                    <span>Cardholder name *</span>
                                     <input type="text" data-field="cardholder_name" placeholder="NGUYEN VAN A"/>
                                     <small data-error-for="cardholder_name"></small>
                                 </label>
 
                                 <label class="pvco3-field">
-                                    <span>Hết hạn MM/YY *</span>
+                                    <span>Expiry MM/YY *</span>
                                     <input type="text" data-field="card_expiry" placeholder="12/25" inputmode="numeric"/>
                                     <small data-error-for="card_expiry"></small>
                                 </label>
@@ -229,15 +229,15 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
 
                             <label class="pvco3-check pvco3-check--compact">
                                 <input type="checkbox" data-field="save_card" value="1"/>
-                                <span>Lưu thẻ này cho lần mua sau</span>
+                                <span>Save this card for next purchase</span>
                             </label>
 
                             <div class="pvco3-security">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true">
                                     <rect x="3" y="11" width="18" height="10" rx="2"/>
                                     <path d="M7 11V8a5 5 0 0 1 10 0v3"/>
                                 </svg>
-                                <span>Thanh toán bảo mật với mã hóa SSL 256-bit</span>
+                                <span>Secure payment with 256-bit SSL encryption</span>
                             </div>
                         </div>
 
@@ -247,10 +247,10 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
                                     <span class="pvco3-wallet-logo pvco3-wallet-logo--momo">M</span>
                                     <span class="pvco3-wallet-copy">
                                         <strong>MOMO</strong>
-                                        <small>Ví điện tử hàng đầu Việt Nam</small>
+                                        <small>Vietnam's leading e-wallet</small>
                                         <span class="pvco3-wallet-tags">
-                                            <em>Được xác minh</em>
-                                            <em>Nhanh chóng</em>
+                                            <em>Verified</em>
+                                            <em>Fast</em>
                                         </span>
                                     </span>
                                     <span class="pvco3-wallet-arrow">→</span>
@@ -260,10 +260,10 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
                                     <span class="pvco3-wallet-logo pvco3-wallet-logo--zalopay">Z</span>
                                     <span class="pvco3-wallet-copy">
                                         <strong>ZaloPay</strong>
-                                        <small>Thanh toán qua ứng dụng Zalo</small>
+                                        <small>Pay via the Zalo app</small>
                                         <span class="pvco3-wallet-tags">
-                                            <em>Được xác minh</em>
-                                            <em>Nhanh chóng</em>
+                                            <em>Verified</em>
+                                            <em>Fast</em>
                                         </span>
                                     </span>
                                     <span class="pvco3-wallet-arrow">→</span>
@@ -271,45 +271,45 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
                             </div>
 
                             <div class="pvco3-info-box">
-                                <strong>Lưu ý:</strong> Bạn sẽ được chuyển hướng sang ứng dụng hoặc trang web của MOMO/ZaloPay để hoàn tất thanh toán.
+                                <strong>Note:</strong> You will be redirected to the MOMO/ZaloPay app or website to complete payment.
                             </div>
 
                             <button type="button" class="pvco3-wallet-submit" data-wallet-continue>
-                                Tiếp tục với ví điện tử
+                                Continue with e-wallet
                             </button>
                         </div>
 
                         <div class="pvco3-payment-panel" data-pay-panel="bank">
                             <div class="pvco3-bank-section">
-                                <span class="pvco3-bank-label">Chọn ngân hàng</span>
+                                <span class="pvco3-bank-label">Select bank</span>
                                 <div class="pvco3-bank-grid">
                                     <button type="button" class="pvco3-bank-option is-selected" data-bank-option="vietcombank" data-bank-code="970">
                                         <strong>Vietcombank</strong>
-                                        <small>Mã: 970</small>
+                                        <small>Code: 970</small>
                                     </button>
                                     <button type="button" class="pvco3-bank-option" data-bank-option="techcombank" data-bank-code="980">
                                         <strong>TechcomBank</strong>
-                                        <small>Mã: 980</small>
+                                        <small>Code: 980</small>
                                     </button>
                                     <button type="button" class="pvco3-bank-option" data-bank-option="acb" data-bank-code="963">
                                         <strong>ACB</strong>
-                                        <small>Mã: 963</small>
+                                        <small>Code: 963</small>
                                     </button>
                                     <button type="button" class="pvco3-bank-option" data-bank-option="vpbank" data-bank-code="975">
                                         <strong>VPBank</strong>
-                                        <small>Mã: 975</small>
+                                        <small>Code: 975</small>
                                     </button>
                                 </div>
                             </div>
 
                             <div class="pvco3-transfer-card">
-                                <h3>Thông tin chuyển khoản</h3>
+                                <h3>Bank transfer details</h3>
 
                                 <div class="pvco3-transfer-field">
-                                    <span>Chủ tài khoản</span>
+                                    <span>Account holder</span>
                                     <button type="button" class="pvco3-copy-field" data-copy-source="account_name">
                                         <strong data-bank-account-name>TECHIEWORLD CO., LTD.</strong>
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true">
                                             <rect x="9" y="9" width="11" height="11" rx="2"/>
                                             <path d="M5 15V6a2 2 0 0 1 2-2h9"/>
                                         </svg>
@@ -317,10 +317,10 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
                                 </div>
 
                                 <div class="pvco3-transfer-field">
-                                    <span>Số tài khoản</span>
+                                    <span>Account number</span>
                                     <button type="button" class="pvco3-copy-field" data-copy-source="account_number">
                                         <strong data-bank-account-number>0123 456 789 012</strong>
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true">
                                             <rect x="9" y="9" width="11" height="11" rx="2"/>
                                             <path d="M5 15V6a2 2 0 0 1 2-2h9"/>
                                         </svg>
@@ -328,10 +328,10 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
                                 </div>
 
                                 <div class="pvco3-transfer-field">
-                                    <span>Ngân hàng</span>
+                                    <span>Bank</span>
                                     <button type="button" class="pvco3-copy-field" data-copy-source="bank_name">
                                         <strong data-bank-name>Vietcombank</strong>
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true">
                                             <rect x="9" y="9" width="11" height="11" rx="2"/>
                                             <path d="M5 15V6a2 2 0 0 1 2-2h9"/>
                                         </svg>
@@ -339,10 +339,10 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
                                 </div>
 
                                 <div class="pvco3-transfer-field">
-                                    <span>Mã tham chiếu (ghi vào nội dung chuyển)</span>
+                                    <span>Reference code (use as transfer description)</span>
                                     <button type="button" class="pvco3-copy-field" data-copy-source="transfer_code">
                                         <strong data-bank-transfer-code>TRANSFER-TECHIEWORLD</strong>
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true">
                                             <rect x="9" y="9" width="11" height="11" rx="2"/>
                                             <path d="M5 15V6a2 2 0 0 1 2-2h9"/>
                                         </svg>
@@ -352,8 +352,8 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
 
                             <div class="pvco3-cod-card" data-cod-option>
                                 <div>
-                                    <strong>Thanh toán khi nhận hàng (COD)</strong>
-                                    <span>Thanh toán bằng tiền mặt khi đơn hàng được giao tới bạn.</span>
+                                    <strong>Cash on delivery (COD)</strong>
+                                    <span>Pay in cash when the order is delivered to you.</span>
                                 </div>
                                 <span class="pvco3-cod-check">✓</span>
                             </div>
@@ -364,14 +364,14 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
 
                     <div class="pvco3-nav">
                         <button type="button" class="pvco3-btn pvco3-btn--ghost" data-step-prev="1">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true">
                                 <path d="M15 18 9 12l6-6"/>
                             </svg>
-                            Quay lại
+                            Back
                         </button>
                         <button type="button" class="pvco3-btn pvco3-btn--primary" data-step-next="3">
-                            Tiếp theo
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            Continue
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true">
                                 <path d="M9 6l6 6-6 6"/>
                             </svg>
                         </button>
@@ -380,35 +380,35 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
 
                 <div class="pvco3-panel" data-step-panel="3">
                     <div class="pvco3-card">
-                        <h2 class="pvco3-card-title">Xác nhận đơn hàng</h2>
+                        <h2 class="pvco3-card-title">Review order</h2>
 
                         <div class="pvco3-review-block">
                             <div class="pvco3-review-head">
-                                <h3>Địa chỉ giao hàng</h3>
-                                <button type="button" class="pvco3-edit" data-step-edit="1">Chỉnh sửa</button>
+                                <h3>Shipping address</h3>
+                                <button type="button" class="pvco3-edit" data-step-edit="1">Edit</button>
                             </div>
                             <div class="pvco3-review-copy" data-review-address></div>
                         </div>
 
                         <div class="pvco3-review-block">
                             <div class="pvco3-review-head">
-                                <h3>Phương thức vận chuyển</h3>
-                                <button type="button" class="pvco3-edit" data-step-edit="1">Chỉnh sửa</button>
+                                <h3>Shipping method</h3>
+                                <button type="button" class="pvco3-edit" data-step-edit="1">Edit</button>
                             </div>
                             <div class="pvco3-review-copy" data-review-shipping></div>
                         </div>
 
                         <div class="pvco3-review-block">
                             <div class="pvco3-review-head">
-                                <h3>Phương thức thanh toán</h3>
-                                <button type="button" class="pvco3-edit" data-step-edit="2">Chỉnh sửa</button>
+                                <h3>Payment method</h3>
+                                <button type="button" class="pvco3-edit" data-step-edit="2">Edit</button>
                             </div>
                             <div class="pvco3-review-copy" data-review-payment></div>
                         </div>
 
                         <div class="pvco3-review-block" data-review-note-block hidden>
                             <div class="pvco3-review-head">
-                                <h3>Ghi chú</h3>
+                                <h3>Note</h3>
                             </div>
                             <div class="pvco3-review-copy" data-review-note></div>
                         </div>
@@ -416,18 +416,18 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
 
                     <div class="pvco3-nav">
                         <button type="button" class="pvco3-btn pvco3-btn--ghost" data-step-prev="2">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true">
                                 <path d="M15 18 9 12l6-6"/>
                             </svg>
-                            Quay lại
+                            Back
                         </button>
                         <button type="button" class="pvco3-btn pvco3-btn--primary" data-place-order>
-                            <span class="pvco3-place-label">Xác nhận &amp; thanh toán</span>
+                            <span class="pvco3-place-label">Confirm &amp; pay</span>
                             <span class="pvco3-place-loading" hidden>
                                 <span class="pvco3-spinner pvco3-spinner--sm" aria-hidden="true"></span>
-                                Đang xử lý…
+                                Processing…
                             </span>
-                            <svg class="pvco3-place-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <svg class="pvco3-place-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true">
                                 <path d="M9 6l6 6-6 6"/>
                             </svg>
                         </button>
@@ -437,22 +437,22 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
                 <div class="pvco3-panel" data-step-panel="4">
                     <div class="pvco3-card pvco3-card--success" data-success-state hidden>
                         <div class="pvco3-complete-icon">✓</div>
-                        <h2>Thanh toán thành công</h2>
-                        <p data-success-copy>Đơn hàng của bạn đã được xác nhận thành công.</p>
+                        <h2>Payment successful</h2>
+                        <p data-success-copy>Your order has been confirmed successfully.</p>
                         <div class="pvco3-complete-meta" data-success-meta></div>
                         <div class="pvco3-complete-actions">
-                            <a class="pvco3-btn pvco3-btn--primary" href="<?= $homeUrl ?>">Trang chủ</a>
-                            <a class="pvco3-btn pvco3-btn--ghost" href="<?= $accountUrl ?>">Tài khoản</a>
+                            <a class="pvco3-btn pvco3-btn--primary" href="<?= $homeUrl ?>">Home</a>
+                            <a class="pvco3-btn pvco3-btn--ghost" href="<?= $accountUrl ?>">My account</a>
                         </div>
                     </div>
 
                     <div class="pvco3-card pvco3-card--failure" data-failure-state hidden>
                         <div class="pvco3-complete-icon pvco3-complete-icon--danger">!</div>
-                        <h2>Thanh toán thất bại</h2>
-                        <p data-failure-copy>Đã xảy ra lỗi trong quá trình xử lý thanh toán.</p>
+                        <h2>Payment failed</h2>
+                        <p data-failure-copy>An error occurred while processing your payment.</p>
                         <div class="pvco3-complete-actions">
-                            <button type="button" class="pvco3-btn pvco3-btn--ghost" data-step-edit="2">Thử lại</button>
-                            <a class="pvco3-btn pvco3-btn--primary" href="<?= $cartUrl ?>">Về giỏ hàng</a>
+                            <button type="button" class="pvco3-btn pvco3-btn--ghost" data-step-edit="2">Try again</button>
+                            <a class="pvco3-btn pvco3-btn--primary" href="<?= $cartUrl ?>">Back to cart</a>
                         </div>
                     </div>
                 </div>
@@ -460,29 +460,29 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
 
             <aside class="pvco3-sidebar" data-summary-sidebar>
                 <div class="pvco3-summary-card">
-                    <h2 class="pvco3-summary-title">Đơn hàng của bạn</h2>
+                    <h2 class="pvco3-summary-title">Your order</h2>
 
                     <div class="pvco3-summary-items" data-summary-items></div>
 
                     <div class="pvco3-summary-breakdown">
                         <div class="pvco3-summary-row">
-                            <span>Tạm tính</span>
+                            <span>Subtotal</span>
                             <strong data-summary-subtotal>—</strong>
                         </div>
                         <div class="pvco3-summary-row">
-                            <span>Vận chuyển</span>
+                            <span>Shipping</span>
                             <strong data-summary-shipping>—</strong>
                         </div>
                     </div>
 
                     <div class="pvco3-summary-total">
-                        <span>Tổng cộng</span>
+                        <span>Grand total</span>
                         <strong data-summary-grand>—</strong>
                     </div>
 
                     <div class="pvco3-summary-foot">
-                        <p><strong data-summary-count-text>0</strong> sản phẩm trong đơn</p>
-                        <p>Vận chuyển: <strong data-summary-shipping-name>Chưa chọn</strong></p>
+                        <p><strong data-summary-count-text>0</strong> items in order</p>
+                        <p>Shipping: <strong data-summary-shipping-name>Not selected</strong></p>
                     </div>
                 </div>
             </aside>

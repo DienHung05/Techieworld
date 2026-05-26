@@ -26,11 +26,11 @@ $couponCode = (string) $block->getCouponCode();
                    name="coupon_code"
                    data-promo-input
                    value="<?= $block->escapeHtmlAttr($couponCode) ?>"
-                   placeholder="<?= $block->escapeHtmlAttr(__('Nhập mã khuyến mãi')) ?>"/>
+                   placeholder="<?= $block->escapeHtmlAttr(__('Enter promo code')) ?>"/>
             <button class="action apply pvcart-coupon-button"
                     type="button"
                     data-promo-apply>
-                <span><?= $block->escapeHtml(__('Dùng')) ?></span>
+                <span><?= $block->escapeHtml(__('Apply')) ?></span>
             </button>
         </div>
 
@@ -40,23 +40,23 @@ $couponCode = (string) $block->getCouponCode();
             <div class="pvcart-coupon-applied-copy">
                 <p class="pvcart-coupon-applied-code" data-promo-applied-code>
                     <?php if ($hasCouponCode): ?>
-                        <?= $block->escapeHtml(__('Mã: %1', strtoupper($couponCode))) ?>
+                        <?= $block->escapeHtml(__('Code: %1', strtoupper($couponCode))) ?>
                     <?php endif; ?>
                 </p>
                 <p class="pvcart-coupon-applied-note" data-promo-applied-note>
                     <?php if ($hasCouponCode): ?>
-                        <?= $block->escapeHtml(__('Khuyến mãi đã được áp dụng cho đơn hàng của bạn')) ?>
+                        <?= $block->escapeHtml(__('Promo code has been applied to your order')) ?>
                     <?php endif; ?>
                 </p>
                 <p class="pvcart-coupon-hint pvcart-coupon-hint--inside">
-                    <?= $block->escapeHtml(__('Gợi ý: SAVE10, SAVE20, SAVE50K')) ?>
+                    <?= $block->escapeHtml(__('Try: SAVE10, SAVE20, SAVE50K')) ?>
                 </p>
             </div>
             <button type="button"
                     class="action cancel pvcart-coupon-remove pvcart-coupon-remove--card"
                     data-promo-remove-card
                     <?= $hasCouponCode ? '' : 'hidden="hidden"' ?>>
-                <span><?= $block->escapeHtml(__('Xóa')) ?></span>
+                <span><?= $block->escapeHtml(__('Remove')) ?></span>
             </button>
         </div>
 
@@ -64,7 +64,7 @@ $couponCode = (string) $block->getCouponCode();
            data-promo-feedback
            <?= $hasCouponCode ? '' : 'hidden="hidden"' ?>>
             <?php if ($hasCouponCode): ?>
-                <?= $block->escapeHtml(__('Mã %1 đang được áp dụng.', strtoupper($couponCode))) ?>
+                <?= $block->escapeHtml(__('Code %1 is applied.', strtoupper($couponCode))) ?>
             <?php endif; ?>
         </p>
         <?= /* @noEscape */ $block->getChildHtml('captcha') ?>

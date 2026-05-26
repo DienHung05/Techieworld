@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="pvmodern" translate="label" sortOrder="200">
+            <label>PVModern</label>
+        </tab>
+        <section id="pvmodern" translate="label" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label>PVModern Settings</label>
+            <tab>pvmodern</tab>
+            <resource>YourVendor_PVModern::config</resource>
+            <group id="github_oauth" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>GitHub OAuth Login</label>
+                <field id="client_id" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Client ID</label>
+                    <comment>From your GitHub OAuth App settings (github.com → Settings → Developer settings → OAuth Apps)</comment>
+                </field>
+                <field id="client_secret" translate="label comment" type="obscure" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Client Secret</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment>Keep this secret. Your GitHub OAuth App client secret.</comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

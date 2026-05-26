@@ -22,46 +22,46 @@ $ordersUrl = $block->escapeUrl($block->getUrl('sales/order/history'));
     <script type="application/json" id="pvcheckout-bootstrap"><?= /* @noEscape */ $bootstrapJson ?></script>
 
     <div class="checkout-container">
-        <div class="checkout-stepper" data-checkout-stepper aria-label="<?= $block->escapeHtmlAttr(__('Các bước thanh toán')) ?>">
+        <div class="checkout-stepper" data-checkout-stepper aria-label="<?= $block->escapeHtmlAttr(__('Checkout steps')) ?>">
             <button type="button" class="stepper-item is-active" data-step-target="1">
                 <span class="stepper-circle" data-step-circle="1">1</span>
                 <span class="stepper-copy">
-                    <span class="stepper-title">Thông tin nhận hàng</span>
-                    <span class="stepper-subtitle">Địa chỉ &amp; bên vận chuyển</span>
+                    <span class="stepper-title">Delivery info</span>
+                    <span class="stepper-subtitle">Address &amp; carrier</span>
                 </span>
             </button>
             <button type="button" class="stepper-item is-disabled" data-step-target="2">
                 <span class="stepper-circle" data-step-circle="2">2</span>
                 <span class="stepper-copy">
-                    <span class="stepper-title">Phương thức thanh toán</span>
+                    <span class="stepper-title">Payment method</span>
                     <span class="stepper-subtitle">COD / Bank / Card / Wallet</span>
                 </span>
             </button>
             <button type="button" class="stepper-item is-disabled" data-step-target="3">
                 <span class="stepper-circle" data-step-circle="3">3</span>
                 <span class="stepper-copy">
-                    <span class="stepper-title">Xác nhận</span>
-                    <span class="stepper-subtitle">Kiểm tra đơn hàng</span>
+                    <span class="stepper-title">Review</span>
+                    <span class="stepper-subtitle">Check your order</span>
                 </span>
             </button>
             <button type="button" class="stepper-item is-disabled" data-step-target="4">
                 <span class="stepper-circle" data-step-circle="4">4</span>
                 <span class="stepper-copy">
-                    <span class="stepper-title">Xác nhận thanh toán</span>
+                    <span class="stepper-title">Confirm payment</span>
                     <span class="stepper-subtitle">QR / payment URL</span>
                 </span>
             </button>
             <button type="button" class="stepper-item is-disabled" data-step-target="5">
                 <span class="stepper-circle" data-step-circle="5">5</span>
                 <span class="stepper-copy">
-                    <span class="stepper-title">Hoàn thành</span>
-                    <span class="stepper-subtitle">Đơn hàng thành công</span>
+                    <span class="stepper-title">Complete</span>
+                    <span class="stepper-subtitle">Order placed</span>
                 </span>
             </button>
             <div class="checkout-stepper-mobile">
-                <p data-mobile-step-count>Bước 1/5</p>
-                <h2 data-mobile-step-title>Thông tin nhận hàng</h2>
-                <span data-mobile-step-subtitle>Địa chỉ &amp; bên vận chuyển</span>
+                <p data-mobile-step-count>Step 1/5</p>
+                <h2 data-mobile-step-title>Delivery info</h2>
+                <span data-mobile-step-subtitle>Address &amp; carrier</span>
                 <div class="checkout-stepper-bar"><span data-mobile-step-progress style="width:20%"></span></div>
             </div>
             <div class="checkout-progress-track" aria-hidden="true">
@@ -74,15 +74,15 @@ $ordersUrl = $block->escapeUrl($block->getUrl('sales/order/history'));
         <div class="checkout-layout" data-checkout-layout>
             <div class="checkout-main">
                 <section class="checkout-card step-content" data-checkout-panel="1">
-                    <h2 class="checkout-card-title">Thông tin giao hàng</h2>
+                    <h2 class="checkout-card-title">Shipping information</h2>
                     <div class="shipping-form-grid">
                         <div class="form-field">
-                            <label class="form-label" for="pv-full-name">Họ và tên <span class="form-required">*</span></label>
-                            <input class="form-input" id="pv-full-name" type="text" data-field="fullName" autocomplete="name" placeholder="Nguyễn Văn A"/>
+                            <label class="form-label" for="pv-full-name">Full name <span class="form-required">*</span></label>
+                            <input class="form-input" id="pv-full-name" type="text" data-field="fullName" autocomplete="name" placeholder="John Smith"/>
                             <small class="form-error" data-error="fullName"></small>
                         </div>
                         <div class="form-field">
-                            <label class="form-label" for="pv-phone">Số điện thoại <span class="form-required">*</span></label>
+                            <label class="form-label" for="pv-phone">Phone number <span class="form-required">*</span></label>
                             <input class="form-input" id="pv-phone" type="tel" data-field="phone" autocomplete="tel" placeholder="0912345678"/>
                             <small class="form-error" data-error="phone"></small>
                         </div>
@@ -92,76 +92,76 @@ $ordersUrl = $block->escapeUrl($block->getUrl('sales/order/history'));
                             <small class="form-error" data-error="email"></small>
                         </div>
                         <div class="form-field form-field-full">
-                            <label class="form-label" for="pv-address">Địa chỉ <span class="form-required">*</span></label>
-                            <input class="form-input" id="pv-address" type="text" data-field="address" autocomplete="street-address" placeholder="123 Đường Nguyễn Huệ"/>
+                            <label class="form-label" for="pv-address">Address <span class="form-required">*</span></label>
+                            <input class="form-input" id="pv-address" type="text" data-field="address" autocomplete="street-address" placeholder="123 Main Street"/>
                             <small class="form-error" data-error="address"></small>
                         </div>
                         <div class="form-field form-field-full">
-                            <label class="form-label" for="pv-address2">Địa chỉ thêm (tùy chọn)</label>
-                            <input class="form-input" id="pv-address2" type="text" data-field="address2" placeholder="Căn hộ, tầng, v.v..."/>
+                            <label class="form-label" for="pv-address2">Additional address (optional)</label>
+                            <input class="form-input" id="pv-address2" type="text" data-field="address2" placeholder="Apartment, floor, etc..."/>
                         </div>
                         <div class="form-field">
-                            <label class="form-label" for="pv-city">Tỉnh/Thành phố <span class="form-required">*</span></label>
+                            <label class="form-label" for="pv-city">Province/City <span class="form-required">*</span></label>
                             <select class="form-select" id="pv-city" data-field="city" data-city-select>
-                                <option value="">Chọn tỉnh/thành phố</option>
+                                <option value="">Select province/city</option>
                             </select>
                             <small class="form-error" data-error="city"></small>
                         </div>
                         <div class="form-field">
-                            <label class="form-label" for="pv-district">Quận/Huyện <span class="form-required">*</span></label>
+                            <label class="form-label" for="pv-district">District <span class="form-required">*</span></label>
                             <select class="form-select" id="pv-district" data-field="district" data-district-select disabled>
-                                <option value="">Chọn tỉnh/thành phố trước</option>
+                                <option value="">Select province/city first</option>
                             </select>
                             <small class="form-error" data-error="district"></small>
                         </div>
                         <div class="form-field">
-                            <label class="form-label" for="pv-ward">Phường/Xã <span class="form-required">*</span></label>
+                            <label class="form-label" for="pv-ward">Ward <span class="form-required">*</span></label>
                             <select class="form-select" id="pv-ward" data-field="ward" data-ward-select disabled>
-                                <option value="">Chọn quận/huyện trước</option>
+                                <option value="">Select district first</option>
                             </select>
                             <small class="form-error" data-error="ward"></small>
                         </div>
                         <div class="form-field form-field-full">
-                            <label class="form-label" for="pv-note">Ghi chú đặc biệt (tùy chọn)</label>
-                            <textarea class="form-textarea" id="pv-note" data-field="note" placeholder="Ví dụ: Để tại cửa, không cần ký nhận"></textarea>
+                            <label class="form-label" for="pv-note">Special note (optional)</label>
+                            <textarea class="form-textarea" id="pv-note" data-field="note" placeholder="e.g. Leave at the door, no signature required"></textarea>
                         </div>
                         <div class="default-address-row">
                             <input type="checkbox" id="pv-save-default" data-field="saveAsDefault"/>
-                            <label for="pv-save-default">Lưu làm địa chỉ mặc định</label>
+                            <label for="pv-save-default">Save as default address</label>
                         </div>
                     </div>
 
                     <div class="shipping-method-section" id="pv-shipping-method-section">
-                        <h3 class="checkout-section-title">Chọn bên vận chuyển</h3>
-                        <p class="checkout-section-subtitle">Phí vận chuyển thay đổi theo vị trí giao hàng và carrier bạn chọn.</p>
+                        <h3 class="checkout-section-title">Select shipping carrier</h3>
+                        <p class="checkout-section-subtitle">Shipping fee varies based on your delivery location and chosen carrier.</p>
                         <div class="shipping-method-list" data-shipping-method-list>
                             <button type="button" class="shipping-method-card" data-shipping-method="pvmodernshipping_spx">
                                 <span class="shipping-radio"></span>
                                 <span>
                                     <span class="shipping-method-name">Shopee Express</span>
-                                    <span class="shipping-method-description">Giao hàng trong 2-3 ngày, toàn quốc</span>
-                                    <span class="shipping-method-eta">Dự kiến: 27/04/2026 (2 ngày)</span>
-                                    <span class="shipping-method-note">Giá nội thành/gần shop</span>
+                                    <span class="shipping-method-description">Delivery in 2-3 days, nationwide</span>
+                                    <span class="shipping-method-eta">Est.: 27/04/2026 (2 days)</span>
+                                    <span class="shipping-method-note">Urban/nearby price</span>
                                 </span>
                                 <span class="shipping-method-price">25.000 ₫</span>
                             </button>
                             <button type="button" class="shipping-method-card" data-shipping-method="pvmodernshipping_ghn">
                                 <span class="shipping-radio"></span>
                                 <span>
-                                    <span class="shipping-method-name">Giao Hàng Nhanh</span>
-                                    <span class="shipping-method-description">Giao hàng nhanh 1-2 ngày</span>
-                                    <span class="shipping-method-eta">Dự kiến: 26/04/2026 (1 ngày)</span>
-                                    <span class="shipping-method-note">Giá nội thành/gần shop</span>
+                                    <span class="shipping-method-name">GHN Express</span>
+                                    <span class="shipping-method-description">Fast delivery 1-2 days</span>
+                                    <span class="shipping-method-eta">Est.: 26/04/2026 (1 day)</span>
+                                    <span class="shipping-method-note">Urban/nearby price</span>
                                 </span>
                                 <span class="shipping-method-price">35.000 ₫</span>
                             </button>
                             <button type="button" class="shipping-method-card" data-shipping-method="pvmodernshipping_ghtk">
                                 <span class="shipping-radio"></span>
                                 <span>
-                                    <span class="shipping-method-name">Giao Hàng Tiết Kiệm</span>
-                                    <span class="shipping-method-description">Giao hàng tiết kiệm 3-5 ngày</span>
-                                    <span class="shipping-method-eta">Dự kiến: 30/04/2026 (5 ngày)</span>
-                                    <span class="shipping-method-note">Giá nội thành/gần shop</span>
+                                    <span class="shipping-method-name">GHTK Economy</span>
+                                    <span class="shipping-method-description">Economy delivery 3-5 days</span>
+                                    <span class="shipping-method-eta">Est.: 30/04/2026 (5 days)</span>
+                                    <span class="shipping-method-note">Urban/nearby price</span>
                                 </span>
                                 <span class="shipping-method-price">15.000 ₫</span>
                             </button>
@@ -169,34 +169,34 @@ $ordersUrl = $block->escapeUrl($block->getUrl('sales/order/history'));
                         <small class="form-error" data-error="shippingMethod"></small>
                     </div>
                     <div class="checkout-actions">
-                        <a class="btn btn-secondary" href="<?= $cartUrl ?>">Quay lại</a>
-                        <button type="button" class="btn btn-primary" data-next-step="2">Tiếp theo</button>
+                        <a class="btn btn-secondary" href="<?= $cartUrl ?>">Back to cart</a>
+                        <button type="button" class="btn btn-primary" data-next-step="2">Continue</button>
                     </div>
                 </section>
 
                 <section class="checkout-card step-content" data-checkout-panel="2" hidden>
-                    <h2 class="checkout-card-title">Phương thức thanh toán</h2>
+                    <h2 class="checkout-card-title">Payment method</h2>
                     <div class="payment-method-list" data-payment-method-list></div>
                     <small class="form-error" data-error="paymentMethod"></small>
                     <div class="card-payment-form" data-card-payment-form hidden>
                         <div class="form-field form-field-full">
                             <div class="payment-detail-header">
-                                <strong>Thông tin thẻ</strong>
+                                <strong>Card details</strong>
                                 <span>SSL secured gateway</span>
                             </div>
                         </div>
                         <div class="form-field form-field-full">
-                            <label class="form-label" for="pv-card-holder">Tên chủ thẻ</label>
+                            <label class="form-label" for="pv-card-holder">Cardholder name</label>
                             <input class="form-input" id="pv-card-holder" type="text" data-card-field="holderName" placeholder="NGUYEN VAN A"/>
                             <small class="form-error" data-error="cardHolder"></small>
                         </div>
                         <div class="form-field form-field-full">
-                            <label class="form-label" for="pv-card-number">Số thẻ</label>
+                            <label class="form-label" for="pv-card-number">Card number</label>
                             <input class="form-input" id="pv-card-number" type="text" data-card-field="number" placeholder="1234 5678 9012 3456"/>
                             <small class="form-error" data-error="cardNumber"></small>
                         </div>
                         <div class="form-field">
-                            <label class="form-label" for="pv-card-expiry">Ngày hết hạn</label>
+                            <label class="form-label" for="pv-card-expiry">Expiry date</label>
                             <input class="form-input" id="pv-card-expiry" type="text" data-card-field="expiry" placeholder="12/25"/>
                             <small class="form-error" data-error="cardExpiry"></small>
                         </div>
@@ -208,37 +208,37 @@ $ordersUrl = $block->escapeUrl($block->getUrl('sales/order/history'));
                     </div>
                     <div class="bank-payment-panel" data-bank-payment-panel hidden>
                         <div class="payment-detail-header">
-                            <strong>Thông tin chuyển khoản</strong>
-                            <span>Chuyển khoản thủ công sau khi đặt hàng</span>
+                            <strong>Bank transfer details</strong>
+                            <span>Manual transfer after placing the order</span>
                         </div>
                         <div class="bank-grid" data-bank-grid></div>
                         <div class="transfer-box">
                             <div class="transfer-row">
-                                <span>Chủ tài khoản</span>
+                                <span>Account holder</span>
                                 <strong data-copy-value="TECHIEWORLD VIETNAM LTD">TECHIEWORLD VIETNAM LTD</strong>
                                 <button type="button" class="copy-button" data-copy-button data-copy-value="TECHIEWORLD VIETNAM LTD">Copy</button>
                             </div>
                             <div class="transfer-row">
-                                <span>Số tài khoản</span>
+                                <span>Account number</span>
                                 <strong data-copy-value="123456789012">123456789012</strong>
                                 <button type="button" class="copy-button" data-copy-button data-copy-value="123456789012">Copy</button>
                             </div>
                             <div class="transfer-row">
-                                <span>Ngân hàng</span>
+                                <span>Bank</span>
                                 <strong data-selected-bank-label>Vietcombank</strong>
                             </div>
                             <div class="transfer-row">
-                                <span>Nội dung chuyển khoản</span>
+                                <span>Transfer description</span>
                                 <strong data-transfer-reference>TECHIE-ORDER</strong>
                                 <button type="button" class="copy-button" data-copy-button data-copy-source="[data-transfer-reference]">Copy</button>
                             </div>
-                            <p class="payment-note">Sau khi đặt hàng, hệ thống sẽ giữ đơn ở trạng thái chờ thanh toán để nhân viên đối soát giao dịch.</p>
+                            <p class="payment-note">After placing the order, the system will hold it in a pending-payment status while our team verifies the transaction.</p>
                         </div>
                     </div>
                     <div class="wallet-payment-panel" data-wallet-payment-panel hidden>
                         <div class="payment-detail-header">
-                            <strong>Ví điện tử</strong>
-                            <span>Backend tạo payment URL MoMo/VNPay khi có credentials</span>
+                            <strong>E-wallet</strong>
+                            <span>Backend generates MoMo/VNPay payment URL when credentials are configured</span>
                         </div>
                         <div class="wallet-grid" data-wallet-grid></div>
                         <div class="wallet-qr-box">
@@ -247,38 +247,38 @@ $ordersUrl = $block->escapeUrl($block->getUrl('sales/order/history'));
                             </div>
                             <div>
                                 <strong data-wallet-title>MoMo</strong>
-                                <p>Quét mã hoặc mở ứng dụng để thanh toán. Link thật sẽ được tạo từ backend gateway khi cấu hình API.</p>
-                                <button type="button" class="btn btn-secondary wallet-launch" data-wallet-launch>Mở ứng dụng thanh toán</button>
+                                <p>Scan the QR or open the app to pay. A real payment link will be generated from the backend gateway once the API is configured.</p>
+                                <button type="button" class="btn btn-secondary wallet-launch" data-wallet-launch>Open payment app</button>
                             </div>
                         </div>
                     </div>
                     <div class="checkout-actions">
-                        <button type="button" class="btn btn-secondary" data-prev-step="1">Quay lại</button>
-                        <button type="button" class="btn btn-primary" data-next-step="3">Tiếp theo</button>
+                        <button type="button" class="btn btn-secondary" data-prev-step="1">Back</button>
+                        <button type="button" class="btn btn-primary" data-next-step="3">Continue</button>
                     </div>
                 </section>
 
                 <section class="checkout-card step-content" data-checkout-panel="3" hidden>
-                    <h2 class="checkout-card-title">Kiểm tra đơn hàng</h2>
+                    <h2 class="checkout-card-title">Review order</h2>
                     <div data-review-alert></div>
                     <div class="review-section-list" data-review-list></div>
                     <div class="checkout-actions">
-                        <button type="button" class="btn btn-secondary" data-prev-step="2">Quay lại</button>
+                        <button type="button" class="btn btn-secondary" data-prev-step="2">Back</button>
                         <button type="button" class="btn btn-primary" data-next-step="4">
-                            <span>Tiếp tục thanh toán</span>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                            <span>Continue to payment</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                         </button>
                     </div>
                 </section>
 
                 <section class="checkout-card step-content" data-checkout-panel="4" hidden>
-                    <h2 class="checkout-card-title">Xác nhận thanh toán</h2>
+                    <h2 class="checkout-card-title">Confirm payment</h2>
                     <div class="payment-confirmation" data-payment-confirmation></div>
                     <div class="checkout-actions">
-                        <button type="button" class="btn btn-secondary" data-prev-step="3">Quay lại</button>
-                        <button type="button" class="btn btn-secondary" data-check-payment-status hidden>Kiểm tra lại trạng thái</button>
+                        <button type="button" class="btn btn-secondary" data-prev-step="3">Back</button>
+                        <button type="button" class="btn btn-secondary" data-check-payment-status hidden>Re-check status</button>
                         <button type="button" class="btn btn-primary" data-place-order>
-                            <span data-place-order-label>Tạo thanh toán</span>
+                            <span data-place-order-label>Place order</span>
                             <span class="spinner" data-place-order-spinner hidden></span>
                         </button>
                     </div>
@@ -286,41 +286,41 @@ $ordersUrl = $block->escapeUrl($block->getUrl('sales/order/history'));
             </div>
 
             <aside class="checkout-summary-card" data-checkout-summary>
-                <h2 class="checkout-summary-title">Đơn hàng của bạn</h2>
+                <h2 class="checkout-summary-title">Your order</h2>
                 <div class="checkout-summary-items" data-summary-items></div>
                 <div class="checkout-summary-divider"></div>
                 <div class="checkout-summary-row">
-                    <span>Tạm tính</span>
+                    <span>Subtotal</span>
                     <strong class="checkout-summary-row-value" data-summary-subtotal>—</strong>
                 </div>
                 <div class="checkout-summary-row" data-summary-shipping-row hidden>
-                    <span>Phí vận chuyển</span>
+                    <span>Shipping fee</span>
                     <strong class="checkout-summary-row-value" data-summary-shipping>—</strong>
                 </div>
                 <div class="checkout-summary-row is-total">
-                    <span>Tổng cộng</span>
+                    <span>Grand total</span>
                     <strong class="checkout-summary-row-value" data-summary-total>—</strong>
                 </div>
                 <div class="checkout-summary-footer">
-                    <p><strong data-summary-count>0</strong> sản phẩm trong đơn</p>
-                    <p data-summary-carrier-row hidden>Vận chuyển: <strong data-summary-carrier></strong></p>
+                    <p><strong data-summary-count>0</strong> items in order</p>
+                    <p data-summary-carrier-row hidden>Shipping: <strong data-summary-carrier></strong></p>
                 </div>
             </aside>
         </div>
 
         <section class="complete-card" data-checkout-complete hidden>
             <div class="complete-icon">✓</div>
-            <h1 class="complete-title">Đơn hàng thành công</h1>
-            <p class="complete-description">Cảm ơn bạn đã mua hàng. Đơn hàng của bạn đã được ghi nhận và đang chờ xử lý.</p>
+            <h1 class="complete-title">Order placed!</h1>
+            <p class="complete-description">Thank you for your purchase. Your order has been recorded and is awaiting processing.</p>
             <div class="order-id-pill" data-complete-order-id>#SHOP-000000</div>
             <div class="complete-summary-box" data-complete-summary></div>
             <div class="complete-actions">
-                <a class="btn btn-primary" href="<?= $homeUrl ?>">Tiếp tục mua sắm</a>
+                <a class="btn btn-primary" href="<?= $homeUrl ?>">Continue shopping</a>
                 <button class="btn btn-secondary pvco-track-btn" type="button" data-complete-track>
                     <span class="pvco-track-icon" aria-hidden="true">⌖</span>
-                    Theo dõi đơn hàng
+                    Track order
                 </button>
-                <a class="btn btn-secondary" href="<?= $ordersUrl ?>">Xem chi tiết đơn hàng</a>
+                <a class="btn btn-secondary" href="<?= $ordersUrl ?>">View order details</a>
             </div>
         </section>
     </div>

@@ -3,10 +3,12 @@
 $pendingCount  = $block->countByStatus('pending_review');
 $paidCount     = $block->countByStatus('paid');
 $totalCount    = $block->countAll();
-$approveUrl    = $block->escapeUrl($block->getApproveUrl());
-$rejectUrl     = $block->escapeUrl($block->getRejectUrl());
-$ordersJsonUrl = $block->escapeUrl($block->getOrdersJsonUrl());
-$formKey       = $block->escapeHtmlAttr($block->getFormKey());
+$approveUrl         = $block->escapeUrl($block->getApproveUrl());
+$rejectUrl          = $block->escapeUrl($block->getRejectUrl());
+$ordersJsonUrl      = $block->escapeUrl($block->getOrdersJsonUrl());
+$simulateWebhookUrl = $block->escapeUrl($block->getSimulateWebhookUrl());
+$isMockMode         = $block->isMockModeEnabled();
+$formKey            = $block->escapeHtmlAttr($block->getFormKey());
 ?>
 <style>
 /* ── PVModern Payment Dashboard ── */
@@ -66,6 +68,8 @@ $formKey       = $block->escapeHtmlAttr($block->getFormKey());
 .pva-btn-detail{padding:5px 12px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:5px;color:#475569;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
 .pva-btn-detail:hover{background:#e2e8f0;color:#1e293b}
 .pva-btn-row{display:flex;gap:5px;flex-wrap:nowrap}
+.pva-btn-simulate{padding:5px 12px;background:#7c3aed;border:none;border-radius:5px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s;white-space:nowrap}
+.pva-btn-simulate:hover{background:#6d28d9}
 /* Loading */
 .pva-loading{text-align:center;padding:60px 20px;color:#94a3b8}
 .pva-spinner{display:inline-block;width:24px;height:24px;border:3px solid #e2e8f0;border-top-color:#2563eb;border-radius:50%;animation:spin .65s linear infinite;vertical-align:middle;margin-right:8px}
@@ -334,10 +338,12 @@ td .amt{font-weight:700;color:#16a34a}
 (function() {
 'use strict';
 
-var APPROVE_URL   = '<?= /* @noEscape */ $approveUrl ?>';
-var REJECT_URL    = '<?= /* @noEscape */ $rejectUrl ?>';
-var ORDERS_URL    = '<?= /* @noEscape */ $ordersJsonUrl ?>';
-var FORM_KEY      = '<?= /* @noEscape */ $formKey ?>';
+var APPROVE_URL       = '<?= /* @noEscape */ $approveUrl ?>';
+var REJECT_URL        = '<?= /* @noEscape */ $rejectUrl ?>';
+var ORDERS_URL        = '<?= /* @noEscape */ $ordersJsonUrl ?>';
+var SIMULATE_URL      = '<?= /* @noEscape */ $simulateWebhookUrl ?>';
+var IS_MOCK_MODE      = <?= $isMockMode ? 'true' : 'false' ?>;
+var FORM_KEY          = '<?= /* @noEscape */ $formKey ?>';
 var SCREENSHOT_BASE = '<?= /* @noEscape */ rtrim($block->escapeUrl($block->getUrl('pvmodern_payments/payments/screenshot')), '/') ?>';
 
 var pvCurrentTab    = 'pending_review';
@@ -459,8 +465,9 @@ function renderTable(orders) {
       : '<span class="pva-no-img">Chưa có ảnh</span>';
     var canAct   = (o.payment_status === 'pending_review' || o.payment_status === 'pending');
     var isPaid   = o.payment_status === 'paid';
-    var btnApprove = canAct ? '<button class="pva-btn-approve" onclick="pvQuickApprove(' + o.id + ')">✓ Duyệt</button>' : '';
-    var btnReject  = canAct ? '<button class="pva-btn-reject" onclick="pvQuickReject(' + o.id + ')">✕</button>' : '';
+    var btnApprove  = canAct ? '<button class="pva-btn-approve" onclick="pvQuickApprove(' + o.id + ')">✓ Duyệt</button>' : '';
+    var btnReject   = canAct ? '<button class="pva-btn-reject" onclick="pvQuickReject(' + o.id + ')">✕</button>' : '';
+    var btnSimulate = (IS_MOCK_MODE && !isPaid) ? '<button class="pva-btn-simulate" onclick="pvSimulateWebhook(' + o.id + ')" title="Simulate Casso webhook (sandbox)">⚡ Sim</button>' : '';
 
     return '<tr id="pvRow' + o.id + '">'
       + '<td><input type="checkbox" class="pv-row-chk" data-id="' + esc(o.id) + '"></td>'
@@ -471,7 +478,7 @@ function renderTable(orders) {
       + '<td>' + imgHtml + '</td>'
       + '<td style="font-size:12px;color:#64748b">' + esc(timeAgo(o.created_at)) + '</td>'
       + '<td>' + statusBadge(o.payment_status) + '</td>'
-      + '<td><div class="pva-btn-row"><button class="pva-btn-detail" onclick="pvOpenModal(' + o.id + ')">👁 Chi tiết</button>' + btnApprove + btnReject + '</div></td>'
+      + '<td><div class="pva-btn-row"><button class="pva-btn-detail" onclick="pvOpenModal(' + o.id + ')">👁 Chi tiết</button>' + btnApprove + btnReject + btnSimulate + '</div></td>'
       + '</tr>';
   }).join('');
 
@@ -548,6 +555,27 @@ function pvQuickApprove(orderId) {
 function pvQuickReject(orderId) {
   var note = prompt('Lý do từ chối (tùy chọn):') || '';
   pvDoAction(orderId, 'reject', note, null);
+}
+
+function pvSimulateWebhook(orderId) {
+  if (!confirm('Simulate Casso webhook for order #' + orderId + '?\nThis will mark the order as paid (sandbox only).')) return;
+  var url = SIMULATE_URL + (SIMULATE_URL.indexOf('?') >= 0 ? '&' : '?') + 'form_key=' + encodeURIComponent(FORM_KEY);
+  fetch(url, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+    body: JSON.stringify({pv_order_id: orderId, form_key: FORM_KEY})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    if (data.success) {
+      toast('⚡ Simulated! Status: ' + (data.payment_status || '?'), 'ok');
+      pvLoadOrders();
+    } else {
+      toast('Simulate failed: ' + (data.message || 'Unknown error'), 'err');
+    }
+  })
+  .catch(function(err){ toast('Lỗi: ' + (err.message || 'Request failed'), 'err'); });
 }
 
 function pvDoAction(orderId, action, note, cb) {
@@ -632,9 +660,10 @@ window.pvOpenModal   = pvOpenModal;
 window.pvCloseModal  = pvCloseModal;
 window.pvToggleCheck = pvToggleCheck;
 window.pvModalAction = pvModalAction;
-window.pvQuickApprove = pvQuickApprove;
-window.pvQuickReject  = pvQuickReject;
-window.pvLoadOrders   = pvLoadOrders;
+window.pvQuickApprove    = pvQuickApprove;
+window.pvQuickReject     = pvQuickReject;
+window.pvSimulateWebhook = pvSimulateWebhook;
+window.pvLoadOrders      = pvLoadOrders;
 
 })();
 </script>

@@ -1,0 +1,70 @@
+# =====================================================================
+#  PVModern Magento 2 — .dockerignore
+# =====================================================================
+#  Excludes from the build context to keep the image lean. The COPY . .
+#  in the Dockerfile honors this file.
+# =====================================================================
+
+# Mutable runtime data — volumes own these at runtime
+var/
+generated/
+pub/static/frontend/*
+pub/static/_cache/
+pub/static/_requirejs/
+pub/static/deployed_version.txt
+pub/static/adminhtml/
+pub/media/captcha/
+pub/media/tmp/
+pub/media/customer/
+pub/media/import/
+pub/media/wysiwyg/.thumbs/
+
+# Vendor is reinstalled in the builder stage — no need to ship the local copy
+vendor/
+
+# Local environment + secrets — never bake into the image
+.env
+.env.local
+.env.*.local
+auth.json
+pvmodern.env
+*.env
+
+# Local SSL / TLS certs from the dev environment
+nginx-ssl/
+*.pem
+*.key
+
+# Logs
+*.log
+var/log/
+
+# Editor + OS junk
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.github/
+
+# Docker compose files — not needed inside the image, save a few KB
+docker-compose.yml
+docker-compose.*.yml
+.dockerignore
+
+# NOTE: do NOT exclude `docker/` or `Dockerfile` — the nginx Dockerfile
+# explicitly COPYs from docker/nginx/* during the build, so those paths
+# must be visible in the build context. They're ~10 KB total, no point
+# saving the bytes by losing the build.
+
+# Backup files
+*.bak
+*.orig
+*.swp
+*~
+
+# Existing host-only helpers — they reference paths that don't exist in the container
+bin/sepay-demo-pay.sh

@@ -10,6 +10,8 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\App\DeploymentConfig;
 use Magento\Framework\Serialize\Serializer\Json;
 use YourVendor\PVModern\Helper\PaymentDb;
+use YourVendor\PVModern\Model\IntegrationConfig;
+use YourVendor\PVModern\Model\Payment\CassoTransactionProcessor;
 
 class Casso implements HttpPostActionInterface, CsrfAwareActionInterface
 {
@@ -18,7 +20,9 @@ class Casso implements HttpPostActionInterface, CsrfAwareActionInterface
         private readonly JsonFactory $resultJsonFactory,
         private readonly DeploymentConfig $deploymentConfig,
         private readonly Json $json,
-        private readonly PaymentDb $paymentDb
+        private readonly PaymentDb $paymentDb,
+        private readonly IntegrationConfig $integrationConfig,
+        private readonly CassoTransactionProcessor $transactionProcessor
     ) {}
 
     public function createCsrfValidationException(RequestInterface $request): ?InvalidRequestException { return null; }
@@ -28,15 +32,18 @@ class Casso implements HttpPostActionInterface, CsrfAwareActionInterface
     {
         $result = $this->resultJsonFactory->create();
 
-        // Verify Casso secure token
-        $configToken = (string)$this->deploymentConfig->get('pvmodern/casso_token', '');
+        // Verify Casso secure token. This legacy endpoint is kept for existing
+        // Casso configuration, but it now uses the same verified processing path
+        // as /api/webhooks/casso.
+        $configToken = (string)($this->integrationConfig->getCassoConfig()['webhook_secret'] ?? '')
+            ?: (string)$this->deploymentConfig->get('pvmodern/casso_token', '');
         $sentToken = (string)($this->request->getHeader('Secure-Token')
             ?? $this->request->getHeader('x-api-key')
             ?? $this->request->getHeader('Authorization')
             ?? '');
         $sentToken = ltrim($sentToken, 'Bearer ');
 
-        if ($configToken !== '' && !hash_equals($configToken, $sentToken)) {
+        if ($configToken === '' || !hash_equals($configToken, $sentToken)) {
             return $result->setHttpResponseCode(401)->setData(['error' => 1, 'message' => 'Unauthorized']);
         }
 
@@ -56,7 +63,9 @@ class Casso implements HttpPostActionInterface, CsrfAwareActionInterface
         }
 
         foreach ($transactions as $tx) {
-            $this->processCassoTransaction($tx, $body);
+            if (is_array($tx)) {
+                $this->transactionProcessor->process($tx, $body, true);
+            }
         }
 
         return $result->setData(['error' => 0, 'message' => 'ok']);
