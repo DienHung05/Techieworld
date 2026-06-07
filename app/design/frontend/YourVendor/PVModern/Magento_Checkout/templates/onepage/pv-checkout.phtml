@@ -308,12 +308,12 @@ $accountUrl    = $block->escapeUrl($block->getUrl('customer/account'));
                                         <span class="pvco3-pm-mark pvco3-pm-mark--vnpay">VN</span>
                                     </div>
                                     <div class="pvco3-pm-info">
-                                        <h3 class="pvco3-pm-name">VNPay QR</h3>
-                                        <p class="pvco3-pm-desc">Scan VNPay QR — supports 35+ banks and e-wallets</p>
+                                        <h3 class="pvco3-pm-name">VNPay</h3>
+                                        <p class="pvco3-pm-desc">Pay through the official VNPay gateway</p>
                                         <div class="pvco3-pm-tags">
                                             <span class="pvco3-pm-tag pvco3-pm-tag--blue">VNPay</span>
-                                            <span class="pvco3-pm-tag pvco3-pm-tag--green">Verified</span>
-                                            <span class="pvco3-pm-tag pvco3-pm-tag--amber">Fast</span>
+                                            <span class="pvco3-pm-tag pvco3-pm-tag--green">Gateway</span>
+                                            <span class="pvco3-pm-tag pvco3-pm-tag--amber">IPN verified</span>
                                         </div>
                                     </div>
                                     <span class="pvco3-pm-check" aria-hidden="true">
@@ -321,23 +321,18 @@ $accountUrl    = $block->escapeUrl($block->getUrl('customer/account'));
                                     </span>
                                 </button>
 
-                                <!-- 4. Visa / Mastercard -->
+                                <!-- 4. PayPal -->
                                 <button type="button" class="pvco3-pm-card" data-pm-card data-pm="card">
-                                    <div class="pvco3-pm-icon pvco3-pm-icon--card" aria-hidden="true">
-                                        <svg viewBox="0 0 42 28" width="42" height="28">
-                                            <rect width="42" height="28" rx="5" fill="#1a1f71"/>
-                                            <ellipse cx="16" cy="14" rx="7" ry="7" fill="#eb001b" opacity=".95"/>
-                                            <ellipse cx="26" cy="14" rx="7" ry="7" fill="#f79e1b" opacity=".95"/>
-                                            <ellipse cx="21" cy="14" rx="3.5" ry="7" fill="#ff5f00"/>
-                                        </svg>
+                                    <div class="pvco3-pm-icon pvco3-pm-icon--paypal" aria-hidden="true">
+                                        <span class="pvco3-pm-mark pvco3-pm-mark--paypal">PP</span>
                                     </div>
                                     <div class="pvco3-pm-info">
-                                        <h3 class="pvco3-pm-name">Visa / Mastercard</h3>
-                                        <p class="pvco3-pm-desc">International card payment via 3D Secure gateway</p>
+                                        <h3 class="pvco3-pm-name">PayPal</h3>
+                                        <p class="pvco3-pm-desc">Pay with a PayPal account</p>
                                         <div class="pvco3-pm-tags">
-                                            <span class="pvco3-pm-tag pvco3-pm-tag--blue">Visa</span>
-                                            <span class="pvco3-pm-tag pvco3-pm-tag--red">Mastercard</span>
                                             <span class="pvco3-pm-tag pvco3-pm-tag--amber">PayPal</span>
+                                            <span class="pvco3-pm-tag pvco3-pm-tag--blue">Account</span>
+                                            <span class="pvco3-pm-tag pvco3-pm-tag--green">Express</span>
                                         </div>
                                     </div>
                                     <span class="pvco3-pm-check" aria-hidden="true">
@@ -528,7 +523,7 @@ $accountUrl    = $block->escapeUrl($block->getUrl('customer/account'));
              COD skips directly to step 5 (success).
         ════════════════════════════════════════════════════════════════ -->
         <div class="pvco3-qr-screen" data-qr-screen hidden>
-            <div class="pvco3-pay-confirm-wrap">
+            <div class="pvco3-pay-confirm-wrap" data-pay-confirm-wrap>
 
                 <!-- ── Coloured header bar (provider + status + amount) ── -->
                 <div class="pvco3-pch-bar pvco3-pch-bar--bank_qr" data-pch-bar>
@@ -577,13 +572,18 @@ $accountUrl    = $block->escapeUrl($block->getUrl('customer/account'));
                                 </div>
                             </div>
                             <div class="pvco3-pcp-field pvco3-pcp-field--ref">
-                                <span class="pvco3-pcp-label">Nội dung chuyển khoản</span>
+                                <span class="pvco3-pcp-label" data-pcp-ref-label>Nội dung chuyển khoản</span>
                                 <div class="pvco3-pcp-value-row">
                                     <span class="pvco3-pcp-value pvco3-mono" data-pcp-ref>—</span>
                                     <button type="button" class="pvco3-pcp-copy" data-pcp-copy="ref" title="Copy">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                                     </button>
                                 </div>
+                            </div>
+                            <div class="pvco3-vnpay-actions" data-pcp-vnpay-actions hidden>
+                                <a class="pvco3-btn pvco3-btn--vnpay pvco3-vnpay-open" data-pcp-vnpay-open href="#" target="_blank" rel="noopener">
+                                    Pay on VNPay
+                                </a>
                             </div>
                             <div class="pvco3-pcp-field pvco3-pcp-field--bank" data-pcp-bank-info>
                                 <span class="pvco3-pcp-label">Tài khoản nhận</span>
@@ -596,14 +596,14 @@ $accountUrl    = $block->escapeUrl($block->getUrl('customer/account'));
                                     <span class="pvco3-pcp-bank-val pvco3-mono" data-pcp-bank-number>—</span>
                                 </div>
                             </div>
-                            <p class="pvco3-pcp-warning">
+                            <p class="pvco3-pcp-warning" data-pcp-warning>
                                 ⚠ Vui lòng giữ nguyên số tiền và nội dung — hệ thống sẽ tự động xác nhận trong vài giây.
                             </p>
-                            <div class="pvco3-autodetect-notice">
+                            <div class="pvco3-autodetect-notice" data-pcp-autodetect>
                                 <span class="pvco3-spinner pvco3-spinner--xs"></span>
-                                <span>Đang chờ thanh toán — tự động xác nhận sau khi nhận tiền</span>
+                                <span data-pcp-autodetect-text>Đang chờ thanh toán — tự động xác nhận sau khi nhận tiền</span>
                             </div>
-                            <div class="pvco3-pcp-card-badges">
+                            <div class="pvco3-pcp-card-badges" data-pcp-badges>
                                 <span>🔒 SSL 256-bit</span>
                                 <span>VietQR</span>
                                 <span>Napas 247</span>
@@ -620,6 +620,34 @@ $accountUrl    = $block->escapeUrl($block->getUrl('customer/account'));
                 </div>
 
             </div><!-- /.pvco3-pay-confirm-wrap -->
+
+            <div class="pvco3-vnpay-direct" data-vnpay-direct hidden>
+                <section class="pvco3-vnpay-direct-card">
+                    <div class="pvco3-vnpay-direct-mark">
+                        <span data-direct-mark-code>VN</span>
+                        <strong data-direct-mark-label>VNPay</strong>
+                    </div>
+                    <h2 data-direct-title>Thanh toán trên VNPay</h2>
+                    <p class="pvco3-vnpay-direct-sub">
+                        Đơn hàng <strong data-vnpay-direct-order>—</strong>
+                        <span>•</span>
+                        <strong data-vnpay-direct-amount>—</strong>
+                    </p>
+                    <p class="pvco3-vnpay-direct-copy" data-direct-copy>
+                        Bấm nút bên dưới để mở cổng VNPay chính thức. Sau khi thanh toán xong,
+                        VNPay sẽ đưa bạn quay lại Techieworld và hệ thống tự xác nhận bằng IPN.
+                    </p>
+                    <div class="pvco3-vnpay-direct-actions">
+                        <a class="pvco3-btn pvco3-btn--vnpay pvco3-vnpay-direct-open" data-vnpay-direct-open href="#" rel="noopener">
+                            <span data-direct-open-label>Mở VNPay</span>
+                        </a>
+                    </div>
+                    <div class="pvco3-autodetect-notice pvco3-vnpay-direct-wait">
+                        <span class="pvco3-spinner pvco3-spinner--xs"></span>
+                        <span data-vnpay-direct-status>Đang chờ VNPay gửi IPN xác nhận giao dịch</span>
+                    </div>
+                </section>
+            </div>
         </div><!-- /.pvco3-qr-screen -->
 
 

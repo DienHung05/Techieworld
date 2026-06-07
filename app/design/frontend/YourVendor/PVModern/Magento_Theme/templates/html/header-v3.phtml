@@ -117,6 +117,7 @@ $_resolveMenuLink = static function (array $_link) use ($_buildCategoryFilterUrl
 };
 
 $_searchUrl        = $block->escapeUrl($_searchUrl);
+$_productHomeUrl   = $block->escapeUrl($block->getUrl('', ['_query' => ['view' => 'products'], '_fragment' => 'pv3-products']));
 
 $_searchSuggestUrl = $block->escapeUrl($block->getUrl('pvmodern/search/suggest'));
 $_trackingUrl      = $block->escapeUrl($block->getUrl('pvmodern/orders/tracking'));
@@ -140,7 +141,7 @@ $_activeStr        = $block->escapeHtmlAttr($_activeCat);
         <div class="pv3-container pv3-header-row">
 
             <!-- LOGO ──────────────────────────────────────────────────────── -->
-            <a class="pv3-brand" href="<?= $block->escapeUrl($block->getUrl('')) ?>" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
+            <a class="pv3-brand" href="<?= $_productHomeUrl ?>" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
                 <img src="<?= $block->escapeUrl($block->getViewFileUrl('YourVendor_PVModern::images/logo-technology.png')) ?>"
                      alt="Techieworld logo" height="44" style="display:block;height:44px;width:44px;flex-shrink:0;border-radius:16px;object-fit:cover;" />
                 <span class="pv3-brand-copy" style="display:flex;flex-direction:column;line-height:1.2;">

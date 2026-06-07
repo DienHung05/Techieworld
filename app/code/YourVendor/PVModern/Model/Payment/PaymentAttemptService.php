@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace YourVendor\PVModern\Model\Payment;
 
 use Magento\Framework\Serialize\Serializer\Json;
+use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
@@ -18,6 +19,7 @@ class PaymentAttemptService
         private readonly PaymentDb $paymentDb,
         private readonly OrderCollectionFactory $orderCollectionFactory,
         private readonly OrderRepositoryInterface $orderRepository,
+        private readonly CartRepositoryInterface $cartRepository,
         private readonly ShippingManager $shippingManager,
         private readonly Json $json,
         private readonly LoggerInterface $logger
@@ -34,6 +36,7 @@ class PaymentAttemptService
         $incrementId = (string) $order->getIncrementId();
         $amount = (float) $order->getGrandTotal();
         $expiresAt = $this->normalizeDate((string) ($paymentInit['expires_at'] ?? ''), time() + 1800);
+        $expiresAtTs = strtotime($expiresAt) ?: (time() + 1800);
         $providerOrderId = (string) ($paymentInit['provider_order_id'] ?? $paymentInit['reference'] ?? $incrementId);
         $providerSessionId = (string) ($paymentInit['provider_session_id'] ?? '');
         $providerTransactionId = (string) ($paymentInit['provider_transaction_id'] ?? '');
@@ -80,6 +83,11 @@ class PaymentAttemptService
             'expires_at' => $expiresAt,
             'last_status_change_at' => date('Y-m-d H:i:s'),
         ]);
+
+        $paymentInit['expires_at'] = $expiresAt;
+        $paymentInit['expires_at_epoch'] = $expiresAtTs;
+        $paymentInit['expiresAt'] = gmdate('c', $expiresAtTs);
+        $paymentInit['expiresAtEpoch'] = $expiresAtTs;
 
         $statusEndpoint = '/api/paymentSessions/status?paymentAttemptId=' . $attemptId;
         $eventsEndpoint = '/api/paymentSessions/events?paymentAttemptId=' . $attemptId;
@@ -325,10 +333,29 @@ class PaymentAttemptService
         }
 
         if ($order && $order->getId()) {
+            $this->clearRestoredQuoteAfterPayment($order);
             $this->triggerFulfillmentOnce($order);
         }
 
         return ['result' => 'accepted', 'message' => 'Payment confirmed.'];
+    }
+
+    private function clearRestoredQuoteAfterPayment(Order $order): void
+    {
+        try {
+            if (!$order->getQuoteId()) {
+                return;
+            }
+            $quote = $this->cartRepository->get((int) $order->getQuoteId());
+            $quote->removeAllItems();
+            $quote->setIsActive(false);
+            $this->cartRepository->save($quote);
+        } catch (\Throwable $exception) {
+            $this->logger->warning('[PVModern][Payment] unable to clear restored quote after payment', [
+                'order' => $order->getIncrementId(),
+                'message' => $exception->getMessage(),
+            ]);
+        }
     }
 
     /**

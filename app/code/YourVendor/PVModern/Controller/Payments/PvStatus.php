@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace YourVendor\PVModern\Controller\Payments;
 
 use Magento\Framework\App\Action\HttpGetActionInterface;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\App\DeploymentConfig;
@@ -81,20 +82,35 @@ class PvStatus implements HttpGetActionInterface
             $pvOrder = $this->paymentDb->findById($pvOrderId);
         }
 
-        // Auto-expire check
-        if (in_array($pvOrder['payment_status'], ['pending', 'pending_review'], true)
-            && strtotime($pvOrder['expires_at']) < time()) {
-            $this->paymentDb->updateOrder((int)$pvOrder['id'], ['payment_status' => 'expired']);
+        $attempt = $this->paymentDb->findLatestAttemptForIncrement((string) $pvOrder['magento_increment_id']);
+        $expiryValue = (string) (($attempt['expires_at'] ?? '') ?: ($pvOrder['expires_at'] ?? ''));
+        $expiresAtTs = $expiryValue !== '' ? strtotime($expiryValue) : false;
+
+        // Auto-expire only from the latest attempt/order expiry, with a small
+        // grace window so browser/VNPay/server clock skew cannot instantly
+        // hide a newly-created sandbox QR.
+        $attemptStatus = $attempt ? (string) ($attempt['status'] ?? '') : '';
+        $orderStatus = (string) ($pvOrder['payment_status'] ?? 'pending');
+        $isPendingAttempt = $attempt && in_array($attemptStatus, ['pending', 'awaiting_payment'], true);
+        $isPendingOrder = in_array($orderStatus, ['pending', 'pending_review', 'awaiting_payment'], true);
+        if (($isPendingAttempt || $isPendingOrder) && $expiresAtTs && ($expiresAtTs + 180) < time()) {
+            if ($isPendingAttempt) {
+                $this->paymentDb->transitionAttempt((int) $attempt['id'], 'expired');
+                $attempt['status'] = 'expired';
+                $attemptStatus = 'expired';
+            }
+            $this->paymentDb->updateOrder((int) $pvOrder['id'], ['payment_status' => 'expired']);
             $pvOrder['payment_status'] = 'expired';
+            $orderStatus = 'expired';
         }
 
-        $attempt = $this->paymentDb->findLatestAttemptForIncrement((string) $pvOrder['magento_increment_id']);
-        $status = (string) ($pvOrder['payment_status'] ?? 'pending');
-        if ($attempt && in_array((string) $attempt['status'], ['paid', 'failed', 'expired', 'manual_review'], true)) {
-            $status = (string) $attempt['status'];
+        $status = $attemptStatus !== '' ? $attemptStatus : $orderStatus;
+        if ($status === '') {
+            $status = 'pending';
         }
 
         $paymentContext = $this->loadPaymentContext((string) $pvOrder['magento_increment_id']);
+        $orderItems = $this->loadOrderItems((string) $pvOrder['magento_increment_id']);
 
         return $result->setData([
             'success' => true,
@@ -109,12 +125,61 @@ class PvStatus implements HttpGetActionInterface
             'transfer_code' => $pvOrder['transfer_code'],
             'payment_method' => $pvOrder['payment_method'],
             'total_amount' => (float)$pvOrder['total_amount'],
-            'expires_at' => $pvOrder['expires_at'],
+            'expires_at' => $expiryValue,
+            'expires_at_epoch' => $expiresAtTs ? (int) $expiresAtTs : null,
+            'expiresAt' => $expiresAtTs ? gmdate('c', (int) $expiresAtTs) : null,
             'screenshot_uploaded' => !empty($pvOrder['screenshot_url']),
             'nextStepAllowed' => $status === 'paid',
             'can_proceed' => $status === 'paid',
             'payment' => $paymentContext,
+            'items' => $orderItems,
+            'cart_items' => $orderItems,
         ]);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function loadOrderItems(string $incrementId): array
+    {
+        try {
+            $orders = $this->orderCollectionFactory->create()
+                ->addFieldToFilter('increment_id', $incrementId)
+                ->setPageSize(1);
+            $order = $orders->getFirstItem();
+            if (!$order || !$order->getId()) {
+                return [];
+            }
+
+            $items = [];
+            $objectManager = ObjectManager::getInstance();
+            $productRepository = $objectManager->get(\Magento\Catalog\Api\ProductRepositoryInterface::class);
+            $productImageHelper = $objectManager->get(\Magento\Catalog\Helper\Image::class);
+            foreach ($order->getAllVisibleItems() as $item) {
+                $qty = (int) max(1, (float) $item->getQtyOrdered());
+                $rowTotal = (float) ($item->getRowTotalInclTax() ?: $item->getRowTotal());
+                $unitPrice = (float) ($item->getPriceInclTax() ?: $item->getPrice());
+                $imageUrl = '';
+                try {
+                    $product = $productRepository->getById((int) $item->getProductId(), false, (int) $order->getStoreId());
+                    $imageUrl = (string) $productImageHelper->init($product, 'product_thumbnail_image')->getUrl();
+                } catch (\Throwable $e) {
+                    $imageUrl = '';
+                }
+                $items[] = [
+                    'name' => (string) $item->getName(),
+                    'qty' => $qty,
+                    'price' => $unitPrice,
+                    'row_total' => $rowTotal,
+                    'image_url' => $imageUrl,
+                    'product_id' => (int) $item->getProductId(),
+                    'sku' => (string) $item->getSku(),
+                ];
+            }
+            return $items;
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
     /**
@@ -139,6 +204,15 @@ class PvStatus implements HttpGetActionInterface
                 return null;
             }
             $decoded['amount'] = (int) round((float) ($decoded['amount'] ?? $order->getGrandTotal()));
+            $expiresAtTs = (int) ($decoded['expires_at_epoch'] ?? $decoded['expiresAtEpoch'] ?? 0);
+            if ($expiresAtTs <= 0 && !empty($decoded['expires_at'])) {
+                $expiresAtTs = strtotime((string) $decoded['expires_at']) ?: 0;
+            }
+            if ($expiresAtTs > 0) {
+                $decoded['expires_at_epoch'] = $expiresAtTs;
+                $decoded['expiresAtEpoch'] = $expiresAtTs;
+                $decoded['expiresAt'] = gmdate('c', $expiresAtTs);
+            }
             return $decoded;
         } catch (\Throwable $e) {
             return null;

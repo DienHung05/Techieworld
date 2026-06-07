@@ -96,8 +96,8 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
     var PAYMENT_METHODS = [
         {id: 'bank_qr',  providerCode: 'bank_transfer', title: 'QR Ngân hàng',           gateway: 'bank_qr'},
         {id: 'momo',     providerCode: 'online_gateway', title: 'Ví MoMo',               gateway: 'momo'},
-        {id: 'vnpay',    providerCode: 'online_gateway', title: 'VNPay QR',              gateway: 'vnpay'},
-        {id: 'card',     providerCode: 'online_gateway', title: 'Visa / Mastercard',     gateway: 'vnpay'},
+        {id: 'vnpay',    providerCode: 'online_gateway', title: 'VNPay',                 gateway: 'vnpay'},
+        {id: 'card',     providerCode: 'online_gateway', title: 'PayPal',                gateway: 'paypal'},
         {id: 'cod',      providerCode: 'cod',            title: 'Thanh toán khi nhận hàng', gateway: ''}
     ];
 
@@ -118,7 +118,7 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
         var $root = $(element);
         var bootstrap = readBootstrap();
         var storageKey = 'pvmodern_checkout_customer_flow';
-        var STATE_VERSION = 'v5';
+        var STATE_VERSION = 'v7';
         var isSubmitting = false;
         var state = $.extend(true, {
             step: 1,
@@ -290,6 +290,119 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                 pay.checkout_url || pay.deeplinkUrl || pay.deeplink_url || '';
         }
 
+        function isRealVnpayPayment(pay) {
+            return state.paymentMethodId === 'vnpay' && !!paymentRedirectUrl(pay || {});
+        }
+
+        function isPaypalPayment(pay) {
+            pay = pay || {};
+            return state.paymentMethodId === 'card' &&
+                String(pay.provider || '').toLowerCase() === 'paypal' &&
+                !!paymentRedirectUrl(pay);
+        }
+
+        function isPendingLikeStatus(status) {
+            status = String(status || '').toLowerCase();
+            return status === '' || status === 'idle' || status === 'pending' || status === 'awaiting_payment';
+        }
+
+        function hasPendingRealVnpayPayment() {
+            return !!(state.order && isRealVnpayPayment(state.order.payment || {}) && isPendingLikeStatus(state.paymentStatus));
+        }
+
+        function clearPaymentOverlay() {
+            $root.find('[data-pcp-overlay]').attr('hidden', 'hidden');
+            $root.find('[data-pcp-overlay-inner]').empty();
+        }
+
+        function resetPendingPaymentState(targetStep) {
+            if (targetStep > 2 || state.paymentStatus === 'paid') {
+                return;
+            }
+            stopCountdown();
+            stopPaymentPolling();
+            clearPaymentOverlay();
+            state.paymentStatus = 'idle';
+            if (targetStep === 1) {
+                state.order = null;
+                state.maxUnlockedStep = Math.max(1, Math.min(state.maxUnlockedStep || 1, 3));
+                try {
+                    if (window.history && window.history.replaceState && isPaymentConfirmationRoute()) {
+                        window.history.replaceState({}, '', '/checkout');
+                    }
+                } catch (e) {}
+            }
+            saveState();
+        }
+
+        function qrProxyUrl(data, size) {
+            data = String(data || '');
+            if (!data) {
+                return '';
+            }
+            return '/api/qr/url?size=' + encodeURIComponent(size || 540) + '&data=' + encodeURIComponent(data);
+        }
+
+        function secondsUntil(dateValue, fallbackSeconds) {
+            if (!dateValue) {
+                return fallbackSeconds;
+            }
+            var numeric = parseInt(dateValue, 10);
+            if (!isNaN(numeric) && String(dateValue).match(/^[0-9]+$/)) {
+                var seconds = numeric > 9999999999 ? Math.floor(numeric / 1000) : numeric;
+                return Math.max(0, seconds - Math.floor(Date.now() / 1000));
+            }
+
+            var raw = String(dateValue);
+            var normalized = raw;
+            if (/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/.test(raw)) {
+                normalized = raw.replace(' ', 'T') + 'Z';
+            }
+            var timestamp = Date.parse(normalized);
+            if (!timestamp || isNaN(timestamp)) {
+                return fallbackSeconds;
+            }
+            return Math.max(0, Math.floor((timestamp - Date.now()) / 1000));
+        }
+
+        function vnpayExpireEpochFromUrl(url) {
+            if (!url) {
+                return 0;
+            }
+            try {
+                var params = new URL(url).searchParams;
+                var raw = params.get('vnp_ExpireDate') || '';
+                if (!/^[0-9]{14}$/.test(raw)) {
+                    return 0;
+                }
+                var year = parseInt(raw.slice(0, 4), 10);
+                var month = parseInt(raw.slice(4, 6), 10) - 1;
+                var day = parseInt(raw.slice(6, 8), 10);
+                var hour = parseInt(raw.slice(8, 10), 10);
+                var min = parseInt(raw.slice(10, 12), 10);
+                var sec = parseInt(raw.slice(12, 14), 10);
+                return Math.floor(Date.UTC(year, month, day, hour - 7, min, sec) / 1000);
+            } catch (e) {
+                return 0;
+            }
+        }
+
+        function paymentExpirySeconds(pay, fallbackSeconds) {
+            pay = pay || {};
+            if (state.paymentMethodId === 'vnpay') {
+                var vnpayEpoch = vnpayExpireEpochFromUrl(paymentRedirectUrl(pay));
+                if (vnpayEpoch > 0) {
+                    var vnpaySeconds = secondsUntil(vnpayEpoch, fallbackSeconds);
+                    return vnpaySeconds > 0 ? vnpaySeconds : fallbackSeconds;
+                }
+            }
+            var epoch = parseInt(pay.expires_at_epoch || pay.expiresAtEpoch || 0, 10);
+            if (epoch > 0) {
+                return secondsUntil(epoch, fallbackSeconds);
+            }
+            return secondsUntil(pay.expires_at || pay.expiresAt, fallbackSeconds);
+        }
+
         function setQrImage($img, primarySrc, fallbackSrc, label) {
             if (!$img.length) {
                 return;
@@ -353,6 +466,39 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                 return sum + (parseInt(item.qty, 10) || 0);
             }, 0);
             return n || parseInt((bootstrap.cart || {}).count || 0, 10) || (state.cartSnapshot || []).length;
+        }
+
+        function normalizeSnapshotItems(items) {
+            if (!Array.isArray(items)) {
+                return [];
+            }
+            return items.map(function (item) {
+                var qty = parseInt(item.qty || item.qty_ordered || item.quantity || 1, 10) || 1;
+                var price = parseFloat(item.price || item.unit_price || 0) || 0;
+                var rowTotal = parseFloat(item.row_total || item.rowTotal || 0) || (price * qty);
+                return {
+                    name: item.name || item.product_name || item.sku || 'Product',
+                    qty: qty,
+                    price: price,
+                    row_total: rowTotal,
+                    image_url: item.image_url || item.image || item.thumbnail || '',
+                    sku: item.sku || ''
+                };
+            }).filter(function (item) {
+                return !!item.name;
+            });
+        }
+
+        function restoreCartSnapshotFromResponse(res) {
+            var items = normalizeSnapshotItems((res || {}).items || (res || {}).cart_items || (res || {}).order_items || []);
+            if (!items.length || (state.cartSnapshot && state.cartSnapshot.length)) {
+                return;
+            }
+            state.cartSnapshot = items;
+            state.cartSnapshotLocked = true;
+            state.cartSnapshotSubtotal = items.reduce(function (sum, item) {
+                return sum + (parseFloat(item.row_total || 0) || 0);
+            }, 0);
         }
 
         function selectedShipping() {
@@ -797,10 +943,10 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                 return '<p style="color:#64748b;font-size:13px">Ví MoMo — Thanh toán qua QR/app sau khi xác nhận đơn</p>';
             }
             if (pm === 'vnpay') {
-                return '<p style="color:#64748b;font-size:13px">VNPay QR — Quét mã sau khi xác nhận đơn</p>';
+                return '<p style="color:#64748b;font-size:13px">VNPay — Thanh toán qua cổng VNPay sau khi xác nhận đơn</p>';
             }
             if (pm === 'card') {
-                return '<p style="color:#64748b;font-size:13px">Visa / Mastercard — Nhập thông tin thẻ sau khi xác nhận</p>';
+                return '<p style="color:#64748b;font-size:13px">PayPal — Thanh toán bằng tài khoản PayPal sau khi xác nhận đơn</p>';
             }
             if (pm === 'cod') {
                 return '<p style="color:#64748b;font-size:13px">Thanh toán khi nhận hàng</p>';
@@ -826,20 +972,20 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                 hint:  'Mở app MoMo → Quét QR → Xác nhận'
             },
             vnpay: {
-                label: 'VNPay QR',
+                label: 'VNPay',
                 pill:  'VNPay',
                 bar:   'pvco3-pch-bar--vnpay',
                 icon:  '<span style="font-size:14px;font-weight:900">VN</span>',
                 pillIcon: '<span style="font-size:11px;font-weight:900;color:#005BAA">VN</span>',
-                hint:  'Mở VNPay hoặc app ngân hàng → Quét QR → Xác nhận'
+                hint:  'Bấm nút thanh toán hoặc quét QR để mở cổng VNPay'
             },
             card: {
-                label: 'Visa / Mastercard',
-                pill:  'BIDV VietQR',
+                label: 'PayPal',
+                pill:  'PayPal',
                 bar:   'pvco3-pch-bar--card',
-                icon:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/></svg>',
-                pillIcon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/></svg>',
-                hint:  'Mở bất kỳ app ngân hàng VN → Quét VietQR → Xác nhận'
+                icon:  '<span style="font-size:14px;font-weight:900">PP</span>',
+                pillIcon: '<span style="font-size:11px;font-weight:900;color:#003087">PP</span>',
+                hint:  'Mở cổng PayPal sandbox để hoàn tất thanh toán'
             },
             cod: {
                 label: 'COD',
@@ -857,6 +1003,12 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
             var pay    = order.payment || {};
             var amount = parseInt(pay.amount, 10) || parseInt(state.orderTotal, 10) || total();
             var theme  = BRAND_THEME[pm] || BRAND_THEME.bank_qr;
+            var vnpayUrl = paymentRedirectUrl(pay);
+            var realVnpay = isRealVnpayPayment(pay);
+            var realPaypal = isPaypalPayment(pay);
+            var directGateway = realVnpay || realPaypal;
+            var $payConfirmWrap = $root.find('[data-pay-confirm-wrap]');
+            var $vnpayDirect = $root.find('[data-vnpay-direct]');
 
             $root.find('[data-pch-bar]').attr('class', 'pvco3-pch-bar ' + theme.bar);
             $root.find('[data-pch-icon]').html(theme.icon);
@@ -868,14 +1020,64 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
             $root.find('[data-pcp-hint]').text(theme.hint);
 
             var instructions = pay.instructions || {};
-            var ref = instructions.transfer_reference
+            var ref = realVnpay
+                ? (pay.provider_order_id || pay.reference || order.incrementId || String(order.orderId || '').replace(/^#/, ''))
+                : (instructions.transfer_reference
                    || pay.reference
                    || pay.qr_payload
-                   || ('ORD' + String(order.orderId || '').replace(/[^0-9]/g, ''));
+                   || ('ORD' + String(order.orderId || '').replace(/[^0-9]/g, '')));
+
+            if (directGateway) {
+                var gatewayName = realPaypal ? 'PayPal' : 'VNPay';
+                var gatewayCode = realPaypal ? 'PP' : 'VN';
+                var vnpayFailed = state.paymentStatus === 'failed';
+                $payConfirmWrap.attr('hidden', 'hidden').hide();
+                $vnpayDirect.removeAttr('hidden').show();
+                $vnpayDirect.toggleClass('is-failed', vnpayFailed);
+                $root.find('[data-direct-mark-code]').text(gatewayCode);
+                $root.find('[data-direct-mark-label]').text(gatewayName);
+                $root.find('[data-direct-title]').text('Thanh toán trên ' + gatewayName);
+                $root.find('[data-direct-copy]').text(realPaypal
+                    ? 'Bấm nút bên dưới để mở PayPal. Website dùng Business account để nhận tiền; khi PayPal mở ra, hãy đăng nhập bằng Personal buyer để test thanh toán.'
+                    : 'Bấm nút bên dưới để mở cổng VNPay chính thức. Sau khi thanh toán xong, VNPay sẽ đưa bạn quay lại Techieworld và hệ thống tự xác nhận bằng IPN.');
+                // Sandbox account rows (Business seller / Personal buyer) are
+                // intentionally not displayed to avoid exposing the accounts.
+                $root.find('[data-paypal-accounts]').attr('hidden', 'hidden').hide();
+                $root.find('[data-direct-open-label]').text('Mở ' + gatewayName);
+                $root.find('[data-vnpay-direct-open]').attr('href', vnpayUrl || '#');
+                $root.find('[data-vnpay-direct-order]').text(ref || order.incrementId || order.orderId || '—');
+                $root.find('[data-vnpay-direct-amount]').text(formatVND(amount));
+                $root.find('[data-vnpay-direct-status]').text(vnpayFailed
+                    ? gatewayName + ' báo giao dịch chưa thành công. Bạn có thể mở lại sandbox để thử lại.'
+                    : 'Đang chờ ' + gatewayName + ' xác nhận giao dịch');
+                _copyValues['amount'] = String(Math.round(amount));
+                _copyValues['ref'] = ref;
+                clearPaymentOverlay();
+
+                if (pm !== 'cod') {
+                    startCountdown(paymentExpirySeconds(pay, 30 * 60));
+                    fetchPvPaymentData();
+                    startPaymentEventStream();
+                }
+                return;
+            }
+
+            $vnpayDirect.attr('hidden', 'hidden').hide();
+            $vnpayDirect.removeClass('is-failed');
+            $payConfirmWrap.removeAttr('hidden').show();
+
             $root.find('[data-pcp-ref]').text(ref);
             $root.find('[data-pcp-bank-name]').text(instructions.bank_name || 'BIDV');
             $root.find('[data-pcp-bank-holder]').text(instructions.account_name || 'DIEN MANH HUNG');
             $root.find('[data-pcp-bank-number]').text(instructions.account_number || '4661104867');
+            $root.find('[data-pcp-ref-label]').text('Nội dung chuyển khoản');
+            $root.find('[data-pcp-bank-info]').show();
+            var $vnpayActions = $root.find('[data-pcp-vnpay-actions]');
+            $vnpayActions.attr('hidden', 'hidden').hide();
+            $root.find('[data-pcp-vnpay-open]').attr('href', '#');
+            $root.find('[data-pcp-warning]').text('⚠ Vui lòng giữ nguyên số tiền và nội dung — hệ thống sẽ tự động xác nhận trong vài giây.');
+            $root.find('[data-pcp-autodetect-text]').text('Đang chờ thanh toán — tự động xác nhận sau khi nhận tiền');
+            $root.find('[data-pcp-badges]').html('<span>🔒 SSL 256-bit</span><span>VietQR</span><span>Napas 247</span>');
 
             _copyValues['amount'] = String(Math.round(amount));
             _copyValues['ref']    = ref;
@@ -889,7 +1091,7 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                 // can actually open (and CSP always permits the image).
                 var scanUrl = window.location.origin + '/api/qr/scanpaid?order=' +
                               encodeURIComponent(ref);
-                qr = '/api/qr/url?size=540&data=' + encodeURIComponent(scanUrl);
+                qr = qrProxyUrl(scanUrl, 540);
             }
             $root.find('[data-pcp-qr-loading]').show();
             $qrImg.attr('hidden', 'hidden').removeAttr('src');
@@ -899,17 +1101,24 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                 $qrImg.removeAttr('hidden').show();
             });
 
-            $root.find('[data-pcp-overlay]').attr('hidden', 'hidden');
+            clearPaymentOverlay();
 
             if (pm !== 'cod') {
-                startCountdown(30 * 60);
+                startCountdown(paymentExpirySeconds(pay, 30 * 60));
                 fetchPvPaymentData();
                 startPaymentEventStream();
+                if (state.paymentStatus === 'failed') {
+                    showStatusOverlay('failed');
+                }
             }
         }
 
         function startCountdown(seconds) {
             stopCountdown();
+            seconds = parseInt(seconds, 10);
+            if (isNaN(seconds) || seconds <= 0) {
+                seconds = hasPendingRealVnpayPayment() ? (30 * 60) : 0;
+            }
             _countdownSecs = seconds;
             function tick() {
                 var m = Math.floor(_countdownSecs / 60);
@@ -921,6 +1130,11 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                 if (_countdownSecs <= 0) {
                     stopCountdown();
                     stopPaymentPolling();
+                    if (hasPendingRealVnpayPayment()) {
+                        $root.find('[data-countdown]').text('--:--').removeClass('is-warning is-ok');
+                        startPaymentPolling();
+                        return;
+                    }
                     showStatusOverlay('expired');
                     return;
                 }
@@ -966,7 +1180,7 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                     _eventSource.close(); _eventSource = null;
                     stopCountdown(); stopPaymentPolling();
                     showStatusOverlay('paid');
-                    window.setTimeout(function () { goToStep(5); }, 1500);
+                    window.setTimeout(function () { goToStep(5); }, 500);
                 } else if (status === 'failed' || status === 'cancelled') {
                     _eventSource.close(); _eventSource = null;
                     stopCountdown(); stopPaymentPolling();
@@ -1007,7 +1221,7 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                         stopCountdown(); stopPaymentPolling();
                         if (state.step !== 5) {
                             showStatusOverlay('paid');
-                            window.setTimeout(function () { goToStep(5); }, 1500);
+                            window.setTimeout(function () { goToStep(5); }, 500);
                         }
                     } else if (status === 'failed' || status === 'cancelled') {
                         stopCountdown(); stopPaymentPolling();
@@ -1042,15 +1256,35 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                 data: {orderId: state.order.orderId.replace(/^#/, '')}
             }).done(function (res) {
                 if (!res.success) { return; }
-                if (res.pv_order_id) { state.order.pvOrderId = res.pv_order_id; saveState(); }
-                if (res.transfer_code) {
+                var status = String(res.status || '').toLowerCase();
+                if (status && state.paymentStatus !== 'paid') {
+                    state.paymentStatus = status;
+                }
+                restoreCartSnapshotFromResponse(res);
+                if (res.payment) {
+                    state.order.payment = $.extend({}, state.order.payment || {}, res.payment);
+                }
+                if (res.pv_order_id) {
+                    state.order.pvOrderId = res.pv_order_id;
+                }
+                saveState();
+                if (res.transfer_code && !isRealVnpayPayment(state.order.payment || {})) {
                     $root.find('[data-pcp-ref]').text(res.transfer_code);
                     _copyValues['ref'] = res.transfer_code;
                 }
-                if (res.expires_at) {
-                    var secsLeft = Math.max(0, Math.floor((new Date(res.expires_at.replace(' ','T')).getTime() - Date.now()) / 1000));
+                var expirySource = res.expires_at_epoch || res.expiresAt || res.expires_at;
+                if (res.payment && (res.payment.expires_at_epoch || res.payment.expiresAtEpoch || res.payment.expires_at || res.payment.expiresAt)) {
+                    expirySource = res.payment.expires_at_epoch || res.payment.expiresAtEpoch || res.payment.expires_at || res.payment.expiresAt;
+                }
+                if (expirySource) {
+                    var expiryPayment = $.extend({}, state.order.payment || {});
+                    if (!expiryPayment.expires_at_epoch && !expiryPayment.expiresAtEpoch && !expiryPayment.expires_at && !expiryPayment.expiresAt) {
+                        expiryPayment.expires_at_epoch = expirySource;
+                    }
+                    var secsLeft = paymentExpirySeconds(expiryPayment, 30 * 60);
                     if (secsLeft > 0) { stopCountdown(); startCountdown(secsLeft); }
                 }
+                renderSummary();
             });
         }
 
@@ -1109,6 +1343,9 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
             if (isSubmitting) { return; }
             clearErrors();
             isSubmitting = true;
+            stopCountdown();
+            stopPaymentPolling();
+            clearPaymentOverlay();
             var $btn = $root.find('[data-place-order]');
             $btn.addClass('is-loading').prop('disabled', true);
             $btn.find('.pvco3-place-label').attr('hidden', 'hidden');
@@ -1117,7 +1354,7 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
             var shipping = selectedShipping();
             var pm = state.paymentMethodId;
             var gatewayChannel = {
-                bank_qr: 'bank_qr', momo: 'momo', vnpay: 'vnpay', card: 'stripe', cod: ''
+                bank_qr: 'bank_qr', momo: 'momo', vnpay: 'vnpay', card: 'paypal', cod: ''
             }[pm] || '';
             var payload = {
                 form_key: checkoutFormKey(),
@@ -1270,8 +1507,10 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                 goToStep(parseInt($(this).data('prev-step'), 10));
             });
             $root.on('click', '[data-goto-step]', function () {
+                var targetStep = parseInt($(this).data('goto-step'), 10);
+                resetPendingPaymentState(targetStep);
                 stopCountdown(); stopPaymentPolling();
-                goToStep(parseInt($(this).data('goto-step'), 10));
+                goToStep(targetStep);
             });
             $root.on('click', '[data-step-indicator]', function () {
                 var step = parseInt($(this).data('step-indicator'), 10);
@@ -1425,10 +1664,11 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                 } else if (res.total_amount) {
                     state.orderTotal = Math.round(parseFloat(res.total_amount));
                 }
-                state.paymentMethodId = state.paymentMethodId || res.payment_method || 'bank_qr';
-                state.paymentStatus = res.status || 'pending';
-                state.step = (res.status === 'paid') ? 5 : 4;
+                state.paymentMethodId = res.payment_method || state.paymentMethodId || 'bank_qr';
+                state.paymentStatus = String(res.status || 'pending').toLowerCase();
+                state.step = (state.paymentStatus === 'paid') ? 5 : 4;
                 state.maxUnlockedStep = Math.max(state.maxUnlockedStep || 1, state.step);
+                restoreCartSnapshotFromResponse(res);
                 saveState();
                 callback(true);
             }).fail(function () { callback(false); });
@@ -1440,11 +1680,7 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
             var params;
             try {
                 params = new URLSearchParams(window.location.search);
-                if ((params.get('payment_result') === 'success' || params.get('payment_result') === 'pending') && state.order) {
-                    state.paymentStatus = 'pending';
-                    state.step = 4;
-                    state.maxUnlockedStep = Math.max(state.maxUnlockedStep || 1, 4);
-                } else if (params.get('payment_result') === 'failed' && state.order) {
+                if (params.get('payment_result') === 'failed' && state.order) {
                     state.paymentStatus = 'failed';
                     state.step = 4;
                     state.maxUnlockedStep = Math.max(state.maxUnlockedStep || 1, 4);
@@ -1495,6 +1731,10 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                 if (urlOrderId && stateIncId !== urlOrderId) {
                     /* URL orderId differs from in-memory state — trust URL */
                     state.order = null;
+                }
+                if (urlOrderId) {
+                    recoverOrderFromUrl(function () { finalizeInit(); });
+                    return;
                 }
                 if (!state.order || !state.order.orderId || !state.order.incrementId) {
                     recoverOrderFromUrl(function () { finalizeInit(); });

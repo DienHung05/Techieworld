@@ -10,17 +10,24 @@ use YourVendor\PVModern\Model\Payment\VietQrBuilder;
 
 class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
 {
+    private const VNPAY_CLOCK_CACHE_TTL = 300;
+
+    /** @var array{checked_at:int, offset:int}|null */
+    private static ?array $vnpayClockOffset = null;
+
     private const BRAND_LABELS = [
         'momo'   => 'MoMo',
         'vnpay'  => 'VNPay',
-        'card'   => 'Visa / Mastercard',
+        'card'   => 'PayPal',
+        'paypal' => 'PayPal',
         'stripe' => 'Visa / Mastercard',
     ];
 
     private const BRAND_PROVIDERS = [
         'momo'   => 'momo',
         'vnpay'  => 'vnpay',
-        'card'   => 'stripe',
+        'card'   => 'paypal',
+        'paypal' => 'paypal',
         'stripe' => 'stripe',
     ];
 
@@ -75,6 +82,10 @@ class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
             return $this->initializeVnpay($increment, $amount, $isMock);
         }
 
+        if ($channel === 'paypal') {
+            return $this->initializePaypal($increment, $amount, $isMock);
+        }
+
         if ($channel === 'stripe' || $channel === 'card') {
             return $this->initializeStripe($increment, $amount, $isMock);
         }
@@ -97,9 +108,18 @@ class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
         $hasCredentials = !empty($config['tmn_code']) && !empty($config['hash_secret']);
         $reference = 'VNPAY-' . $increment;
 
-        if ($isMock || !$hasCredentials) {
+        if (!$hasCredentials) {
             return $this->initializeVietQrFallback('vnpay', $increment, $amount);
         }
+
+        $expireMinutes = max(5, min(60, (int) ($config['expire_minutes'] ?? 15)));
+        $paymentUrl = rtrim((string) $config['payment_url'], '?');
+        $createdAtTs = $this->resolveVnpayTimestamp($paymentUrl);
+        $expiresAtTs = $createdAtTs + ($expireMinutes * 60);
+        $timezone = new \DateTimeZone('Asia/Ho_Chi_Minh');
+        $createdAt = (new \DateTimeImmutable('@' . $createdAtTs))->setTimezone($timezone);
+        $expiresAt = (new \DateTimeImmutable('@' . $expiresAtTs))->setTimezone($timezone);
+        $txnRef = preg_replace('/[^A-Za-z0-9_-]/', '', $increment) ?: (string) $createdAtTs;
 
         $params = [
             'vnp_Version' => '2.1.0',
@@ -107,14 +127,14 @@ class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
             'vnp_TmnCode' => (string) $config['tmn_code'],
             'vnp_Amount' => (string) ($amount * 100),
             'vnp_CurrCode' => 'VND',
-            'vnp_TxnRef' => preg_replace('/[^A-Za-z0-9_-]/', '', $increment) ?: (string) time(),
+            'vnp_TxnRef' => $txnRef,
             'vnp_OrderInfo' => 'Thanh toan don hang ' . $increment,
             'vnp_OrderType' => 'other',
             'vnp_Locale' => (string) ($config['locale'] ?: 'vn'),
             'vnp_ReturnUrl' => (string) $config['return_url'],
-            'vnp_IpAddr' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1',
-            'vnp_CreateDate' => date('YmdHis'),
-            'vnp_ExpireDate' => date('YmdHis', time() + 15 * 60),
+            'vnp_IpAddr' => $this->resolveClientIp(),
+            'vnp_CreateDate' => $createdAt->format('YmdHis'),
+            'vnp_ExpireDate' => $expiresAt->format('YmdHis'),
         ];
 
         ksort($params);
@@ -126,17 +146,23 @@ class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
         }
 
         $secureHash = hash_hmac('sha512', implode('&', $hashData), (string) $config['hash_secret']);
-        $redirectUrl = rtrim((string) $config['payment_url'], '?') . '?' . implode('&', $query) . '&vnp_SecureHash=' . $secureHash;
+        $redirectUrl = $paymentUrl . '?' . implode('&', $query) . '&vnp_SecureHash=' . $secureHash;
+        $qrCodeUrl = '/api/qr/url?size=540&data=' . rawurlencode($redirectUrl);
 
         return [
             'status' => $this->getInitialStatus(),
             'label' => 'VNPay',
             'provider' => 'vnpay',
             'redirect_url' => $redirectUrl,
+            'payment_url' => $redirectUrl,
+            'qr_code_url' => $qrCodeUrl,
             'qr_payload' => $redirectUrl,
             'reference' => $reference,
             'provider_order_id' => (string) $params['vnp_TxnRef'],
-            'expires_at' => date('Y-m-d H:i:s', time() + 30 * 60),
+            'expires_at' => gmdate('Y-m-d H:i:s', $expiresAtTs),
+            'expires_at_epoch' => $expiresAtTs,
+            'expiresAt' => gmdate('c', $expiresAtTs),
+            'expiresAtEpoch' => $expiresAtTs,
             'amount' => $amount,
             'message' => 'VNPay payment URL created.',
             'mock' => false,
@@ -208,6 +234,81 @@ class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
         ];
     }
 
+    private function resolveVnpayTimestamp(string $paymentUrl): int
+    {
+        $now = time();
+        if (self::$vnpayClockOffset !== null
+            && ($now - (int) self::$vnpayClockOffset['checked_at']) < self::VNPAY_CLOCK_CACHE_TTL
+        ) {
+            return $now + (int) self::$vnpayClockOffset['offset'];
+        }
+
+        $remoteTimestamp = $this->fetchRemoteDateTimestamp($paymentUrl);
+        $offset = $remoteTimestamp > 0 ? ($remoteTimestamp - $now) : 0;
+        self::$vnpayClockOffset = [
+            'checked_at' => $now,
+            'offset' => abs($offset) >= 30 ? $offset : 0,
+        ];
+
+        return $now + (int) self::$vnpayClockOffset['offset'];
+    }
+
+    private function resolveClientIp(): string
+    {
+        $candidates = [
+            (string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? ''),
+            (string) ($_SERVER['HTTP_X_REAL_IP'] ?? ''),
+            (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''),
+            (string) ($_SERVER['REMOTE_ADDR'] ?? ''),
+        ];
+
+        foreach ($candidates as $candidate) {
+            foreach (explode(',', $candidate) as $ip) {
+                $ip = trim($ip);
+                if ($ip !== '' && filter_var($ip, FILTER_VALIDATE_IP)) {
+                    return $ip;
+                }
+            }
+        }
+
+        return '127.0.0.1';
+    }
+
+    private function fetchRemoteDateTimestamp(string $paymentUrl): int
+    {
+        if (!function_exists('curl_init')) {
+            return 0;
+        }
+
+        $parts = parse_url($paymentUrl);
+        $baseUrl = (($parts['scheme'] ?? 'https') . '://' . ($parts['host'] ?? 'sandbox.vnpayment.vn') . '/');
+        $ch = curl_init($baseUrl);
+        if (!$ch) {
+            return 0;
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_NOBODY => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADER => true,
+            CURLOPT_TIMEOUT => 5,
+            CURLOPT_CONNECTTIMEOUT => 3,
+            CURLOPT_USERAGENT => 'Techieworld VNPay clock sync',
+        ]);
+        $headers = curl_exec($ch);
+        curl_close($ch);
+        if (!is_string($headers) || $headers === '') {
+            return 0;
+        }
+
+        if (!preg_match('/^Date:\s*(.+)$/mi', $headers, $matches)) {
+            return 0;
+        }
+
+        $timestamp = strtotime(trim($matches[1]));
+        return $timestamp !== false ? (int) $timestamp : 0;
+    }
+
     private function initializeStripe(string $increment, int $amount, bool $isMock): array
     {
         $config = $this->integrationConfig->getStripeConfig();
@@ -264,6 +365,87 @@ class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
             'mock' => false,
             'gateway_response' => $response,
         ];
+    }
+
+    private function initializePaypal(string $increment, int $amount, bool $isMock): array
+    {
+        $config = $this->integrationConfig->getPaypalConfig();
+        $businessAccount = (string) ($config['business_account'] ?? '');
+
+        if ($isMock || $businessAccount === '') {
+            return $this->initializeVietQrFallback('paypal', $increment, $amount);
+        }
+
+        $reference = 'PAYPAL-' . preg_replace('/[^A-Za-z0-9_-]/', '', $increment);
+        $currency = strtoupper((string) ($config['currency'] ?? 'USD'));
+        $displayAmount = (float) $amount;
+        if ($currency !== 'VND') {
+            $rate = max(1.0, (float) ($config['vnd_to_usd_rate'] ?? 25000));
+            $displayAmount = round($amount / $rate, 2);
+        }
+
+        $returnUrl = $this->appendQuery((string) $config['return_url'], [
+            'orderId' => $increment,
+            'gateway' => 'paypal',
+        ]);
+        $cancelUrl = $this->appendQuery((string) $config['cancel_url'], [
+            'orderId' => $increment,
+            'payment_result' => 'failed',
+            'gateway' => 'paypal',
+        ]);
+
+        $params = [
+            'cmd' => '_xclick',
+            'business' => $businessAccount,
+            'item_name' => 'Techieworld order ' . $increment,
+            'item_number' => $increment,
+            'invoice' => $increment,
+            'custom' => $increment,
+            'amount' => number_format($displayAmount, 2, '.', ''),
+            'currency_code' => $currency,
+            'return' => $returnUrl,
+            'cancel_return' => $cancelUrl,
+            'notify_url' => (string) $config['notify_url'],
+            'no_shipping' => '1',
+            'rm' => '1',
+            'charset' => 'utf-8',
+        ];
+        $paymentUrl = rtrim((string) $config['payment_url'], '?') . '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+
+        return [
+            'status' => $this->getInitialStatus(),
+            'label' => 'PayPal',
+            'provider' => 'paypal',
+            'redirect_url' => $paymentUrl,
+            'payment_url' => $paymentUrl,
+            'qr_payload' => $paymentUrl,
+            'reference' => $reference,
+            'provider_order_id' => $increment,
+            'provider_session_id' => $reference,
+            'expires_at' => date('Y-m-d H:i:s', time() + 30 * 60),
+            'amount' => $amount,
+            'message' => 'PayPal sandbox payment URL created.',
+            'mock' => false,
+            'gateway_response' => [
+                'paypal_amount' => $displayAmount,
+                'paypal_currency' => $currency,
+                'paypal_business_account' => $businessAccount,
+                'paypal_personal_account' => (string) ($config['personal_account'] ?? ''),
+            ],
+            'paypal_accounts' => [
+                'business' => $businessAccount,
+                'personal' => (string) ($config['personal_account'] ?? ''),
+            ],
+        ];
+    }
+
+    /**
+     * @param array<string, string> $query
+     */
+    private function appendQuery(string $url, array $query): string
+    {
+        $separator = str_contains($url, '?') ? '&' : '?';
+        return $url . $separator . http_build_query($query, '', '&', PHP_QUERY_RFC3986);
     }
 
     /**

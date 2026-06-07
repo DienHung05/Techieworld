@@ -34,7 +34,7 @@ class Create implements HttpPostActionInterface, CsrfAwareActionInterface
         $currency = strtoupper(trim((string) ($payload['currency'] ?? 'VND')));
 
         $gatewayOverride = '';
-        if (in_array($method, ['momo', 'vnpay', 'stripe'], true)) {
+        if (in_array($method, ['momo', 'vnpay', 'stripe', 'paypal'], true)) {
             $gatewayOverride = $method;
             $method = $method === 'stripe' ? 'card' : 'wallet';
         }
@@ -60,7 +60,7 @@ class Create implements HttpPostActionInterface, CsrfAwareActionInterface
 
         $gatewayChannel = $gatewayOverride ?: ($method === 'wallet'
             ? strtolower((string) ($payload['wallet'] ?? $payload['gateway_channel'] ?? 'momo'))
-            : ($method === 'card' ? 'stripe' : 'vnpay'));
+            : ($method === 'card' ? 'paypal' : 'vnpay'));
         $payment = $provider->initialize([
             'order_increment_id' => $order ? (string) $order->getIncrementId() : ($orderId ?: 'PENDING-' . time()),
             'amount' => $amount,
@@ -72,6 +72,7 @@ class Create implements HttpPostActionInterface, CsrfAwareActionInterface
             'momo' => 'momo',
             'vnpay' => 'vnpay',
             'stripe' => 'card',
+            'paypal' => 'card',
             default => in_array($method, ['bank', 'bank_transfer'], true) ? 'bank_qr' : $method,
         };
         if ($order) {
@@ -80,7 +81,7 @@ class Create implements HttpPostActionInterface, CsrfAwareActionInterface
                 (string) ($payment['provider'] ?? match ($frontendMethod) {
                     'momo' => 'momo',
                     'vnpay' => 'vnpay',
-                    'card' => 'stripe',
+                    'card' => 'paypal',
                     'bank_qr' => 'bank_transfer',
                     default => 'online_gateway',
                 }),

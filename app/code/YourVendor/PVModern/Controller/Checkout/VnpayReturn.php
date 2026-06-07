@@ -11,6 +11,7 @@ use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollection
 use Psr\Log\LoggerInterface;
 use YourVendor\PVModern\Model\Checkout\OrderPaymentStatus;
 use YourVendor\PVModern\Model\IntegrationConfig;
+use YourVendor\PVModern\Model\Payment\PaymentAttemptService;
 
 class VnpayReturn implements HttpGetActionInterface
 {
@@ -20,6 +21,7 @@ class VnpayReturn implements HttpGetActionInterface
         private readonly IntegrationConfig $integrationConfig,
         private readonly OrderCollectionFactory $orderCollectionFactory,
         private readonly OrderRepositoryInterface $orderRepository,
+        private readonly PaymentAttemptService $paymentAttemptService,
         private readonly LoggerInterface $logger
     ) {
     }
@@ -28,22 +30,85 @@ class VnpayReturn implements HttpGetActionInterface
     {
         $params = $this->request->getParams();
         $isValid = $this->verifySignature($params);
-        $isPaid = $isValid && (($params['vnp_ResponseCode'] ?? '') === '00');
+        $responseCode = (string) ($params['vnp_ResponseCode'] ?? '');
+        $transactionStatus = (string) ($params['vnp_TransactionStatus'] ?? $responseCode);
+        $txnRef = preg_replace('/[^A-Za-z0-9_-]/', '', (string) ($params['vnp_TxnRef'] ?? '')) ?: '';
+        $isPaidResponse = $isValid && $responseCode === '00' && $transactionStatus === '00';
+        $processResult = '';
+
+        if ($isValid && $txnRef !== '') {
+            $processResult = $this->applyVerifiedReturn($params, $txnRef, $responseCode, $transactionStatus);
+        }
+
+        $isConfirmed = $isPaidResponse && in_array($processResult, ['accepted', 'duplicate'], true);
 
         $this->logger->info('[PVModern][VNPay] return received', [
             'valid' => $isValid,
-            'response_code' => $params['vnp_ResponseCode'] ?? null,
-            'txn_ref' => $params['vnp_TxnRef'] ?? null,
-            'note' => 'Browser return is navigation-only; payment confirmation waits for verified IPN.',
+            'response_code' => $responseCode,
+            'transaction_status' => $transactionStatus,
+            'txn_ref' => $txnRef,
+            'process_result' => $processResult,
+            'note' => 'Verified VNPay return updates payment immediately; IPN remains idempotent if it arrives later.',
         ]);
 
-        return $this->redirectFactory->create()->setPath('checkout', [
-            '_query' => [
-                'payment_result' => $isPaid ? 'pending' : 'failed',
-                'gateway' => 'vnpay',
-                'txn' => (string) ($params['vnp_TxnRef'] ?? ''),
-            ],
-        ]);
+        $redirectPath = $txnRef !== '' ? 'payment-confirmation' : 'checkout';
+        $query = [
+            'payment_result' => $isConfirmed ? 'success' : ($isPaidResponse ? 'pending' : 'failed'),
+            'gateway' => 'vnpay',
+        ];
+        if ($txnRef !== '') {
+            $query['orderId'] = $txnRef;
+            $query['txn'] = $txnRef;
+        }
+
+        return $this->redirectFactory->create()->setPath($redirectPath, ['_query' => $query]);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function applyVerifiedReturn(array $payload, string $txnRef, string $responseCode, string $transactionStatus): string
+    {
+        $transactionNo = preg_replace('/[^A-Za-z0-9_-]/', '', (string) ($payload['vnp_TransactionNo'] ?? '')) ?: '';
+        $amount = ((float) ($payload['vnp_Amount'] ?? 0)) / 100;
+        $attempt = $this->paymentAttemptService->findAttemptForProvider(
+            'vnpay',
+            $txnRef,
+            '',
+            $transactionNo,
+            $txnRef
+        );
+        $eventId = $this->paymentAttemptService->recordEvent(
+            $attempt,
+            'vnpay',
+            'return',
+            $transactionNo !== '' ? $transactionNo : $txnRef,
+            $transactionNo !== '' ? $transactionNo : null,
+            true,
+            $amount > 0 ? $amount : null,
+            'VND',
+            http_build_query($payload)
+        );
+
+        if (!$attempt) {
+            $this->paymentAttemptService->finishEvent($eventId, 'rejected', 'Payment attempt not found on VNPay return.');
+            return 'not_found';
+        }
+
+        $providerStatus = ($responseCode === '00' && $transactionStatus === '00') ? 'success' : 'failed';
+        $processResult = $this->paymentAttemptService->applyProviderResult(
+            $attempt,
+            $eventId,
+            'vnpay',
+            $providerStatus,
+            $transactionNo !== '' ? $transactionNo : $txnRef,
+            $transactionNo !== '' ? $transactionNo : null,
+            $amount,
+            'VND',
+            true
+        );
+
+        return (string) ($processResult['result'] ?? '');
     }
 
     /**
@@ -63,7 +128,7 @@ class VnpayReturn implements HttpGetActionInterface
         $pairs = [];
         foreach ($params as $key => $value) {
             if (str_starts_with((string) $key, 'vnp_') && $value !== '' && $value !== null) {
-                $pairs[] = (string) $key . '=' . urlencode((string) $value);
+                $pairs[] = urlencode((string) $key) . '=' . urlencode((string) $value);
             }
         }
 

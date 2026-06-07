@@ -374,7 +374,7 @@ function statusLabel(s) {
   return {pending:'Chờ TT', pending_review:'Chờ xét', paid:'Đã TT', failed:'Thất bại', expired:'Hết hạn'}[s] || s;
 }
 function methodLabel(m) {
-  return {momo:'MoMo', vnpay:'VNPay', bank_qr:'Ngân hàng QR', card:'Visa/Card', cod:'COD'}[m] || m;
+  return {momo:'MoMo', vnpay:'VNPay', bank_qr:'Ngân hàng QR', card:'PayPal', cod:'COD'}[m] || m;
 }
 function methodBadge(m) {
   return '<span class="method-' + esc(m) + '">' + esc(methodLabel(m)) + '</span>';

@@ -188,7 +188,9 @@ class IntegrationConfig
             'tmn_code' => $this->getString('VNPAY_TMN_CODE'),
             'hash_secret' => $this->getString('VNPAY_HASH_SECRET'),
             'return_url' => $this->absoluteUrl((string) $this->getString('VNPAY_RETURN_URL', $this->getString('PVMODERN_GATEWAY_RETURN_URL', '/pvmodern/checkout/vnpayReturn'))),
+            'ipn_url' => $this->absoluteUrl((string) $this->getString('VNPAY_IPN_URL', '/api/webhooks_vnpay/ipn')),
             'locale' => $this->getString('VNPAY_LOCALE', 'vn'),
+            'expire_minutes' => $this->getString('VNPAY_EXPIRE_MINUTES', '15'),
         ];
     }
 
@@ -205,6 +207,24 @@ class IntegrationConfig
             'api_base_url' => $this->getString('STRIPE_API_BASE_URL', 'https://api.stripe.com/v1'),
             'success_url' => $this->absoluteUrl((string) $this->getString('STRIPE_SUCCESS_URL', '/checkout?payment_result=pending&gateway=stripe')),
             'cancel_url' => $this->absoluteUrl((string) $this->getString('STRIPE_CANCEL_URL', '/checkout?payment_result=failed&gateway=stripe')),
+        ];
+    }
+
+    /**
+     * @return array<string, string|null>
+     */
+    public function getPaypalConfig(): array
+    {
+        return [
+            'business_account' => $this->getString('PAYPAL_BUSINESS_ACCOUNT', $this->getString('PAYPAL_SANDBOX_BUSINESS_ACCOUNT')),
+            'personal_account' => $this->getString('PAYPAL_PERSONAL_ACCOUNT', $this->getString('PAYPAL_SANDBOX_PERSONAL_ACCOUNT')),
+            'payment_url' => $this->getString('PAYPAL_PAYMENT_URL', 'https://www.sandbox.paypal.com/cgi-bin/webscr'),
+            'ipn_verify_url' => $this->getString('PAYPAL_IPN_VERIFY_URL', 'https://ipnpb.sandbox.paypal.com/cgi-bin/webscr'),
+            'return_url' => $this->absoluteUrl((string) $this->getString('PAYPAL_RETURN_URL', '/pvmodern/checkout/paypalReturn')),
+            'cancel_url' => $this->absoluteUrl((string) $this->getString('PAYPAL_CANCEL_URL', '/payment-confirmation')),
+            'notify_url' => $this->absoluteUrl((string) $this->getString('PAYPAL_NOTIFY_URL', '/api/webhooks/paypalIpn')),
+            'currency' => $this->getString('PAYPAL_CURRENCY', 'USD'),
+            'vnd_to_usd_rate' => $this->getString('PAYPAL_VND_TO_USD_RATE', '25000'),
         ];
     }
 

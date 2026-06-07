@@ -222,6 +222,32 @@ define([
 
             var cartData = customerData.get('cart');
 
+            function isPaymentFlowPage() {
+                return $('body').hasClass('checkout-index-index') ||
+                    $('body').hasClass('payment-confirmation-index-index');
+            }
+
+            function isEmptyCartPage() {
+                if (!$('body').hasClass('checkout-cart-index')) {
+                    return false;
+                }
+                return $('.pvcart-empty-layout, .cart-empty').length > 0 ||
+                    !$('#shopping-cart-table tbody.cart.item').length;
+            }
+
+            function clearFrozenCartState() {
+                try {
+                    var raw = window.sessionStorage.getItem('pvmodern_checkout_customer_flow');
+                    if (!raw) return;
+                    var saved = JSON.parse(raw);
+                    if (!saved || !saved.cartSnapshotLocked) return;
+                    saved.cartSnapshotLocked = false;
+                    saved.cartSnapshot = [];
+                    saved.cartSnapshotSubtotal = 0;
+                    window.sessionStorage.setItem('pvmodern_checkout_customer_flow', JSON.stringify(saved));
+                } catch (e) {}
+            }
+
             // Read the snapshot the checkout widget froze when place_order ran.
             // While the customer is mid-payment at step 4, we ignore Magento's
             // (correctly-empty) cart section and display the snapshot count
@@ -229,18 +255,24 @@ define([
             // order is placed, while the customer is still waiting for their
             // bank transfer to confirm.
             function readFrozenSnapshotCount() {
+                if (!isPaymentFlowPage()) return null;
                 try {
                     var raw = window.sessionStorage.getItem('pvmodern_checkout_customer_flow');
                     if (!raw) return null;
                     var saved = JSON.parse(raw);
                     if (!saved || !saved.cartSnapshotLocked) return null;
-                    if (saved.step && saved.step >= 5) return null; // payment done — let Magento's 0 through
+                    if (parseInt(saved.step, 10) !== 4) return null;
                     var snap = saved.cartSnapshot || [];
                     return snap.reduce(function (s, i) { return s + (parseInt(i.qty, 10) || 1); }, 0);
                 } catch (e) { return null; }
             }
 
             function refreshBadge(data) {
+                if (isEmptyCartPage()) {
+                    clearFrozenCartState();
+                    applyCount(0);
+                    return;
+                }
                 var frozen = readFrozenSnapshotCount();
                 if (frozen !== null) { applyCount(frozen); return; }
                 /* Use the sum of qty across items so the badge shows the true
@@ -263,6 +295,23 @@ define([
             }
             cartData.subscribe(refreshBadge);
             refreshBadge(cartData());
+
+            if (!isPaymentFlowPage()) {
+                try {
+                    customerData.reload(['cart'], true).done(function (sections) {
+                        refreshBadge(sections && sections.cart ? sections.cart : cartData());
+                    });
+                } catch (e) {}
+            }
+
+            if (isEmptyCartPage()) {
+                clearFrozenCartState();
+                applyCount(0);
+                try {
+                    customerData.invalidate(['cart']);
+                    customerData.reload(['cart'], true);
+                } catch (e) {}
+            }
 
             /* Immediate update from checkout widget — honored regardless of
                freeze state because pvCartCountChanged is fired explicitly

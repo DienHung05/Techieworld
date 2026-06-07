@@ -13,6 +13,7 @@ use Magento\Framework\UrlInterface;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Model\Order;
 use Psr\Log\LoggerInterface;
 use YourVendor\PVModern\Model\IntegrationConfig;
 use YourVendor\PVModern\Model\Payment\PaymentAttemptService;
@@ -353,6 +354,10 @@ class CheckoutService
             $this->checkoutSession->setLastRealOrderId((string) $order->getIncrementId());
             $this->checkoutSession->setLastOrderStatus((string) $order->getStatus());
 
+            if ($normalized['payment_method'] !== 'cod') {
+                $this->restoreQuoteForPendingPayment($order);
+            }
+
             $purchaseCode = $this->purchaseCodeGenerator->generateFromOrder($order);
 
             return [
@@ -380,6 +385,29 @@ class CheckoutService
             throw new LocalizedException(__('We could not place the order. Please review your checkout details and try again.'));
         } finally {
             $this->checkoutSession->unsetData(self::PROCESSING_FLAG);
+        }
+    }
+
+    private function restoreQuoteForPendingPayment(Order $order): void
+    {
+        try {
+            if (!$order->getQuoteId()) {
+                return;
+            }
+
+            if ($this->checkoutSession->restoreQuote()) {
+                return;
+            }
+
+            $quote = $this->cartRepository->get((int) $order->getQuoteId());
+            $quote->setIsActive(true)->setReservedOrderId(null);
+            $this->cartRepository->save($quote);
+            $this->checkoutSession->replaceQuote($quote);
+        } catch (\Throwable $exception) {
+            $this->logger->warning('[PVModern][Checkout] unable to restore pending-payment quote', [
+                'order' => $order->getIncrementId(),
+                'message' => $exception->getMessage(),
+            ]);
         }
     }
 
@@ -612,7 +640,7 @@ class CheckoutService
         return match ($frontendPaymentMethod) {
             'momo' => 'momo',
             'vnpay' => 'vnpay',
-            'card' => 'stripe',
+            'card' => 'paypal',
             'bank_qr' => 'bank_transfer',
             default => $frontendPaymentMethod,
         };

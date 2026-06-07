@@ -24,60 +24,79 @@ class Ipn implements HttpGetActionInterface
     public function execute()
     {
         $result = $this->resultJsonFactory->create();
-        $params = $this->request->getParams();
-        $signatureVerified = $this->verifySignature($params);
-        $txnRef = preg_replace('/[^A-Za-z0-9_-]/', '', (string) ($params['vnp_TxnRef'] ?? '')) ?: '';
-        $transactionNo = (string) ($params['vnp_TransactionNo'] ?? '');
-        $amount = ((float) ($params['vnp_Amount'] ?? 0)) / 100;
-        $attempt = $this->paymentAttemptService->findAttemptForProvider('vnpay', $txnRef, '', $transactionNo, $txnRef);
-        $eventId = $this->paymentAttemptService->recordEvent(
-            $attempt,
-            'vnpay',
-            'ipn',
-            (string) ($params['vnp_TransactionNo'] ?? $txnRef) ?: null,
-            $transactionNo !== '' ? $transactionNo : null,
-            $signatureVerified,
-            $amount > 0 ? $amount : null,
-            'VND',
-            http_build_query($params)
-        );
+        $result->setHeader('Cache-Control', 'no-store, no-cache', true);
 
-        if (!$signatureVerified) {
-            $this->paymentAttemptService->finishEvent($eventId, 'rejected', 'Invalid VNPay signature.');
-            return $result->setData(['RspCode' => '97', 'Message' => 'Invalid signature']);
+        try {
+            $params = $this->request->getParams();
+            $signatureVerified = $this->verifySignature($params);
+            $txnRef = preg_replace('/[^A-Za-z0-9_-]/', '', (string) ($params['vnp_TxnRef'] ?? '')) ?: '';
+            $transactionNo = preg_replace('/[^A-Za-z0-9_-]/', '', (string) ($params['vnp_TransactionNo'] ?? '')) ?: '';
+            $amount = ((float) ($params['vnp_Amount'] ?? 0)) / 100;
+            $attempt = $this->paymentAttemptService->findAttemptForProvider('vnpay', $txnRef, '', $transactionNo, $txnRef);
+            $eventId = $this->paymentAttemptService->recordEvent(
+                $attempt,
+                'vnpay',
+                'ipn',
+                $transactionNo !== '' ? $transactionNo : ($txnRef !== '' ? $txnRef : null),
+                $transactionNo !== '' ? $transactionNo : null,
+                $signatureVerified,
+                $amount > 0 ? $amount : null,
+                'VND',
+                http_build_query($params)
+            );
+
+            if (!$signatureVerified) {
+                $this->paymentAttemptService->finishEvent($eventId, 'rejected', 'Invalid VNPay signature.');
+                return $result->setData(['RspCode' => '97', 'Message' => 'Invalid Checksum']);
+            }
+
+            if (!$attempt) {
+                $this->paymentAttemptService->finishEvent($eventId, 'rejected', 'Payment attempt not found.');
+                return $result->setData(['RspCode' => '01', 'Message' => 'Order not Found']);
+            }
+
+            $responseCode = (string) ($params['vnp_ResponseCode'] ?? '');
+            $transactionStatus = (string) ($params['vnp_TransactionStatus'] ?? $responseCode);
+            $providerStatus = ($responseCode === '00' && $transactionStatus === '00') ? 'success' : 'failed';
+            $processResult = $this->paymentAttemptService->applyProviderResult(
+                $attempt,
+                $eventId,
+                'vnpay',
+                $providerStatus,
+                $transactionNo !== '' ? $transactionNo : ($txnRef !== '' ? $txnRef : null),
+                $transactionNo !== '' ? $transactionNo : null,
+                $amount,
+                'VND',
+                true
+            );
+
+            $this->logger->info('[PVModern][VNPay] IPN processed', [
+                'txn_ref' => $txnRef,
+                'transaction_no' => $transactionNo,
+                'response_code' => $responseCode,
+                'transaction_status' => $transactionStatus,
+                'result' => $processResult['result'] ?? '',
+            ]);
+
+            if (($processResult['result'] ?? '') === 'manual_review') {
+                return $result->setData(['RspCode' => '04', 'Message' => 'Invalid Amount']);
+            }
+
+            if (($processResult['result'] ?? '') === 'duplicate') {
+                return $result->setData(['RspCode' => '02', 'Message' => 'Order already confirmed']);
+            }
+
+            if (($processResult['result'] ?? '') === 'rejected') {
+                return $result->setData(['RspCode' => '99', 'Message' => 'Unknown error']);
+            }
+
+            return $result->setData(['RspCode' => '00', 'Message' => 'Confirm Success']);
+        } catch (\Throwable $exception) {
+            $this->logger->error('[PVModern][VNPay] IPN error', [
+                'message' => $exception->getMessage(),
+            ]);
+            return $result->setData(['RspCode' => '99', 'Message' => 'Unknown error']);
         }
-
-        if (!$attempt) {
-            $this->paymentAttemptService->finishEvent($eventId, 'rejected', 'Payment attempt not found.');
-            return $result->setData(['RspCode' => '01', 'Message' => 'Order not found']);
-        }
-
-        $responseCode = (string) ($params['vnp_ResponseCode'] ?? '');
-        $transactionStatus = (string) ($params['vnp_TransactionStatus'] ?? $responseCode);
-        $providerStatus = ($responseCode === '00' && $transactionStatus === '00') ? 'success' : 'failed';
-        $processResult = $this->paymentAttemptService->applyProviderResult(
-            $attempt,
-            $eventId,
-            'vnpay',
-            $providerStatus,
-            (string) ($params['vnp_TransactionNo'] ?? $txnRef) ?: null,
-            $transactionNo !== '' ? $transactionNo : null,
-            $amount,
-            'VND',
-            true
-        );
-
-        $this->logger->info('[PVModern][VNPay] IPN processed', [
-            'txn_ref' => $txnRef,
-            'transaction_no' => $transactionNo,
-            'result' => $processResult['result'] ?? '',
-        ]);
-
-        if (($processResult['result'] ?? '') === 'manual_review') {
-            return $result->setData(['RspCode' => '04', 'Message' => 'Amount invalid or review required']);
-        }
-
-        return $result->setData(['RspCode' => '00', 'Message' => 'Confirm Success']);
     }
 
     /**

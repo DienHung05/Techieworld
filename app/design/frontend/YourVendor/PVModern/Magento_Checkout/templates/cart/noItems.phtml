@@ -4,6 +4,10 @@
  * @var \Magento\Framework\Escaper $escaper
  */
 $priceHelper = $this->helper(Magento\Framework\Pricing\Helper\Data::class);
+$continueShoppingUrl = $block->getUrl('', [
+    '_query' => ['view' => 'products'],
+    '_fragment' => 'pv3-products',
+]);
 ?>
 <div class="pvcart-empty-layout">
     <div class="pvcart-list-card">
@@ -12,7 +16,7 @@ $priceHelper = $this->helper(Magento\Framework\Pricing\Helper\Data::class);
             <h3 class="pvcart-empty-title"><?= $escaper->escapeHtml(__('Your cart is empty')) ?></h3>
             <p class="pvcart-empty-sub"><?= $escaper->escapeHtml(__('Add products to your cart to continue shopping')) ?></p>
             <a class="pvcart-empty-btn"
-               href="<?= $escaper->escapeUrl($block->getUrl('')) ?>">
+               href="<?= $escaper->escapeUrl($continueShoppingUrl) ?>">
                 <?= $escaper->escapeHtml(__('Continue shopping')) ?>
             </a>
         </div>
@@ -52,7 +56,7 @@ $priceHelper = $this->helper(Magento\Framework\Pricing\Helper\Data::class);
                 <span><?= $escaper->escapeHtml(__('Proceed to checkout')) ?></span>
             </button>
             <a class="pvcart-secondary-btn"
-               href="<?= $escaper->escapeUrl($block->getUrl('')) ?>">
+               href="<?= $escaper->escapeUrl($continueShoppingUrl) ?>">
                 <?= $escaper->escapeHtml(__('Continue shopping')) ?>
             </a>
         </div>

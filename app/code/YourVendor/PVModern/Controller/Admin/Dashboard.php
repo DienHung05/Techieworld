@@ -254,7 +254,7 @@ a{color:#60a5fa;text-decoration:none}
         <option value="momo">MoMo</option>
         <option value="vnpay">VNPay</option>
         <option value="bank_qr">Ngân hàng QR</option>
-        <option value="card">Visa/Card</option>
+        <option value="card">PayPal</option>
       </select>
       <label>Ngày:</label>
       <input type="date" id="filterDate" value="">
@@ -560,7 +560,7 @@ function statusLabel(s) {
   return {pending:'Chờ TT',pending_review:'Chờ xét',paid:'Đã TT',failed:'Thất bại',expired:'Hết hạn'}[s]||s;
 }
 function methodLabel(m) {
-  return {momo:'MoMo',vnpay:'VNPay',bank_qr:'Ngân hàng',card:'Visa/Card',cod:'COD'}[m]||m;
+  return {momo:'MoMo',vnpay:'VNPay',bank_qr:'Ngân hàng',card:'PayPal',cod:'COD'}[m]||m;
 }
 function escHtml(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');

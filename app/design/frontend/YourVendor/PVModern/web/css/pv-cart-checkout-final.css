@@ -3785,6 +3785,7 @@
 .pvco3-pm-icon--momo  { background: #fdf2f8; color: #9d174d; }
 .pvco3-pm-icon--vnpay { background: #eff6ff; color: #1d4ed8; }
 .pvco3-pm-icon--card  { background: #1e1b4b; padding: 8px; }
+.pvco3-pm-icon--paypal { background: #eff6ff; color: #003087; }
 .pvco3-pm-icon--cod   { background: #f8fafc; color: #475569; }
 
 .pvco3-pm-mark {
@@ -3795,6 +3796,7 @@
 
 .pvco3-pm-mark--momo  { color: #be185d; }
 .pvco3-pm-mark--vnpay { color: #1d4ed8; font-size: 16px; }
+.pvco3-pm-mark--paypal { color: #003087; font-size: 16px; letter-spacing: -0.02em; }
 
 .pvco3-pm-info { flex: 1; min-width: 0; }
 
@@ -4169,6 +4171,136 @@
 .pvco3-btn--momo:hover  { background: #9d174d; border-color: #9d174d; }
 .pvco3-btn--vnpay { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
 .pvco3-btn--vnpay:hover { background: #1e40af; border-color: #1e40af; }
+.pvco3-vnpay-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 4px 0 12px;
+}
+.pvco3-vnpay-actions .pvco3-btn {
+    min-height: 42px;
+}
+
+.pvco3-vnpay-direct {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.pvco3-vnpay-direct-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #bfdbfe;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #eff6ff 0%, #fff 54%);
+    padding: 42px 34px;
+    text-align: center;
+    box-shadow: 0 18px 46px rgba(30, 64, 175, 0.12);
+}
+
+.pvco3-vnpay-direct-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #dbeafe;
+    border-radius: 999px;
+    background: #fff;
+    padding: 8px 14px 8px 8px;
+    color: #1d4ed8;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.pvco3-vnpay-direct-mark span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #1d4ed8;
+    color: #fff;
+    font-size: 13px;
+    line-height: 1;
+}
+
+.pvco3-vnpay-direct-card h2 {
+    margin: 20px 0 8px;
+    color: #0f172a;
+    font-size: 28px;
+    font-weight: 800;
+}
+
+.pvco3-vnpay-direct-sub {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 0 14px;
+    color: #1e40af;
+    font-size: 15px;
+}
+
+.pvco3-vnpay-direct-copy {
+    max-width: 560px;
+    margin: 0 auto 24px;
+    color: #475569;
+    font-size: 15px;
+    line-height: 1.65;
+}
+
+.pvco3-paypal-accounts {
+    display: grid;
+    gap: 8px;
+    max-width: 560px;
+    margin: 0 auto 24px;
+}
+
+.pvco3-paypal-account-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 10px 12px;
+    border: 1px solid #dbeafe;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #1e3a8a;
+    font-size: 13px;
+}
+
+.pvco3-paypal-account-row span {
+    color: #64748b;
+    font-weight: 700;
+}
+
+.pvco3-paypal-account-row strong {
+    text-align: right;
+    word-break: break-word;
+}
+
+.pvco3-vnpay-direct-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.pvco3-vnpay-direct-actions .pvco3-btn {
+    min-height: 46px;
+}
+
+.pvco3-vnpay-direct-wait {
+    justify-content: center;
+    max-width: 420px;
+    margin: 20px auto 0;
+}
+
+.pvco3-vnpay-direct.is-failed .pvco3-vnpay-direct-wait {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+}
 
 /* Card redirect panel */
 .pvco3-pcp-card-redirect {
@@ -4427,6 +4559,24 @@
 
     .pvco3-pch-bar {
         flex-wrap: wrap;
+    }
+
+    .pvco3-vnpay-direct-card {
+        padding: 30px 18px;
+        border-radius: 14px;
+    }
+
+    .pvco3-vnpay-direct-card h2 {
+        font-size: 22px;
+    }
+
+    .pvco3-vnpay-direct-sub {
+        flex-wrap: wrap;
+    }
+
+    .pvco3-vnpay-direct-actions .pvco3-btn {
+        width: 100%;
+        justify-content: center;
     }
 
     .pvco3-pm-card {
@@ -5152,4 +5302,3 @@
         position: static !important;
     }
 }
-
