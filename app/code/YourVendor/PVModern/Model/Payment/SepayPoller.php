@@ -6,20 +6,7 @@ namespace YourVendor\PVModern\Model\Payment;
 use Psr\Log\LoggerInterface;
 use YourVendor\PVModern\Model\IntegrationConfig;
 
-/**
- * Active pull of recent SePay transactions for a specific account + memo.
- *
- * Why this exists: SePay's webhook delivery on personal-account Free tier is
- * unreliable / delayed. The webhook path still works when it fires, but as a
- * resilience net the SSE stream also actively pulls SePay's UserAPI for
- * matching transactions. The same CassoTransactionProcessor handles webhook
- * AND poll-discovered transactions identically — so any transaction that
- * SePay confirms reaches our DB within seconds whether they pushed or we
- * pulled.
- *
- * Docs: https://docs.sepay.vn/api-giao-dich.html
- *       GET https://my.sepay.vn/userapi/transactions/list
- */
+
 class SepayPoller
 {
     private const API_BASE = 'https://my.sepay.vn/userapi';
@@ -32,13 +19,7 @@ class SepayPoller
     ) {
     }
 
-    /**
-     * Look for a transaction matching the given transfer code (`ORD<digits>`)
-     * on the configured BIDV account, processed through the standard pipeline.
-     * Returns the processor result, or null if nothing matched / nothing to do.
-     *
-     * @return array<string, mixed>|null
-     */
+    
     public function pollForTransferCode(string $transferCode, ?int $expectedAmount = null): ?array
     {
         $token = trim((string) $this->integrationConfig->getString('SEPAY_API_TOKEN'));
@@ -88,10 +69,10 @@ class SepayPoller
             }
             $amountIn = (float) ($tx['amount_in'] ?? 0);
             if ($amountIn <= 0) {
-                // Outgoing transfer — ignore
+                
                 continue;
             }
-            // Map to the shape CassoTransactionProcessor expects.
+            
             $mapped = [
                 'description' => $content,
                 'amount'      => $amountIn,
@@ -105,9 +86,7 @@ class SepayPoller
         return null;
     }
 
-    /**
-     * @return array<string, mixed>|null
-     */
+    
     private function httpGet(string $url, string $bearer): ?array
     {
         if (!function_exists('curl_init')) {

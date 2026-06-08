@@ -1,13 +1,5 @@
 <?php
-/**
- * PVModern cart page wrapper.
- *
- * Keeps Magento's with-items / no-items branching intact while ensuring both
- * states share the same outer cart shell.
- *
- * @var $block \Magento\Checkout\Block\Cart
- * @var \Magento\Framework\Escaper $escaper
- */
+
 ?>
 <div class="pvcart-page cart-flow-page<?= $block->getItemsCount() ? '' : ' pvcart-page--empty' ?>">
     <div class="cart-page-top">

@@ -47,9 +47,7 @@ class PlaceOrder implements HttpPostActionInterface, CsrfAwareActionInterface
         return $result;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
     private function readPayload(): array
     {
         $raw = (string) $this->request->getContent();
@@ -61,9 +59,7 @@ class PlaceOrder implements HttpPostActionInterface, CsrfAwareActionInterface
         return is_array($decoded) ? $decoded : [];
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     */
+    
     private function assertFormKey(array $payload): void
     {
         if (($payload['form_key'] ?? '') !== $this->formKey->getFormKey()) {

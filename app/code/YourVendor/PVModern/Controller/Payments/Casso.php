@@ -32,9 +32,9 @@ class Casso implements HttpPostActionInterface, CsrfAwareActionInterface
     {
         $result = $this->resultJsonFactory->create();
 
-        // Verify Casso secure token. This legacy endpoint is kept for existing
-        // Casso configuration, but it now uses the same verified processing path
-        // as /api/webhooks/casso.
+        
+        
+        
         $configToken = (string)($this->integrationConfig->getCassoConfig()['webhook_secret'] ?? '')
             ?: (string)$this->deploymentConfig->get('pvmodern/casso_token', '');
         $sentToken = (string)($this->request->getHeader('Secure-Token')
@@ -51,10 +51,10 @@ class Casso implements HttpPostActionInterface, CsrfAwareActionInterface
         try {
             $payload = $this->json->unserialize($body);
         } catch (\Throwable $e) {
-            return $result->setData(['error' => 0, 'message' => 'ok']); // always 200 to Casso
+            return $result->setData(['error' => 0, 'message' => 'ok']); 
         }
 
-        // Casso can send either a single transaction or array in 'data'
+        
         $transactions = [];
         if (isset($payload['data']) && is_array($payload['data'])) {
             $transactions = $payload['data'];
@@ -76,14 +76,14 @@ class Casso implements HttpPostActionInterface, CsrfAwareActionInterface
         $description = (string)($tx['description'] ?? $tx['memo'] ?? '');
         $amount = (float)($tx['amount'] ?? 0);
         $txId = (string)($tx['tid'] ?? $tx['transaction_id'] ?? $tx['id'] ?? '');
-        $kind = (int)($tx['kind'] ?? 1); // 1 = credit, 2 = debit
+        $kind = (int)($tx['kind'] ?? 1); 
 
-        if ($kind !== 1 || $amount <= 0) { return; } // only incoming
+        if ($kind !== 1 || $amount <= 0) { return; } 
 
-        // Find matching pv_payment_order by transfer_code in description
+        
         $pvOrder = $this->findMatchByDescription($description, $amount);
         if (!$pvOrder) {
-            // Log unmatched
+            
             $this->paymentDb->logVerification([
                 'pv_order_id' => 0,
                 'source' => 'casso_unmatched',
@@ -95,9 +95,9 @@ class Casso implements HttpPostActionInterface, CsrfAwareActionInterface
             return;
         }
 
-        if ($pvOrder['payment_status'] === 'paid') { return; } // already paid
+        if ($pvOrder['payment_status'] === 'paid') { return; } 
 
-        // Mark as paid
+        
         $this->paymentDb->updateOrder((int)$pvOrder['id'], [
             'payment_status' => 'paid',
             'current_step' => 5,
@@ -116,7 +116,7 @@ class Casso implements HttpPostActionInterface, CsrfAwareActionInterface
 
     private function findMatchByDescription(string $description, float $amount): ?array
     {
-        // Try to extract transfer code from description (format: ORD + digits)
+        
         if (preg_match('/\bORD\d+\b/i', $description, $m)) {
             $code = strtoupper($m[0]);
             $pvOrder = $this->paymentDb->findByTransferCode($code);
@@ -124,7 +124,7 @@ class Casso implements HttpPostActionInterface, CsrfAwareActionInterface
                 return $pvOrder;
             }
         }
-        // Try increment id patterns
+        
         if (preg_match('/\b1\d{8,9}\b/', $description, $m)) {
             $code = 'ORD' . $m[0];
             $pvOrder = $this->paymentDb->findByTransferCode($code);

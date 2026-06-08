@@ -1,5 +1,5 @@
 <?php
-/** @var \YourVendor\PVModern\Block\Adminhtml\Payments\Dashboard $block */
+
 $pendingCount  = $block->countByStatus('pending_review');
 $paidCount     = $block->countByStatus('paid');
 $totalCount    = $block->countAll();
@@ -338,13 +338,13 @@ td .amt{font-weight:700;color:#16a34a}
 (function() {
 'use strict';
 
-var APPROVE_URL       = '<?= /* @noEscape */ $approveUrl ?>';
-var REJECT_URL        = '<?= /* @noEscape */ $rejectUrl ?>';
-var ORDERS_URL        = '<?= /* @noEscape */ $ordersJsonUrl ?>';
-var SIMULATE_URL      = '<?= /* @noEscape */ $simulateWebhookUrl ?>';
+var APPROVE_URL       = '<?=  $approveUrl ?>';
+var REJECT_URL        = '<?=  $rejectUrl ?>';
+var ORDERS_URL        = '<?=  $ordersJsonUrl ?>';
+var SIMULATE_URL      = '<?=  $simulateWebhookUrl ?>';
 var IS_MOCK_MODE      = <?= $isMockMode ? 'true' : 'false' ?>;
-var FORM_KEY          = '<?= /* @noEscape */ $formKey ?>';
-var SCREENSHOT_BASE = '<?= /* @noEscape */ rtrim($block->escapeUrl($block->getUrl('pvmodern_payments/payments/screenshot')), '/') ?>';
+var FORM_KEY          = '<?=  $formKey ?>';
+var SCREENSHOT_BASE = '<?=  rtrim($block->escapeUrl($block->getUrl('pvmodern_payments/payments/screenshot')), '/') ?>';
 
 var pvCurrentTab    = 'pending_review';
 var pvCurrentOrderId = null;

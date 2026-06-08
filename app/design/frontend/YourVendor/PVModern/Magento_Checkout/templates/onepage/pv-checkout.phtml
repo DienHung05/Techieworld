@@ -1,16 +1,5 @@
 <?php
-/**
- * PVModern — 4-Step Checkout (reference-faithful)
- * ================================================
- * Step 1: Shipping    (address form + shipping methods)
- * Step 2: Payment     (card / e-wallet / bank tabs)
- * Step 3: Review      (order review)
- * Step 4: Complete    (success screen)
- *
- * Matches the reference design in /reference/tmp exactly.
- *
- * @var \YourVendor\PVModern\Block\Checkout\Flow $block
- */
+
 $bootstrapJson = $block->getSerializedBootstrap();
 $cartUrl       = $block->escapeUrl($block->getUrl('checkout/cart'));
 $homeUrl       = $block->escapeUrl($block->getUrl(''));
@@ -21,7 +10,7 @@ $accountUrl    = $block->escapeUrl($block->getUrl('customer/account'));
      data-bootstrap-selector="#pvco3-bootstrap"
      data-payment-confirmation-only="<?= $block->isPaymentConfirmationOnly() ? '1' : '0' ?>">
 
-    <script type="application/json" id="pvco3-bootstrap"><?= /* @noEscape */ $bootstrapJson ?></script>
+    <script type="application/json" id="pvco3-bootstrap"><?=  $bootstrapJson ?></script>
 
     <div class="pv3-container pvco3-wrap">
 

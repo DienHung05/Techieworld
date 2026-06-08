@@ -29,9 +29,7 @@ class Status implements HttpGetActionInterface
         return $result->setData($this->formatAttempt($attempt));
     }
 
-    /**
-     * @return array<string, mixed>|null
-     */
+    
     private function loadAttempt(): ?array
     {
         $id = (int) ($this->request->getParam('paymentAttemptId') ?: $this->request->getParam('payment_attempt_id') ?: $this->request->getParam('id'));
@@ -43,10 +41,7 @@ class Status implements HttpGetActionInterface
         return $orderId !== '' ? $this->paymentDb->findLatestAttemptForIncrement($orderId) : null;
     }
 
-    /**
-     * @param array<string, mixed> $attempt
-     * @return array<string, mixed>
-     */
+    
     private function formatAttempt(array $attempt): array
     {
         return [

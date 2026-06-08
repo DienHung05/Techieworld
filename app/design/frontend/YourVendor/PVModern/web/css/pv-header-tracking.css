@@ -98,9 +98,7 @@ body.pvmodern-v3 .pv3-actions {
 body.pvmodern-v3 .pv3-signout-button[hidden] {
     display: none !important;
 }
-/* Sign-out floats out of the actions row and sits centered between
-   the cart's right edge (= page container's right edge) and the
-   viewport's right edge. Computed as half of the empty gutter. */
+ 
 body.pvmodern-v3 .pv3-signout-button {
     position: absolute !important;
     top: 50% !important;
@@ -114,8 +112,7 @@ body.pvmodern-v3 .pv3-signout-button {
     align-items: center !important;
     justify-content: center !important;
 }
-/* On screens narrower than the container (<=1400px) there's no gutter,
-   so fall back to a normal inline position next to the cart. */
+ 
 @media (max-width: 1400px) {
     body.pvmodern-v3 .pv3-signout-button {
         position: static !important;
@@ -438,7 +435,7 @@ body.pvmodern-v3 .pv-order-track::before {
     }
 }
 
-/* ─── My Orders — purchase / warranty code badge ─────────────────────── */
+ 
 .sales-order-history .col.pv-purchase-code,
 .account .col.pv-purchase-code {
     white-space: nowrap;

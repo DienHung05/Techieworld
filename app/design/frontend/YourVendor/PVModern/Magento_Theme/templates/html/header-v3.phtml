@@ -1,13 +1,5 @@
 <?php
-/**
- * PVModern v4.1-fixed — Header
- * =============================
- * Navigation: pure CSS hover mega-menus, RequireJS sliding underline
- * Cart badge: Magento customerData (KO observable) real-time update
- * No Alpine.js dependency — works with stock Magento RequireJS stack.
- *
- * @var \Magento\Framework\View\Element\Template $block
- */
+
 
 $_om = \Magento\Framework\App\ObjectManager::getInstance();
 $_customerSession = $_om->get(\Magento\Customer\Model\Session::class);
@@ -17,7 +9,7 @@ try {
 } catch (\Throwable $e) {}
 $_logoutUrl = $block->escapeUrl($block->getUrl('customer/account/logout'));
 
-/* ── Server-side cart count (initial render) ───────── */
+
 $_cartQty = 0;
 try {
     $_cartQty = (int) round(
@@ -26,12 +18,7 @@ try {
     );
 } catch (\Throwable $e) {}
 
-/* ── Page-context detection for nav underline ──────────────────────────────
- * PHP detects whether we are on a category page and which nav item is active.
- * Values are embedded as data-* attributes on the <nav> element.
- * The RequireJS widget (v3-header.js) reads these on DOMReady to set the
- * initial underline position and text color — no page-load flash.
- * ─────────────────────────────────────────────────────────────────────────── */
+
 $_req       = $_om->get(\Magento\Framework\App\RequestInterface::class);
 $_action    = $_req->getFullActionName();
 $_isCatPage = ($_action === 'catalog_category_view');
@@ -104,12 +91,12 @@ $_buildCategoryFilterUrl = static function (string $category) use ($_searchUrl, 
 };
 
 $_resolveMenuLink = static function (array $_link) use ($_buildCategoryFilterUrl, $block, $_buildSearchUrl): string {
-    // Explicit full URL
+    
     if (!empty($_link['url'])) {
         return $block->getUrl($_link['url']);
     }
-    // Route category links to the storefront filter state so the customer
-    // lands on a visibly filtered product grid instead of an unrelated page.
+    
+    
     if (!empty($_link['category'])) {
         return $_buildCategoryFilterUrl((string) $_link['category']);
     }
@@ -128,7 +115,7 @@ $_searchQuery      = trim((string) $_req->getParam('q', ''));
 $_isCatStr         = ($_isCatPage || $_isFilterPage) ? 'true' : 'false';
 $_activeStr        = $block->escapeHtmlAttr($_activeCat);
 ?>
-<?php /* ── Google Fonts: Inter ── */ ?>
+<?php  ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -203,7 +190,7 @@ $_activeStr        = $block->escapeHtmlAttr($_activeCat);
                 <div class="pv3-nav-item" data-nav-key="<?= $_hKey ?>">
 
                     <?php
-                    /* Resolve top-level link: supports 'category', 'url', and 'q' keys */
+                    
                     $_topLink = $_resolveMenuLink($_menu);
                     ?>
                     <a href="<?= $block->escapeUrl($_topLink) ?>"

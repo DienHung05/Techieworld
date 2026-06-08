@@ -83,7 +83,7 @@ Defined in [etc/adminhtml/system.xml](app/code/YourVendor/PVModern/etc/adminhtml
 | `PVMODERN_PAYMENT_DEMO` | `Block/Checkout/Flow`, `VietQrBuilder`, `PaymentSessions/Events`, `Qr/ScanPaid` | Enables demo "scan-to-pay" trigger (`/api/qr/scanpaid`) |
 | `PVMODERN_QR_PROVIDER` | `VietQrBuilder` | `sepay` (default) or `vietqr` |
 | `PVMODERN_PUBLIC_BASE_URL` | `VietQrBuilder::buildPublicUrl()` | Override public host used in QR demo URL |
-| `PVMODERN_BANK_ACCOUNT_NAME` / `_NUMBER` / `_NAME` / `_CODE` / `_BIN` / `_BRANCH` / `_TRANSFER_PREFIX` | Bank transfer & VietQR | Beneficiary details (defaults: `DIEN MANH HUNG` / `4661104867` BIDV BIN `970418`) |
+| `PVMODERN_BANK_ACCOUNT_NAME` / `_NUMBER` / `_NAME` / `_CODE` / `_BIN` / `_BRANCH` / `_TRANSFER_PREFIX` | Bank transfer & VietQR | Beneficiary details (defaults: `NGUYEN VAN A` / `0000000000` BIDV BIN `970418`) |
 | `PVMODERN_STATIC_QR_BASE_URL` | `IntegrationConfig::getStaticQrBaseUrl()` | Optional folder of static QR images |
 | `PVMODERN_GATEWAY_MERCHANT_CODE` / `_PUBLIC_KEY` / `_CALLBACK_URL` / `_RETURN_URL` / `_IPN_URL` | Generic gateway config | Used as fallbacks for MoMo/VNPay redirect+IPN |
 | `MOMO_*` (`ENDPOINT`/`CREATE_URL`, `QUERY_URL`, `PARTNER_CODE`, `ACCESS_KEY`, `SECRET_KEY`, `REDIRECT_URL`, `IPN_URL`, `REQUEST_TYPE`) | MoMo provider, IPN, polling | Live MoMo credentials |

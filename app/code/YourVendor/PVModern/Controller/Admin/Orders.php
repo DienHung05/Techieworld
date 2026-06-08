@@ -40,7 +40,7 @@ class Orders implements HttpGetActionInterface
         ];
         $orders = $this->paymentDb->listOrders($filters);
 
-        // Stats
+        
         $cassoToday = $this->countCassoToday();
         $stats = [
             'pending_review' => $this->paymentDb->countOrders('pending_review'),

@@ -96,9 +96,7 @@ class Momo implements HttpPostActionInterface, CsrfAwareActionInterface
         return true;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
     private function decodePayload(string $raw): array
     {
         if ($raw !== '') {
@@ -113,9 +111,7 @@ class Momo implements HttpPostActionInterface, CsrfAwareActionInterface
         return $this->request->getParams();
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     */
+    
     private function verifySignature(array $payload): bool
     {
         $config = $this->integrationConfig->getMomoConfig();

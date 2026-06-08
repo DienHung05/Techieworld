@@ -29,7 +29,7 @@ class AddCustomerUsername implements DataPatchInterface
         $customerEntity = $customerSetup->getEavConfig()->getEntityType(Customer::ENTITY);
         $attributeSetId = (int) $customerEntity->getDefaultAttributeSetId();
 
-        /** @var AttributeSet $attributeSet */
+        
         $attributeSet = $this->attributeSetFactory->create();
         $attributeGroupId = (int) $attributeSet->getDefaultGroupId($attributeSetId);
 

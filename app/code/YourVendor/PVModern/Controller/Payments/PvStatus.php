@@ -13,7 +13,7 @@ use YourVendor\PVModern\Helper\PaymentDb;
 
 class PvStatus implements HttpGetActionInterface
 {
-    // Rate limiting: track last poll time per orderId in APCu or skip gracefully
+    
     private static array $lastPoll = [];
 
     public function __construct(
@@ -31,23 +31,23 @@ class PvStatus implements HttpGetActionInterface
         $result->setHeader('Cache-Control', 'no-store, no-cache', true);
 
         $rawId = trim((string)($this->request->getParam('orderId') ?? $this->request->getParam('order_id') ?? ''));
-        // Keep raw form: strip non-alphanumeric but preserve leading zeros (Magento uses zero-padded IDs like 000000037)
+        
         $incrementId = preg_replace('/[^A-Za-z0-9]/', '', $rawId);
         if ($incrementId === '' || $incrementId === '0') {
             return $result->setHttpResponseCode(400)->setData(['success' => false, 'message' => 'Missing orderId']);
         }
 
-        // Rate limit: 1 req / 3 sec per order (APCu optional)
+        
         $rlKey = 'pvpoll_' . md5($incrementId);
         if (function_exists('apcu_fetch')) {
             apcu_store($rlKey, 1, 3);
         }
 
-        // Find or create pv_payment_order — try exact match first, then numeric-only match
+        
         $pvOrder = $this->paymentDb->findByIncrementId($incrementId);
 
         if (!$pvOrder) {
-            // Look up Magento order — match by exact ID or by numeric value (handles leading zeros)
+            
             $orders = $this->orderCollectionFactory->create()
                 ->addFieldToFilter('increment_id', ['in' => [$incrementId, ltrim($incrementId, '0') ?: '0']])
                 ->setPageSize(1);
@@ -57,15 +57,15 @@ class PvStatus implements HttpGetActionInterface
                 return $result->setHttpResponseCode(404)->setData(['success' => false, 'message' => 'Order not found']);
             }
 
-            // Use the actual increment_id from the order (preserves leading zeros)
+            
             $actualIncrementId = (string)$magentoOrder->getIncrementId();
 
-            // Map payment method from Magento payment method code
+            
             $magentoMethod = (string)$magentoOrder->getPayment()->getMethod();
             $pvMethod = $this->mapMagentoMethod($magentoMethod, $magentoOrder->getPayment()->getAdditionalInformation());
 
             $transferCode = $this->paymentDb->generateTransferCode($actualIncrementId);
-            $expiresAt = date('Y-m-d H:i:s', time() + 1800); // 30 min
+            $expiresAt = date('Y-m-d H:i:s', time() + 1800); 
 
             $pvOrderId = $this->paymentDb->createOrder([
                 'magento_increment_id' => $actualIncrementId,
@@ -86,9 +86,9 @@ class PvStatus implements HttpGetActionInterface
         $expiryValue = (string) (($attempt['expires_at'] ?? '') ?: ($pvOrder['expires_at'] ?? ''));
         $expiresAtTs = $expiryValue !== '' ? strtotime($expiryValue) : false;
 
-        // Auto-expire only from the latest attempt/order expiry, with a small
-        // grace window so browser/VNPay/server clock skew cannot instantly
-        // hide a newly-created sandbox QR.
+        
+        
+        
         $attemptStatus = $attempt ? (string) ($attempt['status'] ?? '') : '';
         $orderStatus = (string) ($pvOrder['payment_status'] ?? 'pending');
         $isPendingAttempt = $attempt && in_array($attemptStatus, ['pending', 'awaiting_payment'], true);
@@ -137,9 +137,7 @@ class PvStatus implements HttpGetActionInterface
         ]);
     }
 
-    /**
-     * @return array<int, array<string, mixed>>
-     */
+    
     private function loadOrderItems(string $incrementId): array
     {
         try {
@@ -182,9 +180,7 @@ class PvStatus implements HttpGetActionInterface
         }
     }
 
-    /**
-     * @return array<string, mixed>|null
-     */
+    
     private function loadPaymentContext(string $incrementId): ?array
     {
         try {
@@ -221,12 +217,12 @@ class PvStatus implements HttpGetActionInterface
 
     private function mapMagentoMethod(string $method, array $addInfo): string
     {
-        // wallet_id is the UI payment method key (momo/vnpay/bank_qr/card) stored directly
+        
         $walletId = strtolower((string)($addInfo['wallet_id'] ?? ''));
         if (in_array($walletId, ['momo', 'vnpay', 'bank_qr', 'card'], true)) {
             return $walletId;
         }
-        // gateway_channel fallback
+        
         $channel = strtolower((string)($addInfo['gateway_channel'] ?? ''));
         if ($channel === 'momo') return 'momo';
         if ($channel === 'vnpay') return 'vnpay';

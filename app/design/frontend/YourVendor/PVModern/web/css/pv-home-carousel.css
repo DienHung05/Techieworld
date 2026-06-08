@@ -1,4 +1,4 @@
-/* ── PVHero Carousel ────────────────────────────────────────────────── */
+ 
 .pvhero-carousel {
     padding: 42px 0 34px;
     background:
@@ -7,22 +7,22 @@
         linear-gradient(180deg, rgba(248, 250, 252, .94), rgba(255, 255, 255, .82));
 }
 
-/* Shell: the outer boundary — clips EVERYTHING inside */
+ 
 .pvhero-shell {
     position: relative;
-    overflow: hidden;           /* <-- THE clip that stops all overflow */
+    overflow: hidden;            
     border-radius: 28px;
     border: 1px solid rgba(226, 232, 240, .9);
     background: #0f172a;
     box-shadow: 0 28px 70px rgba(15, 23, 42, .10);
-    /* height driven by slide content */
+     
 }
 
 .pvhero-carousel [hidden] {
     display: none !important;
 }
 
-/* Viewport: scrollable window inside shell */
+ 
 .pvhero-viewport {
     overflow: hidden;
     width: 100%;
@@ -36,16 +36,16 @@
     min-width: 100%;
 }
 
-/* Each slide: a 2-column grid, overflow:hidden so nothing escapes */
+ 
 .pvhero-slide {
     position: relative;
     flex: 0 0 100%;
-    width: 100%;                /* prevent shrinking past 100% */
+    width: 100%;                 
     min-height: 390px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: stretch;       /* make both columns equal height */
-    overflow: hidden;           /* belt-and-suspenders clip */
+    align-items: stretch;        
+    overflow: hidden;            
     background:
         linear-gradient(135deg, rgba(15, 23, 42, .96), rgba(30, 41, 59, .86)),
         #0f172a;
@@ -56,7 +56,7 @@
     min-width: 0;
 }
 
-/* Decorative glow orbs (z-index: -1 stays inside slide) */
+ 
 .pvhero-slide::before,
 .pvhero-slide::after {
     content: "";
@@ -82,7 +82,7 @@
     filter: blur(6px);
 }
 
-/* Theme color variants */
+ 
 .pvhero-slide--violet { background: linear-gradient(135deg, #111827 0%, #312e81 58%, #7c3aed 100%); }
 .pvhero-slide--blue   { background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 58%, #06b6d4 100%); }
 .pvhero-slide--slate  { background: linear-gradient(135deg, #020617 0%, #334155 62%, #64748b 100%); }
@@ -90,7 +90,7 @@
 .pvhero-slide--cyan   { background: linear-gradient(135deg, #082f49 0%, #155e75 58%, #22d3ee 100%); }
 .pvhero-slide--amber  { background: linear-gradient(135deg, #111827 0%, #92400e 58%, #f59e0b 100%); }
 
-/* Left column: text copy */
+ 
 .pvhero-copy {
     position: relative;
     z-index: 2;
@@ -194,23 +194,18 @@
     border: 1px solid rgba(255, 255, 255, .22);
 }
 
-/* ── RIGHT COLUMN: product/campaign image ──────────────────────────
-   KEY FIX: The media area is a flex container that fills its grid
-   cell. The <picture> and <img> inside fill it completely.
-   overflow:hidden on BOTH the slide AND media ensures the image
-   can NEVER escape — no matter how large the original is.
-   ──────────────────────────────────────────────────────────────── */
+ 
 .pvhero-media {
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Fill the full grid cell height — critical */
+     
     align-self: stretch;
-    overflow: hidden;           /* clips the image to this cell */
+    overflow: hidden;            
     position: relative;
     min-width: 0;
     max-width: calc(100% - 20px);
-    /* Glassmorphism card look */
+     
     margin: 20px 20px 20px 0;
     border-radius: 20px;
     background:
@@ -220,22 +215,22 @@
     box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 24px 56px rgba(15, 23, 42, .20);
 }
 
-/* picture: fill the flex parent */
+ 
 .pvhero-media picture {
     display: block;
     width: 100%;
     height: 100%;
     min-width: 0;
-    overflow: hidden;   /* extra safety */
+    overflow: hidden;    
 }
 
-/* img: fill picture, object-fit:contain keeps aspect ratio */
+ 
 .pvhero-media img {
     display: block;
     width: 100%;
     height: 100%;
-    max-width: 100%;            /* MUST NOT exceed picture width */
-    max-height: 100%;           /* MUST NOT exceed picture height */
+    max-width: 100%;             
+    max-height: 100%;            
     object-fit: contain;
     object-position: center;
     padding: 20px;
@@ -249,7 +244,7 @@
     transform: none;
 }
 
-/* ── Navigation arrows ─────────────────────────────────────────── */
+ 
 .pvhero-nav {
     position: absolute;
     top: 50%;
@@ -290,7 +285,7 @@
 .pvhero-nav--prev { left: 18px; }
 .pvhero-nav--next { right: 18px; }
 
-/* ── Dot indicators ────────────────────────────────────────────── */
+ 
 .pvhero-dots {
     position: absolute;
     left: 50%;
@@ -329,7 +324,7 @@
     background: #fff;
 }
 
-/* ── Loading / empty / error states ────────────────────────────── */
+ 
 .pvhero-loading,
 .pvhero-empty,
 .pvhero-error {
@@ -403,7 +398,7 @@
     100% { background-position: -120% 0; }
 }
 
-/* ── Responsive: tablet ─────────────────────────────────────────── */
+ 
 @media (max-width: 1024px) {
     .pvhero-shell {
         border-radius: 22px;
@@ -427,7 +422,7 @@
     }
 }
 
-/* ── Responsive: mobile ─────────────────────────────────────────── */
+ 
 @media (max-width: 768px) {
     .pvhero-carousel {
         padding: 20px 0 20px;
@@ -440,7 +435,7 @@
 
     .pvhero-slide {
         min-height: auto;
-        /* Stack vertically on mobile */
+         
         grid-template-columns: 1fr;
         grid-template-rows: auto auto;
         width: 100%;
@@ -470,7 +465,7 @@
         max-width: 100%;
     }
 
-    /* Media below text on mobile */
+     
     .pvhero-media {
         margin: 0 16px 16px;
         min-height: 200px;
@@ -570,10 +565,7 @@
     }
 }
 
-/* ── Align price + Add button at the bottom of every product card ──
-   Cards in the same grid row must share the same height. The card and
-   its content wrapper become flex columns so the .pv3-price-row can be
-   pushed to the bottom regardless of how many lines the name/specs take. */
+ 
 .pv3-product-card.pv3-product-card {
     display: flex !important;
     flex-direction: column !important;
@@ -597,13 +589,12 @@
 .pv3-product-card.pv3-product-card .pv3-stock-pill {
     flex: 0 0 auto !important;
 }
-/* Make the parent grid stretch row heights so every card fills the row */
+ 
 .pv3-product-grid {
     align-items: stretch !important;
 }
 
-/* ── Fresh arrivals carousel: pin price + Add button at the bottom of each
-   card so they align horizontally regardless of name length. ── */
+ 
 .pv3-recent-card.pv3-recent-card {
     display: flex !important;
     flex-direction: column !important;
@@ -625,7 +616,7 @@
 .pv3-recent-card.pv3-recent-card .pv3-recent-content > h3 {
     flex: 0 0 auto !important;
 }
-/* Force the slider to stretch every card to the tallest card's height */
+ 
 .pv3-recent-slider {
     align-items: stretch !important;
 }

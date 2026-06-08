@@ -64,9 +64,7 @@ class VnpayReturn implements HttpGetActionInterface
         return $this->redirectFactory->create()->setPath($redirectPath, ['_query' => $query]);
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     */
+    
     private function applyVerifiedReturn(array $payload, string $txnRef, string $responseCode, string $transactionStatus): string
     {
         $transactionNo = preg_replace('/[^A-Za-z0-9_-]/', '', (string) ($payload['vnp_TransactionNo'] ?? '')) ?: '';
@@ -111,9 +109,7 @@ class VnpayReturn implements HttpGetActionInterface
         return (string) ($processResult['result'] ?? '');
     }
 
-    /**
-     * @param array<string, mixed> $params
-     */
+    
     private function verifySignature(array $params): bool
     {
         $secret = (string) ($this->integrationConfig->getVnpayConfig()['hash_secret'] ?? '');
@@ -136,9 +132,7 @@ class VnpayReturn implements HttpGetActionInterface
         return hash_equals(strtolower($expected), strtolower($secureHash));
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     */
+    
     private function updateOrderPayment(array $payload, bool $isPaid): void
     {
         $incrementId = preg_replace('/[^A-Za-z0-9_-]/', '', (string) ($payload['vnp_TxnRef'] ?? '')) ?: '';

@@ -526,8 +526,8 @@ class EnrichTechCatalog implements DataPatchInterface
 
     private function normalizeUsdPrice(float $value): float
     {
-        // Store currency is VND. Prices in the catalog definitions are already VND
-        // integers (e.g. 19,890,000). Clamp to the displayable range and return as-is.
+        
+        
         if ($value <= 0) {
             return 0.0;
         }

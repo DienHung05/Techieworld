@@ -39,9 +39,7 @@ class HeroBannerProvider
     ) {
     }
 
-    /**
-     * @return array<int, array<string, mixed>>
-     */
+    
     public function getSlides(string $placement = self::PLACEMENT): array
     {
         if ($placement !== self::PLACEMENT) {
@@ -66,17 +64,7 @@ class HeroBannerProvider
         return $this->fallbackSlides();
     }
 
-    /**
-     * Reads the admin CMS block "hero_banner_slider" as JSON slide data.
-     *
-     * Supported content shapes:
-     * [
-     *   {"title":"...","image":"/media/wysiwyg/banner.jpg","ctaLink":"/products.html"}
-     * ]
-     * or {"items":[...]}.
-     *
-     * @return array<int, array<string, mixed>>
-     */
+    
     private function loadCmsBlockSlides(): array
     {
         try {
@@ -166,13 +154,7 @@ class HeroBannerProvider
         return array_keys($rows) === range(0, count($rows) - 1);
     }
 
-    /**
-     * Supports a future CMS/admin export without changing storefront code.
-     * Use PVMODERN_HERO_BANNERS_JSON=/absolute/path/to/banners.json or
-     * PVMODERN_HERO_BANNERS='[{"title":"...","image":"..."}]'.
-     *
-     * @return array<int, array<string, mixed>>
-     */
+    
     private function loadConfiguredSlides(): array
     {
         $json = trim((string) getenv('PVMODERN_HERO_BANNERS'));
@@ -210,9 +192,7 @@ class HeroBannerProvider
         return array_slice($slides, 0, self::MAX_SLIDES);
     }
 
-    /**
-     * @return array<int, array<string, mixed>>
-     */
+    
     private function buildProductSlides(): array
     {
         try {
@@ -328,9 +308,7 @@ class HeroBannerProvider
         return (int) ($size[0] ?? 0) >= 400 && (int) ($size[1] ?? 0) >= 240;
     }
 
-    /**
-     * @return array<int, array<string, mixed>>
-     */
+    
     private function fallbackSlides(): array
     {
         $mediaBase = $this->storeManager->getStore()->getBaseUrl(UrlInterface::URL_TYPE_MEDIA);

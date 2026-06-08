@@ -72,9 +72,7 @@ class News implements HttpGetActionInterface
         ]);
     }
 
-    /**
-     * @return array<int, array<string, string>>
-     */
+    
     private function fetchVnExpressBusinessRss(): array
     {
         $body = $this->httpGetText($this->rssUrl());
@@ -118,9 +116,7 @@ class News implements HttpGetActionInterface
         return is_string($value) ? trim($value) : '';
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
     private function httpGetText(string $url): string
     {
         if (function_exists('curl_init')) {
@@ -184,9 +180,7 @@ class News implements HttpGetActionInterface
         return $this->env('VNEXPRESS_BUSINESS_RSS_URL') ?: self::RSS_URL;
     }
 
-    /**
-     * @return array<int, array<string, string>>
-     */
+    
     private function buildArticles(): array
     {
         $img = [

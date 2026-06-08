@@ -12,7 +12,7 @@ class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
 {
     private const VNPAY_CLOCK_CACHE_TTL = 300;
 
-    /** @var array{checked_at:int, offset:int}|null */
+    
     private static ?array $vnpayClockOffset = null;
 
     private const BRAND_LABELS = [
@@ -439,22 +439,14 @@ class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
         ];
     }
 
-    /**
-     * @param array<string, string> $query
-     */
+    
     private function appendQuery(string $url, array $query): string
     {
         $separator = str_contains($url, '?') ? '&' : '?';
         return $url . $separator . http_build_query($query, '', '&', PHP_QUERY_RFC3986);
     }
 
-    /**
-     * Sandbox/no-credentials fallback: every "online gateway" method (momo/vnpay/card)
-     * returns a dynamic BIDV VietQR. Customer scans → bank app auto-fills amount + memo →
-     * Casso webhook detects the ORD<digits> reference → SSE pushes paid status to the browser.
-     *
-     * @return array<string, mixed>
-     */
+    
     private function initializeVietQrFallback(string $channel, string $increment, int $amount): array
     {
         $details = $this->vietQrBuilder->getMerchantDetails();
@@ -491,10 +483,7 @@ class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
         ];
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     * @return array<string, mixed>
-     */
+    
     private function postJson(string $url, array $payload): array
     {
         if (!function_exists('curl_init')) {
@@ -521,10 +510,7 @@ class OnlineGatewayPaymentProvider extends AbstractPaymentProvider
         return is_array($decoded) ? $decoded : [];
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     * @return array<string, mixed>
-     */
+    
     private function postForm(string $url, array $payload, string $secretKey): array
     {
         if (!function_exists('curl_init')) {

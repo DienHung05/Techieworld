@@ -86,9 +86,7 @@ class MomoIpn implements HttpPostActionInterface, CsrfAwareActionInterface
         ]);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
     private function readPayload(): array
     {
         $raw = (string) $this->request->getContent();
@@ -106,9 +104,7 @@ class MomoIpn implements HttpPostActionInterface, CsrfAwareActionInterface
         return $this->request->getParams();
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     */
+    
     private function verifySignature(array $payload): bool
     {
         $config = $this->integrationConfig->getMomoConfig();
@@ -136,9 +132,7 @@ class MomoIpn implements HttpPostActionInterface, CsrfAwareActionInterface
         return hash_equals(hash_hmac('sha256', $raw, $secret), $signature);
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     */
+    
     private function updateOrderPayment(array $payload): void
     {
         $incrementId = $this->extractIncrementId((string) ($payload['orderId'] ?? ''));

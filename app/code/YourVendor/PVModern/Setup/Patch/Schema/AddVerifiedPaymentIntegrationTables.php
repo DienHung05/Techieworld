@@ -176,9 +176,7 @@ class AddVerifiedPaymentIntegrationTables implements SchemaPatchInterface
         return [];
     }
 
-    /**
-     * @param array<string, mixed> $definition
-     */
+    
     private function addColumnIfMissing(string $table, string $column, string $type, mixed $size, array $definition): void
     {
         $conn = $this->schemaSetup->getConnection();
@@ -192,9 +190,7 @@ class AddVerifiedPaymentIntegrationTables implements SchemaPatchInterface
         }
     }
 
-    /**
-     * @param array<int, string> $columns
-     */
+    
     private function addIndexIfMissing(string $table, string $indexName, array $columns): void
     {
         $conn = $this->schemaSetup->getConnection();

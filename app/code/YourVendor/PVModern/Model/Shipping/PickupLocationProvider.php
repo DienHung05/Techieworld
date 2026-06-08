@@ -12,9 +12,7 @@ class PickupLocationProvider
     ) {
     }
 
-    /**
-     * @return array<int, array<string, string>>
-     */
+    
     public function getLocations(): array
     {
         $json = $this->integrationConfig->getString('PVMODERN_PICKUP_STORES_JSON');
@@ -65,9 +63,7 @@ class PickupLocationProvider
         ];
     }
 
-    /**
-     * @return array<string, string>|null
-     */
+    
     public function getLocation(string $code): ?array
     {
         foreach ($this->getLocations() as $location) {

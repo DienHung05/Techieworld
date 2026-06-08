@@ -51,11 +51,11 @@ class PaymentDb
 
     public function findByIncrementId(string $incrementId): ?array
     {
-        // Match both the as-given form and the zero-padded canonical form so
-        // either '87' or '000000087' work. Both candidates are looked up via
-        // the indexed string-equality predicate (IN list) — much faster than
-        // the previous `magento_increment_id + 0 = ?` cast which bypasses the
-        // index and falls back to a full table scan as the table grows.
+        
+        
+        
+        
+        
         $candidates = $this->incrementIdCandidates($incrementId);
         $placeholders = implode(',', array_fill(0, count($candidates), '?'));
         $row = $this->conn->fetchRow(
@@ -66,12 +66,7 @@ class PaymentDb
         return $row ?: null;
     }
 
-    /**
-     * Build the set of likely increment_id forms (as-given, zero-stripped,
-     * zero-padded). All match against the indexed column.
-     *
-     * @return array<int, string>
-     */
+    
     private function incrementIdCandidates(string $incrementId): array
     {
         $incrementId = trim($incrementId);
@@ -80,7 +75,7 @@ class PaymentDb
             $stripped = '0';
         }
         $padded = str_pad($stripped, 9, '0', STR_PAD_LEFT);
-        // De-dupe but keep insertion order.
+        
         return array_values(array_unique(array_filter([$incrementId, $padded, $stripped])));
     }
 

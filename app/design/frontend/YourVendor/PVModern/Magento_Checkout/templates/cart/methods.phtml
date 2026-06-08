@@ -1,9 +1,5 @@
 <?php
-/**
- * Cart checkout actions.
- *
- * @var \Magento\Checkout\Block\Cart $block
- */
+
 ?>
 <?php if (!$block->hasError()) : ?>
     <?php $methods = $block->getMethods('methods') ?: $block->getMethods('top_methods') ?>
@@ -11,7 +7,7 @@
         <?php foreach ($methods as $method) : ?>
             <?php $methodHtml = $block->getMethodHtml($method); ?>
             <?php if (trim($methodHtml) !== '') : ?>
-                <?= /* @noEscape */ $methodHtml ?>
+                <?=  $methodHtml ?>
             <?php endif; ?>
         <?php endforeach; ?>
     </div>

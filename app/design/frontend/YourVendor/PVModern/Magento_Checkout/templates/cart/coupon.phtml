@@ -1,11 +1,5 @@
 <?php
-/**
- * Cart coupon form restyled to match the reference summary card.
- * Supports reference promo hints client-side while preserving Magento coupon
- * form wiring for real coupons.
- *
- * @var \Magento\Checkout\Block\Cart\Coupon $block
- */
+
 
 $hasCouponCode = $block->getCouponCode() !== null && strlen($block->getCouponCode()) > 0;
 $couponCode = (string) $block->getCouponCode();
@@ -67,6 +61,6 @@ $couponCode = (string) $block->getCouponCode();
                 <?= $block->escapeHtml(__('Code %1 is applied.', strtoupper($couponCode))) ?>
             <?php endif; ?>
         </p>
-        <?= /* @noEscape */ $block->getChildHtml('captcha') ?>
+        <?=  $block->getChildHtml('captcha') ?>
     </form>
 </div>

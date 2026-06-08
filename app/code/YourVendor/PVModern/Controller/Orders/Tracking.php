@@ -63,10 +63,7 @@ class Tracking implements HttpGetActionInterface
         ]);
     }
 
-    /**
-     * @param array<int, array<string, mixed>> $timeline
-     * @return array<int, array<string, string>>
-     */
+    
     private function normalizeTimeline(array $timeline, string $fallbackTime): array
     {
         if ($timeline === []) {

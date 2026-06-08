@@ -197,7 +197,7 @@ define(['jquery'], function ($) {
             }
         }
 
-        /* ── Schedule a qty sync after stepper interaction ─────────── */
+         
         function scheduleUpdate() {
             clearTimeout(updateTimer);
             updateTimer = window.setTimeout(function () {
@@ -208,14 +208,14 @@ define(['jquery'], function ($) {
             }, 300);
         }
 
-        /* ── Stepper: both old pv3-cart-qty-btn and new pvcart-stepper-btn ── */
+         
         $form.on('click', '[data-qty-step]', function () {
             var step       = parseFloat($(this).data('qty-step')) || 0,
                 $btn       = $(this),
                 $input     = $btn.siblings('label').find('[data-role="cart-item-qty"]'),
                 currentVal, nextVal;
 
-            // also search in parent .pvcart-stepper
+            
             if (!$input.length) {
                 $input = $btn.closest('.pvcart-stepper').find('[data-role="cart-item-qty"]');
             }
@@ -227,7 +227,7 @@ define(['jquery'], function ($) {
             $input.val(nextVal).trigger('change');
         });
 
-        /* ── Validate and schedule on manual input change ───────────── */
+         
         $form.on('change', '[data-role="cart-item-qty"]', function () {
             var $input = $(this),
                 value  = parseFloat($input.val()) || 1;
@@ -235,13 +235,13 @@ define(['jquery'], function ($) {
             scheduleUpdate();
         });
 
-        /* ── Flag form submit ────────────────────────────────────────── */
+         
         $form.on('submit', function () {
             isSubmitting = true;
             $form.addClass('is-updating');
         });
 
-        /* ── Promo code handling (reference hints) ───────────────────── */
+         
         $form.on('click', '[data-promo-apply]', function (event) {
             var $input = $form.find('[data-promo-input]'),
                 code = String($input.val() || '').trim().toUpperCase(),

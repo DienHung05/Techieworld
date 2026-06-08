@@ -5,10 +5,9 @@ namespace YourVendor\PVModern\Model;
 
 class IntegrationConfig
 {
-    /** @var array<string, string>|null */
+    
     private static ?array $fileEnvCache = null;
-    /** @var int Mtime of pvmodern.env when the cache was loaded — lets us
-     *  cache-bust automatically when ops edits the file without recycling FPM. */
+    
     private static int $fileEnvCacheMtime = 0;
 
     public function getString(string $key, ?string $default = null): ?string
@@ -28,13 +27,7 @@ class IntegrationConfig
         return $value === '' ? $default : $value;
     }
 
-    /**
-     * Load env values from BP/pvmodern.env (KEY=VALUE per line, # comments OK).
-     * Cached per FPM worker — reloads automatically when the file's mtime
-     * changes so config edits take effect without an FPM reload.
-     *
-     * @return array<string, string>
-     */
+    
     private function loadFileEnv(): array
     {
         $path = BP . '/pvmodern.env';
@@ -128,14 +121,12 @@ class IntegrationConfig
         return $this->getString(strtoupper($provider) . '_SHOP_ID');
     }
 
-    /**
-     * @return array<string, string>
-     */
+    
     public function getBankTransferDetails(): array
     {
         return [
-            'account_name' => $this->getString('PVMODERN_BANK_ACCOUNT_NAME', 'DIEN MANH HUNG') ?? 'DIEN MANH HUNG',
-            'account_number' => $this->getString('PVMODERN_BANK_ACCOUNT_NUMBER', '4661104867') ?? '4661104867',
+            'account_name' => $this->getString('PVMODERN_BANK_ACCOUNT_NAME', 'NGUYEN VAN A') ?? 'NGUYEN VAN A',
+            'account_number' => $this->getString('PVMODERN_BANK_ACCOUNT_NUMBER', '0000000000') ?? '0000000000',
             'bank_name' => $this->getString('PVMODERN_BANK_NAME', 'BIDV') ?? 'BIDV',
             'bank_code' => $this->getString('PVMODERN_BANK_CODE', 'BIDV') ?? 'BIDV',
             'bank_bin' => $this->getString('PVMODERN_BANK_BIN', '970418') ?? '970418',
@@ -149,9 +140,7 @@ class IntegrationConfig
         return rtrim($this->getString('PVMODERN_STATIC_QR_BASE_URL', '/media/pvmodern/qr') ?? '/media/pvmodern/qr', '/');
     }
 
-    /**
-     * @return array<string, string>
-     */
+    
     public function getGatewayConfig(): array
     {
         return [
@@ -161,9 +150,7 @@ class IntegrationConfig
         ];
     }
 
-    /**
-     * @return array<string, string|null>
-     */
+    
     public function getMomoConfig(): array
     {
         return [
@@ -178,9 +165,7 @@ class IntegrationConfig
         ];
     }
 
-    /**
-     * @return array<string, string|null>
-     */
+    
     public function getVnpayConfig(): array
     {
         return [
@@ -194,9 +179,7 @@ class IntegrationConfig
         ];
     }
 
-    /**
-     * @return array<string, string|null>
-     */
+    
     public function getStripeConfig(): array
     {
         return [
@@ -210,9 +193,7 @@ class IntegrationConfig
         ];
     }
 
-    /**
-     * @return array<string, string|null>
-     */
+    
     public function getPaypalConfig(): array
     {
         return [
@@ -228,9 +209,7 @@ class IntegrationConfig
         ];
     }
 
-    /**
-     * @return array<string, string|null>
-     */
+    
     public function getCassoConfig(): array
     {
         return [

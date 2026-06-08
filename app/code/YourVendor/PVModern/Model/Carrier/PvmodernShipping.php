@@ -33,7 +33,7 @@ class PvmodernShipping extends AbstractCarrier implements CarrierInterface
             return false;
         }
 
-        /** @var Result $result */
+        
         $result = $this->rateResultFactory->create();
 
         $quotes = $this->shippingManager->getQuotes([
@@ -75,9 +75,7 @@ class PvmodernShipping extends AbstractCarrier implements CarrierInterface
         ];
     }
 
-    /**
-     * @param array<string, mixed> $quote
-     */
+    
     private function buildMethod(array $quote): \Magento\Quote\Model\Quote\Address\RateResult\Method
     {
         $method = $this->rateMethodFactory->create();

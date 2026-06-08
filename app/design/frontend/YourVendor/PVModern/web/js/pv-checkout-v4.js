@@ -432,18 +432,18 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
         }
 
         function cartItems() {
-            // Once an order has been placed (state.cartSnapshotLocked = true),
-            // the visual cart is FROZEN to the snapshot we took at place_order
-            // time. The Magento quote behind us has been wiped, but the
-            // customer still sees their products until payment confirms at
-            // step 5.
+            
+            
+            
+            
+            
             if (state.cartSnapshotLocked && state.cartSnapshot && state.cartSnapshot.length) {
                 return state.cartSnapshot;
             }
             var live = ((bootstrap.cart || {}).items || []);
             if (live.length) {
-                // Pre-order: keep the snapshot fresh on every render so it's
-                // ready to take over the moment place_order runs.
+                
+                
                 state.cartSnapshot = live.slice();
                 return live;
             }
@@ -771,9 +771,9 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
         function goToStep(step) {
             state.step = step;
             state.maxUnlockedStep = Math.max(state.maxUnlockedStep, step);
-            // While we still have a live cart (pre-order), keep refreshing the
-            // snapshot so it's ready to take over the instant place_order runs.
-            // After the snapshot is LOCKED (at place_order time), don't touch it.
+            
+            
+            
             if (!state.cartSnapshotLocked) {
                 var liveItems = ((bootstrap.cart || {}).items || []);
                 if (liveItems.length) {
@@ -781,9 +781,9 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                     state.cartSnapshotSubtotal = parseFloat((bootstrap.cart || {}).subtotal || 0) || state.cartSnapshotSubtotal;
                 }
             }
-            // Once payment is confirmed (step 5), THEN we tell Magento to wipe
-            // the customer's cart badge — by which point the customer is on
-            // the success screen and doesn't see the visual cart anymore.
+            
+            
+            
             if (step === 5) {
                 try {
                     $(window).trigger('pvCartCountChanged', [0]);
@@ -1040,8 +1040,8 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                 $root.find('[data-direct-copy]').text(realPaypal
                     ? 'Bấm nút bên dưới để mở PayPal. Website dùng Business account để nhận tiền; khi PayPal mở ra, hãy đăng nhập bằng Personal buyer để test thanh toán.'
                     : 'Bấm nút bên dưới để mở cổng VNPay chính thức. Sau khi thanh toán xong, VNPay sẽ đưa bạn quay lại Techieworld và hệ thống tự xác nhận bằng IPN.');
-                // Sandbox account rows (Business seller / Personal buyer) are
-                // intentionally not displayed to avoid exposing the accounts.
+                
+                
                 $root.find('[data-paypal-accounts]').attr('hidden', 'hidden').hide();
                 $root.find('[data-direct-open-label]').text('Mở ' + gatewayName);
                 $root.find('[data-vnpay-direct-open]').attr('href', vnpayUrl || '#');
@@ -1068,8 +1068,8 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
 
             $root.find('[data-pcp-ref]').text(ref);
             $root.find('[data-pcp-bank-name]').text(instructions.bank_name || 'BIDV');
-            $root.find('[data-pcp-bank-holder]').text(instructions.account_name || 'DIEN MANH HUNG');
-            $root.find('[data-pcp-bank-number]').text(instructions.account_number || '4661104867');
+            $root.find('[data-pcp-bank-holder]').text(instructions.account_name || 'NGUYEN VAN A');
+            $root.find('[data-pcp-bank-number]').text(instructions.account_number || '0000000000');
             $root.find('[data-pcp-ref-label]').text('Nội dung chuyển khoản');
             $root.find('[data-pcp-bank-info]').show();
             var $vnpayActions = $root.find('[data-pcp-vnpay-actions]');
@@ -1085,10 +1085,10 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
             var $qrImg = $root.find('[data-pcp-qr-img]');
             var qr = pay.qr_code_url || pay.qrCodeUrl || '';
             if (!qr) {
-                // No qr_code_url returned by backend — synthesize one that
-                // points at our own scanpaid endpoint via the /api/qr/url
-                // proxy so the QR always encodes a same-origin URL the phone
-                // can actually open (and CSP always permits the image).
+                
+                
+                
+                
                 var scanUrl = window.location.origin + '/api/qr/scanpaid?order=' +
                               encodeURIComponent(ref);
                 qr = qrProxyUrl(scanUrl, 540);
@@ -1162,12 +1162,7 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                 startPaymentPolling();
                 return;
             }
-            /* Belt-and-suspenders: also start polling alongside the SSE. If
-               the SSE stays silent for any reason (network drop, browser
-               throttling, intermediate proxy buffering), the poll path will
-               still catch the paid status. Whichever sees it first wins —
-               both paths gate goToStep(5) on the same `paid` status and the
-               other will no-op once stopCountdown/stopPaymentPolling fire. */
+             
             startPaymentPolling();
 
             _eventSource.addEventListener('status', function (e) {
@@ -1193,7 +1188,7 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
             });
             _eventSource.onerror = function () {
                 if (_eventSource) { _eventSource.close(); _eventSource = null; }
-                /* Polling already running from above — no need to re-start it. */
+                 
             };
         }
 
@@ -1236,9 +1231,7 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                     _pollTimer = window.setTimeout(poll, 5000);
                 });
             }
-            /* Start polling almost immediately so the first check happens
-               within ~500ms of step-4 render — the SSE handles the real-time
-               push, polling is the fallback if SSE is silent. */
+             
             _pollTimer = window.setTimeout(poll, 500);
         }
 
@@ -1320,7 +1313,7 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
             var purchaseCode = (state.order && state.order.purchaseCode) ? state.order.purchaseCode : '';
             $root.find('[data-success-order-number]').text(orderId);
             $root.find('[data-success-order-date]').text('Ngày đặt: ' + new Date().toLocaleDateString('vi-VN'));
-            /* Purchase code box */
+             
             var $pcBox = $root.find('[data-success-purchase-code]');
             if ($pcBox.length) {
                 if (purchaseCode) {
@@ -1382,11 +1375,7 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                 contentType: 'application/json',
                 data: JSON.stringify(payload)
             }).done(function (response) {
-                /* Use the real Magento increment_id as orderId — the SSE and
-                   status-poll endpoints look up the payment attempt by this
-                   value via pv_payment_attempt.magento_increment_id, so a
-                   random PVxxx placeholder leaves the desktop tab stuck on
-                   step 4 even after the phone marks the order paid. */
+                 
                 var realIncId = String(response.increment_id || '').replace(/^#/, '');
                 var displayId = realIncId
                     ? '#' + realIncId
@@ -1399,15 +1388,12 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                     shipping: response.shipping || {}
                 };
                 state.paymentStatus = (response.payment && response.payment.status) ? response.payment.status : 'pending';
-                /* Snapshot cart and total before Magento wipes the quote. Locked
-                   for the rest of the session so the right-sidebar items and the
-                   header cart badge keep showing what the customer bought, all
-                   the way through step 4 (waiting for transfer) until step 5. */
+                 
                 state.cartSnapshot = cartItems().slice();
                 state.cartSnapshotLocked = true;
                 state.orderTotal = parseInt(response.payment && response.payment.amount, 10) || total();
                 saveState();
-                /* Rewrite URL to refresh-safe route so F5 doesn't bounce to /checkout/cart */
+                 
                 if (state.paymentMethodId !== 'cod') {
                     try {
                         var incId = (response.increment_id || '').replace(/^#/, '');
@@ -1416,10 +1402,7 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                         }
                     } catch (e) {}
                 }
-                /* DO NOT zero the cart badge or refresh customerData here —
-                   that would visually wipe the cart while the customer is
-                   still mid-payment. We defer the cart wipe to step 5
-                   (see goToStep), once payment is actually confirmed. */
+                 
                 if (state.paymentMethodId === 'cod') {
                     goToStep(5);
                     return;
@@ -1650,9 +1633,7 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
                 data: {orderId: urlOrderId}
             }).done(function (res) {
                 if (!res || !res.success) { callback(false); return; }
-                /* URL is the source of truth — overwrite any stale state.order
-                   so the SSE/poll uses the *real* magento_increment_id, not a
-                   leftover random placeholder from a previous session. */
+                 
                 var realIncId = String(res.orderId || urlOrderId).replace(/^#/, '');
                 state.order = state.order || {};
                 state.order.orderId = '#' + realIncId;
@@ -1719,17 +1700,14 @@ define(['jquery', 'mage/cookies', 'Magento_Customer/js/customer-data'], function
             if (onConfirmationRoute) {
                 state.step = state.step && state.step >= 4 ? state.step : 4;
                 state.maxUnlockedStep = Math.max(state.maxUnlockedStep || 1, state.step);
-                /* Always recover from the URL when on the confirmation route,
-                   even if state.order exists — it might be a stale session
-                   from a previous order with a random placeholder orderId
-                   that would block the SSE lookup. */
+                 
                 var urlOrderId = '';
                 try {
                     urlOrderId = new URLSearchParams(window.location.search).get('orderId') || '';
                 } catch (e) {}
                 var stateIncId = state.order && (state.order.incrementId || String(state.order.orderId || '').replace(/^#/, ''));
                 if (urlOrderId && stateIncId !== urlOrderId) {
-                    /* URL orderId differs from in-memory state — trust URL */
+                     
                     state.order = null;
                 }
                 if (urlOrderId) {

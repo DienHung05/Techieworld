@@ -190,22 +190,22 @@ body.catalog-product-view .product.media img {
     }
 }
 
-/* ── Product detail tabs ── */
+ 
 body.catalog-product-view .product.info.detailed {
     margin-top: 40px;
 }
 
-/* ─── ONE clean rule: items container = horizontal flex row that wraps ─── */
+ 
 body.catalog-product-view .product.data.items {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: wrap !important;
     align-items: flex-end !important;
-    justify-content: flex-start !important;  /* tabs start at LEFT */
+    justify-content: flex-start !important;   
     gap: 0 !important;
 }
 
-/* Each tab TITLE button: sits inline, left-to-right */
+ 
 body.catalog-product-view .product.info.detailed .data.item.title {
     display: inline-flex !important;
     float: none !important;
@@ -215,7 +215,7 @@ body.catalog-product-view .product.info.detailed .data.item.title {
     padding: 0 !important;
     border: none !important;
     background: transparent !important;
-    order: 1 !important;  /* all titles come first */
+    order: 1 !important;   
     flex: 0 0 auto !important;
 }
 
@@ -248,9 +248,9 @@ body.catalog-product-view .product.info.detailed .data.item.title.active strong 
     z-index: 1 !important;
 }
 
-/* Content panel: forced to its own full-width row, always BELOW the tab buttons */
+ 
 body.catalog-product-view .product.info.detailed .data.item.content {
-    order: 2 !important;          /* comes after all order:1 titles */
+    order: 2 !important;           
     flex: 0 0 100% !important;
     width: 100% !important;
     clear: none !important;

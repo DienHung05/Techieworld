@@ -47,9 +47,7 @@ class MomoReturn implements HttpGetActionInterface
         ]);
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     */
+    
     private function verifySignature(array $payload): bool
     {
         $config = $this->integrationConfig->getMomoConfig();
@@ -76,9 +74,7 @@ class MomoReturn implements HttpGetActionInterface
         return hash_equals(hash_hmac('sha256', $raw, $secret), $signature);
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     */
+    
     private function updateOrderPayment(array $payload, bool $isPaid): void
     {
         $incrementId = $this->extractIncrementId((string) ($payload['orderId'] ?? ''));

@@ -14,10 +14,7 @@ use Magento\Framework\Pricing\PriceCurrencyInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use YourVendor\PVModern\Model\ProductVisualResolver;
 
-/**
- * GET /pvmodern/search/suggest?q=<query>
- * Returns up to 10 products matching the query — name, image, price, URL.
- */
+
 class Suggest implements HttpGetActionInterface
 {
     private const MAX_RESULTS = 10;

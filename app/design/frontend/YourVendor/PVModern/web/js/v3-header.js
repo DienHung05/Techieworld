@@ -1,11 +1,4 @@
-/**
- * PVModern v7.0 — Header RequireJS Widget
- * ==========================================
- * MEGA MENU: Removed entirely — pure CSS :hover handles it (see _extend.less).
- * UNDERLINE: Fires on mouseenter of each nav-item (mirrors CSS :hover perfectly).
- * MOBILE: Slide toggle.
- * CART: Real-time via customerData KO observable.
- */
+ 
 define([
     'jquery',
     'Magento_Customer/js/customer-data',
@@ -20,7 +13,7 @@ define([
         var $toggle  = $root.find('[data-role="menu-toggle"]');
         var $mobMenu = $root.find('[data-role="mobile-menu"]');
 
-        /* ── Page context from PHP data-* attributes ──────────────────────── */
+         
         var isCategoryPage = ($nav.data('cat-page') === 'true');
         var activeCat      = ($nav.data('active') || '').trim();
         var $activeLink    = activeCat
@@ -87,11 +80,7 @@ define([
             syncCartFormKey(this);
         });
 
-        /* ═══════════════════════════════════════════════════════════════════
-           CARET ROTATION — mirrors CSS :hover (visual feedback only)
-           The mega-menu itself is shown/hidden by pure CSS :hover.
-           JS only rotates the caret SVG to match hover state.
-        ═══════════════════════════════════════════════════════════════════ */
+         
         $nav.find('.pv3-nav-item').each(function () {
             var $item  = $(this);
             var $caret = $item.find('.pv3-nav-caret');
@@ -99,16 +88,7 @@ define([
             $item.on('mouseleave.pvCaret', function () { $caret.removeClass('is-open'); });
         });
 
-        /* ═══════════════════════════════════════════════════════════════════
-           SLIDING UNDERLINE v7.0 — strict state machine
-           ─────────────────────────────────────────────────────────────────
-           Rules (matching user spec):
-           A) Hover any nav item  → indicator slides to that link instantly
-           B) Leave entire nav    → (i)  Category page: snap back to activeCat
-                                    (ii) Other page: hide indicator
-           C) Page load (cat pg)  → indicator at activeCat
-           D) Page load (other)   → indicator hidden
-        ═══════════════════════════════════════════════════════════════════ */
+         
 
         function getNavLeft() {
             return $nav[0] ? $nav[0].getBoundingClientRect().left : 0;
@@ -120,7 +100,7 @@ define([
             var padL   = parseInt($link.css('paddingLeft'),  10) || 0;
             var padR   = parseInt($link.css('paddingRight'), 10) || 0;
             var $caret = $link.find('.pv3-nav-caret');
-            /* Subtract caret width from the text-only zone */
+             
             var caret  = $caret.length ? ($caret[0].getBoundingClientRect().width + 3) : 0;
             var indL   = rect.left - getNavLeft() + padL;
             var indW   = Math.max(0, rect.width - padL - padR - caret);
@@ -136,7 +116,7 @@ define([
             }
         }
 
-        /* Init */
+         
         if (isCategoryPage && $activeLink.length) {
             $activeLink.addClass('is-active');
             setTimeout(snapToActive, 0);
@@ -144,24 +124,24 @@ define([
             hideIndicator();
         }
 
-        /* Resize: recalculate */
+         
         $(window).on('resize.pvNav', function () {
             if (isCategoryPage && $activeLink.length) { snapToActive(); }
         });
 
-        /* Hover per nav-item (mirrors pure CSS :hover exactly) */
+         
         $nav.find('.pv3-nav-item').each(function () {
             var $item = $(this);
             var $link = $item.find('> a.pv3-nav-link');
             $item.on('mouseenter.pvNav', function () { moveIndicatorTo($link); });
         });
 
-        /* Deals link */
+         
         $nav.find('a.pv3-nav-link.is-deals').on('mouseenter.pvNav', function () {
             moveIndicatorTo($(this));
         });
 
-        /* Cursor leaves entire nav: snap or hide */
+         
         $nav.on('mouseleave.pvNav', function () {
             if (isCategoryPage && $activeLink.length) {
                 snapToActive();
@@ -170,7 +150,7 @@ define([
             }
         });
 
-        /* Click: update active state for SPA-style navigation */
+         
         $nav.find('a[data-cat]').on('click.pvNav', function () {
             var catKey = $(this).data('cat');
             if (catKey && catKey !== 'deals') {
@@ -183,9 +163,7 @@ define([
             }
         });
 
-        /* ═══════════════════════════════════════════════════════════════════
-           MOBILE MENU TOGGLE
-        ═══════════════════════════════════════════════════════════════════ */
+         
         if ($toggle.length && $mobMenu.length) {
             $toggle.on('click.pvMobile', function () {
                 var isOpen = $toggle.attr('aria-expanded') === 'true';
@@ -207,9 +185,7 @@ define([
             });
         }
 
-        /* ═══════════════════════════════════════════════════════════════════
-           REAL-TIME CART BADGE (Magento customerData KO observable)
-        ═══════════════════════════════════════════════════════════════════ */
+         
         (function initCartBadge() {
             var $badge = $root.find('[data-cart-badge]');
             if (!$badge.length) return;
@@ -248,12 +224,12 @@ define([
                 } catch (e) {}
             }
 
-            // Read the snapshot the checkout widget froze when place_order ran.
-            // While the customer is mid-payment at step 4, we ignore Magento's
-            // (correctly-empty) cart section and display the snapshot count
-            // instead — otherwise the header would flash to 0 the moment the
-            // order is placed, while the customer is still waiting for their
-            // bank transfer to confirm.
+            
+            
+            
+            
+            
+            
             function readFrozenSnapshotCount() {
                 if (!isPaymentFlowPage()) return null;
                 try {
@@ -275,10 +251,7 @@ define([
                 }
                 var frozen = readFrozenSnapshotCount();
                 if (frozen !== null) { applyCount(frozen); return; }
-                /* Use the sum of qty across items so the badge shows the true
-                   product quantity (e.g. 3 of one item + 2 of another → 5),
-                   not the line-item count. Magento's summary_count is the
-                   number of distinct lines, not the total qty. */
+                 
                 var count = 0;
                 if (data && data.items && data.items.length) {
                     count = data.items.reduce(function (s, i) {
@@ -313,9 +286,7 @@ define([
                 } catch (e) {}
             }
 
-            /* Immediate update from checkout widget — honored regardless of
-               freeze state because pvCartCountChanged is fired explicitly
-               (e.g. at step 5 when we DO want to clear the badge). */
+             
             $(window).on('pvCartCountChanged', function (e, count) { applyCount(count); });
         }());
 
@@ -331,17 +302,12 @@ define([
             refreshAuth(customer());
         }());
 
-        /* ═══════════════════════════════════════════════════════════════════
-           SEARCH AUTOSUGGEST
-           Uses the PVModern controller endpoint so live Magento products
-           added in admin show in the main header as the customer types.
-        ═══════════════════════════════════════════════════════════════════ */
+         
         (function initSearchSuggest() {
             var $form  = $root.find('.pv3-search');
             var $input = $form.find('.pv3-search-input');
             var $drop  = $form.find('#pv3-search-dropdown');
-            /* Read attributes directly — jQuery .data() can return stale-cached values
-               when other widgets mutate the DOM, which silently breaks suggestions. */
+             
             var suggestUrl = String($form.attr('data-suggest-url') || $form.data('suggest-url') || '');
             var searchUrl  = String($form.attr('data-search-url')  || $form.data('search-url')  || '');
             var resultsAnchor = String($form.attr('data-results-anchor') || 'pv3-products');
@@ -452,7 +418,7 @@ define([
 
             function fetchSuggestions(query) {
                 if (request && request.readyState !== 4) {
-                    try { request.abort(); } catch (e) { /* ignore */ }
+                    try { request.abort(); } catch (e) {   }
                 }
 
                 if (cache[query]) {
@@ -482,7 +448,7 @@ define([
                     if (xhr && (xhr.statusText === 'abort' || xhr.readyState === 0)) {
                         return;
                     }
-                    /* Surface backend errors to the dropdown so they aren't silent. */
+                     
                     var hint = (xhr && xhr.responseJSON && xhr.responseJSON.error)
                         ? ' (' + xhr.responseJSON.error + ')'
                         : '';

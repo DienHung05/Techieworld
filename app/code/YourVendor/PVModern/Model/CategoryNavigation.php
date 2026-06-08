@@ -5,11 +5,7 @@ namespace YourVendor\PVModern\Model;
 
 class CategoryNavigation
 {
-    /**
-     * Isolated menu config so storefront labels can be swapped without touching templates.
-     *
-     * @return array<string, array<string, mixed>>
-     */
+    
     public function getMenuConfig(): array
     {
         return [

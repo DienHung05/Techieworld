@@ -99,9 +99,7 @@ class Ipn implements HttpPostActionInterface, CsrfAwareActionInterface
         }
     }
 
-    /**
-     * @param array<string, mixed> $params
-     */
+    
     private function verifyIpn(array $params, string $verifyUrl): bool
     {
         if ($verifyUrl === '' || !function_exists('curl_init')) {
@@ -128,9 +126,7 @@ class Ipn implements HttpPostActionInterface, CsrfAwareActionInterface
         return is_string($response) && trim($response) === 'VERIFIED';
     }
 
-    /**
-     * @param array<string, mixed>|null $attempt
-     */
+    
     private function resolveVndAmount(?array $attempt, float $gross, string $currency, float $rate): float
     {
         if ($currency === 'VND') {

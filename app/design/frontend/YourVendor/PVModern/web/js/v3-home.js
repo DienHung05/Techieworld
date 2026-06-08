@@ -820,7 +820,7 @@ define(['jquery', 'mage/cookies'], function ($) {
         $recentSlider.on('scroll', updateRecentArrows);
         $(window).on('resize', updateRecentArrows);
 
-        /* News: tap-to-expand on touch devices, CSS handles hover for desktop */
+         
         $newsToggle.on('click', function (e) {
             e.preventDefault();
             toggleNewsReveal();

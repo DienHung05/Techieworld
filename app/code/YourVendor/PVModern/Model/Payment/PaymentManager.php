@@ -8,9 +8,7 @@ use YourVendor\PVModern\Api\PaymentProviderInterface;
 
 class PaymentManager
 {
-    /**
-     * @param array<string, PaymentProviderInterface> $providers
-     */
+    
     private array $providers;
 
     public function __construct(
@@ -29,9 +27,7 @@ class PaymentManager
         $this->providers = $providers;
     }
 
-    /**
-     * @return array<int, array<string, mixed>>
-     */
+    
     public function getFrontendMethods(array $context = []): array
     {
         $methods = [];

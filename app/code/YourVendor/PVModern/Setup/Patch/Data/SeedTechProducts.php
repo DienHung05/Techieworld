@@ -28,7 +28,7 @@ class SeedTechProducts implements DataPatchInterface
     {
         $om = ObjectManager::getInstance();
 
-        /* ── 1. Ensure brand attribute exists ─────────────────────────────── */
+        
         $eavSetupFactory = $om->get(EavSetupFactory::class);
         $eavSetup = $eavSetupFactory->create(['setup' => $this->setup]);
         if (!$eavSetup->getAttributeId(\Magento\Catalog\Model\Product::ENTITY, 'brand')) {
@@ -49,7 +49,7 @@ class SeedTechProducts implements DataPatchInterface
             ]);
         }
 
-        /* ── 2. Ensure categories exist ───────────────────────────────────── */
+        
         $categoryFactory = $om->get(\Magento\Catalog\Model\CategoryFactory::class);
         $storeManager    = $om->get(StoreManagerInterface::class);
         $rootId = (int) $storeManager->getStore()->getRootCategoryId();
@@ -70,9 +70,9 @@ class SeedTechProducts implements DataPatchInterface
             }
         }
 
-        /* ── 3. Product catalog ───────────────────────────────────────────── */
+        
         $products = [
-            /* ═══ 20%+ OFF tier ═══════════════════════════════════════════ */
+            
             ['sku'=>'GPU-001','name'=>'NVIDIA GeForce RTX 4090 24GB GDDR6X',          'brand'=>'NVIDIA',   'cat'=>'GPU',        'price'=>49900000,'special'=>36900000,'qty'=>8],
             ['sku'=>'GPU-002','name'=>'ASUS ROG Strix RTX 4080 Super 16GB OC',        'brand'=>'ASUS',     'cat'=>'GPU',        'price'=>39500000,'special'=>29900000,'qty'=>5],
             ['sku'=>'CPU-001','name'=>'Intel Core i9-14900K 24-Core 6.0GHz',          'brand'=>'Intel',    'cat'=>'CPU',        'price'=>16990000,'special'=>12490000,'qty'=>12],
@@ -86,7 +86,7 @@ class SeedTechProducts implements DataPatchInterface
             ['sku'=>'MBD-001','name'=>'ASUS ROG Maximus Z790 Apex DDR5 ATX',         'brand'=>'ASUS',     'cat'=>'Mainboard',  'price'=>18990000,'special'=>13990000,'qty'=>5],
             ['sku'=>'PSU-001','name'=>'Corsair HX1500i Platinum 1500W Modular',       'brand'=>'Corsair',  'cat'=>'PSU',        'price'=>10990000,'special'=>7990000, 'qty'=>9],
 
-            /* ═══ 10–19% OFF tier ══════════════════════════════════════════ */
+            
             ['sku'=>'GPU-003','name'=>'MSI Gaming X Trio RTX 4060 Ti 16GB',           'brand'=>'MSI',      'cat'=>'GPU',        'price'=>11990000,'special'=>10490000,'qty'=>18],
             ['sku'=>'GPU-004','name'=>'AMD Radeon RX 7900 XTX 24GB GDDR6',           'brand'=>'AMD',      'cat'=>'GPU',        'price'=>22990000,'special'=>19490000,'qty'=>11],
             ['sku'=>'CPU-003','name'=>'AMD Ryzen 7 7700X 8-Core AM5 105W',           'brand'=>'AMD',      'cat'=>'CPU',        'price'=>8490000, 'special'=>7290000, 'qty'=>22],
@@ -100,7 +100,7 @@ class SeedTechProducts implements DataPatchInterface
             ['sku'=>'MBD-002','name'=>'MSI MAG B650 Tomahawk WiFi DDR5 ATX',         'brand'=>'MSI',      'cat'=>'Mainboard',  'price'=>5490000, 'special'=>4690000, 'qty'=>16],
             ['sku'=>'LAP-002','name'=>'Lenovo LOQ 15 i5-13450HX RTX 4060 16GB',      'brand'=>'Lenovo',   'cat'=>'Laptop',     'price'=>22990000,'special'=>19490000,'qty'=>8],
 
-            /* ═══ Under 500,000 VND tier ═══════════════════════════════════ */
+            
             ['sku'=>'ACC-001','name'=>'Thermal Grizzly Kryonaut 1g Thermal Paste',   'brand'=>'Thermal Grizzly','cat'=>'Accessories','price'=>149000,'special'=>119000,'qty'=>100],
             ['sku'=>'ACC-002','name'=>'Noctua NT-H1 3.5g Premium Thermal Compound',  'brand'=>'Noctua',    'cat'=>'Accessories','price'=>199000,'special'=>159000,'qty'=>80],
             ['sku'=>'ACC-003','name'=>'ASUS ROG Large Gaming Mouse Pad 900×400mm',   'brand'=>'ASUS',      'cat'=>'Accessories','price'=>499000,'special'=>399000,'qty'=>50],
@@ -114,7 +114,7 @@ class SeedTechProducts implements DataPatchInterface
             ['sku'=>'ACC-011','name'=>'ID-COOLING ZF-12025 120mm Blue LED Case Fan', 'brand'=>'ID-COOLING','cat'=>'Accessories','price'=>229000,'special'=>189000,'qty'=>65],
             ['sku'=>'ACC-012','name'=>'Corsair 2x SATA Power Extension Cable 30cm',  'brand'=>'Corsair',   'cat'=>'Accessories','price'=>189000,'special'=>149000,'qty'=>75],
 
-            /* ═══ Standard products (no discount) ══════════════════════════ */
+            
             ['sku'=>'LAP-003','name'=>'Apple MacBook Pro 16 M3 Max 36GB RAM',        'brand'=>'Apple',     'cat'=>'Laptop',     'price'=>69990000,'special'=>null,'qty'=>5],
             ['sku'=>'LAP-004','name'=>'Dell XPS 15 i7-13700H RTX 4060 OLED',         'brand'=>'Dell',      'cat'=>'Laptop',     'price'=>42990000,'special'=>null,'qty'=>7],
             ['sku'=>'LAP-005','name'=>'HP OMEN 16 Ryzen 7 7745HX RTX 4070',          'brand'=>'HP',        'cat'=>'Laptop',     'price'=>29990000,'special'=>null,'qty'=>9],
@@ -146,19 +146,19 @@ class SeedTechProducts implements DataPatchInterface
         $store          = $storeManager->getStore();
 
         foreach ($products as $data) {
-            /* skip if SKU already exists */
+            
             try {
                 $productRepo->get($data['sku']);
                 continue;
             } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
-                // product doesn't exist → create it
+                
             }
 
-            /** @var \Magento\Catalog\Model\Product $product */
+            
             $product = $productFactory->create();
             $product->setSku($data['sku'])
                 ->setName($data['name'])
-                ->setAttributeSetId(4) // Default attribute set
+                ->setAttributeSetId(4) 
                 ->setStatus(Status::STATUS_ENABLED)
                 ->setVisibility(Visibility::VISIBILITY_BOTH)
                 ->setTypeId(Type::TYPE_SIMPLE)
@@ -180,7 +180,7 @@ class SeedTechProducts implements DataPatchInterface
 
             $saved = $productRepo->save($product);
 
-            /* Stock */
+            
             $stockItem = $stockRegistry->getStockItemBySku($data['sku']);
             $stockItem->setQty($data['qty']);
             $stockItem->setIsInStock($data['qty'] > 0);

@@ -48,7 +48,7 @@ class Dashboard implements HttpGetActionInterface
 
     private function getDashboardHtml(int $pendingCount, int $paidCount, int $totalCount): string
     {
-        // Inline CSS for the admin dashboard — complete, self-contained HTML page
+        
         return <<<HTML
 <!DOCTYPE html>
 <html lang="vi">

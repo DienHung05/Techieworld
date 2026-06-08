@@ -1,13 +1,10 @@
 <?php
-/**
- * PVModern Cart – reference cart list.
- * Matches: CartItemList.tsx from /reference/tmp
- */
 
-// phpcs:disable Magento2.Templates.ThisInTemplate
 
-/** @var $block \Magento\Checkout\Block\Cart\Grid */
-/** @var \Magento\Framework\Escaper $escaper */
+
+
+
+
 ?>
 <?= $block->getChildHtml('form_before') ?>
 <form action="<?= $escaper->escapeUrl($block->getUrl('checkout/cart/updatePost')) ?>"

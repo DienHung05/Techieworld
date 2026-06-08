@@ -26,10 +26,7 @@ class PaymentAttemptService
     ) {
     }
 
-    /**
-     * @param array<string, mixed> $paymentInit
-     * @return array<string, mixed>
-     */
+    
     public function registerAttemptForOrder(Order $order, string $provider, array $paymentInit, string $frontendMethod): array
     {
         $pvOrder = $this->ensurePvOrderForMagentoOrder($order, $frontendMethod);
@@ -107,9 +104,7 @@ class PaymentAttemptService
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
     public function ensurePvOrderForMagentoOrder(Order $order, string $frontendMethod): array
     {
         $incrementId = (string) $order->getIncrementId();
@@ -139,9 +134,7 @@ class PaymentAttemptService
         return $this->paymentDb->findById($pvOrderId) ?: ['id' => $pvOrderId];
     }
 
-    /**
-     * @return array<string, mixed>|null
-     */
+    
     public function findAttemptForProvider(
         string $provider,
         string $providerOrderId = '',
@@ -163,9 +156,7 @@ class PaymentAttemptService
         return $attempt;
     }
 
-    /**
-     * @param array<string, mixed>|null $attempt
-     */
+    
     public function recordEvent(
         ?array $attempt,
         string $provider,
@@ -196,10 +187,7 @@ class PaymentAttemptService
         ]);
     }
 
-    /**
-     * @param array<string, mixed> $attempt
-     * @return array<string, mixed>
-     */
+    
     public function applyProviderResult(
         array $attempt,
         int $eventId,
@@ -217,7 +205,7 @@ class PaymentAttemptService
         }
 
         $attempt = $this->paymentDb->findAttemptById((int) $attempt['id']) ?: $attempt;
-        // VND has no sub-unit; compare rounded integers so 113006.20 vs 113006 isn't a mismatch.
+        
         $expected = round((float) ($attempt['amount'] ?? 0));
         $received = round((float) $amount);
         if (abs($expected - $received) > 0.5) {
@@ -258,10 +246,7 @@ class PaymentAttemptService
         return ['result' => 'accepted', 'message' => 'No terminal status change.'];
     }
 
-    /**
-     * @param array<string, mixed> $attempt
-     * @return array<string, mixed>
-     */
+    
     public function confirmPaid(
         array $attempt,
         int $eventId,
@@ -358,9 +343,7 @@ class PaymentAttemptService
         }
     }
 
-    /**
-     * @param array<string, mixed> $attempt
-     */
+    
     public function markFailed(array $attempt, string $providerTransactionId, string $reason): void
     {
         $pvOrder = $this->paymentDb->findById((int) $attempt['pv_order_id']);
@@ -385,9 +368,7 @@ class PaymentAttemptService
         }
     }
 
-    /**
-     * @param array<string, mixed> $attempt
-     */
+    
     public function moveToManualReview(array $attempt, string $reason): void
     {
         $this->paymentDb->transitionAttempt((int) $attempt['id'], 'manual_review');
@@ -401,9 +382,7 @@ class PaymentAttemptService
         }
     }
 
-    /**
-     * @param array<string, mixed> $attempt
-     */
+    
     public function expireAttempt(array $attempt): void
     {
         $pvOrder = $this->paymentDb->findById((int) $attempt['pv_order_id']);

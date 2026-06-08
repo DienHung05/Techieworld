@@ -99,9 +99,7 @@ class Ipn implements HttpGetActionInterface
         }
     }
 
-    /**
-     * @param array<string, mixed> $params
-     */
+    
     private function verifySignature(array $params): bool
     {
         $secret = (string) ($this->integrationConfig->getVnpayConfig()['hash_secret'] ?? '');

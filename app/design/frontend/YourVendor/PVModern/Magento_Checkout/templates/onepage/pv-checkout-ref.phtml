@@ -1,10 +1,5 @@
 <?php
-/**
- * PVModern — reference-aligned 4-step checkout.
- *
- * @var \YourVendor\PVModern\Block\Checkout\Flow $block
- * @var \Magento\Framework\Escaper $escaper
- */
+
 $bootstrapJson = $block->getSerializedBootstrap();
 $cartUrl = $block->escapeUrl($block->getUrl('checkout/cart'));
 $homeUrl = $block->escapeUrl($block->getUrl(''));
@@ -13,7 +8,7 @@ $accountUrl = $block->escapeUrl($block->getUrl('customer/account'));
 <div class="pvco3"
      data-mage-init='{"pvmodernCheckout":{}}'
      data-bootstrap-selector="#pvco3-bootstrap">
-    <script type="application/json" id="pvco3-bootstrap"><?= /* @noEscape */ $bootstrapJson ?></script>
+    <script type="application/json" id="pvco3-bootstrap"><?=  $bootstrapJson ?></script>
 
     <div class="pv3-container pvco3-wrap">
         <div class="pvco3-stepper" data-stepper>

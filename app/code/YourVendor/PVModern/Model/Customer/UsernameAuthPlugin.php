@@ -17,13 +17,7 @@ class UsernameAuthPlugin
     ) {
     }
 
-    /**
-     * If the login identifier is not an email, look it up as pv_username and
-     * rewrite it to the matching customer's email so Magento's standard
-     * AccountManagement::authenticate() works unchanged.
-     *
-     * @return array{0:string,1:string}
-     */
+    
     public function beforeAuthenticate(
         AccountManagementInterface $subject,
         $email,

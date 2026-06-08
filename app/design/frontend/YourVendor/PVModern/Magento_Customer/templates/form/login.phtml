@@ -1,9 +1,5 @@
 <?php
-/**
- * PVModern – Modern customer login page (self-contained)
- * @var \Magento\Customer\Block\Form\Login $block
- * @var \Magento\Framework\Escaper        $escaper
- */
+
 $actionUrl      = $escaper->escapeUrl($block->getPostActionUrl());
 $forgotPostUrl  = $escaper->escapeUrl($block->getUrl('customer/account/forgotpasswordpost'));
 $createPostUrl  = $escaper->escapeUrl($block->getUrl('customer/account/createpost'));
@@ -15,7 +11,7 @@ $initialView    = (string) $block->getData('initial_view');
 $initialView    = in_array($initialView, ['login', 'signup'], true) ? $initialView : 'login';
 $showSignup     = $initialView === 'signup';
 
-/* Capture flash messages (wrong password etc.) */
+
 $serverMsgs = '';
 try {
     $mb = $block->getLayout()->getBlock('page.messages');

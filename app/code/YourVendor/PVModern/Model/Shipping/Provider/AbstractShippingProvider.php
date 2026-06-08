@@ -21,10 +21,7 @@ abstract class AbstractShippingProvider implements ShippingProviderInterface
 
     abstract protected function getProviderNote(): string;
 
-    /**
-     * Brand metadata for frontend card rendering.
-     * @return array{color: string, short_name: string, logo_key: string}
-     */
+    
     protected function getProviderBrand(): array
     {
         return [

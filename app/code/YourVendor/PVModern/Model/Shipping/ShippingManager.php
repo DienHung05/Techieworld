@@ -9,9 +9,7 @@ use YourVendor\PVModern\Api\ShippingProviderInterface;
 
 class ShippingManager
 {
-    /**
-     * @param array<string, ShippingProviderInterface> $providers
-     */
+    
     private array $providers;
 
     private LoggerInterface $logger;
@@ -34,9 +32,7 @@ class ShippingManager
         $this->logger = $logger ?: $objectManager->get(LoggerInterface::class);
     }
 
-    /**
-     * @return array<int, array<string, mixed>>
-     */
+    
     public function getQuotes(array $context): array
     {
         $quotes = [];
@@ -66,9 +62,7 @@ class ShippingManager
         return $this->providers[$code] ?? null;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
     public function createShipment(string $code, array $context): array
     {
         $provider = $this->getProvider($code);
@@ -83,9 +77,7 @@ class ShippingManager
         return $provider->createShipment($context);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
     public function track(string $code, string $trackingNumber): array
     {
         $provider = $this->getProvider($code);
@@ -100,9 +92,7 @@ class ShippingManager
         return $provider->track($trackingNumber);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
     public function cancel(string $code, string $shipmentId): array
     {
         $provider = $this->getProvider($code);

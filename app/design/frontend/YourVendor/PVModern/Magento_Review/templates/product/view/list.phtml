@@ -1,20 +1,14 @@
 <?php
-/**
- * PVModern — Review list override
- * Replaces the empty "Be the first to review" state with the product specs table.
- * When reviews do exist they render normally above the specs.
- *
- * @var \Magento\Review\Block\Product\View\ListView $block
- */
+
 $om       = \Magento\Framework\App\ObjectManager::getInstance();
 $registry = $om->get(\Magento\Framework\Registry::class);
 $product  = $registry->registry('current_product');
 
-/* ── Load reviews if any ─────────────────────────────────────────────────── */
+
 $reviewCollection = null;
 $hasReviews       = false;
 try {
-    /** @var \Magento\Review\Model\ResourceModel\Review\CollectionFactory $rcf */
+    
     $rcf = $om->get(\Magento\Review\Model\ResourceModel\Review\CollectionFactory::class);
     $reviewCollection = $rcf->create()
         ->addStatusFilter(\Magento\Review\Model\Review::STATUS_APPROVED)
@@ -26,7 +20,7 @@ try {
     $hasReviews = $reviewCollection->getSize() > 0;
 } catch (\Throwable $e) {}
 
-/* ── Helper: load specs from product ─────────────────────────────────────── */
+
 $specs = [];
 if ($product) {
     $rawSpecs = trim((string) $product->getData('tech_specs'));
@@ -42,7 +36,7 @@ if ($product) {
     }
 
     if (empty($specs)) {
-        /* Auto-generate specs from standard Magento attributes */
+        
         $attrMap = [
             'brand'        => 'Brand',
             'manufacturer' => 'Brand',
@@ -68,7 +62,7 @@ if ($product) {
                 }
             } catch (\Throwable $e) {}
         }
-        /* Fallback minimum spec rows */
+        
         if (empty($specs)) {
             $specs[] = ['label' => 'SKU',    'value' => (string) ($product ? $product->getSku() : '')];
             $specs[] = ['label' => 'Weight', 'value' => ($product ? $product->getWeight() . ' kg' : '—')];
@@ -77,7 +71,7 @@ if ($product) {
 }
 ?>
 
-<?php /* ══ REVIEW LIST ══════════════════════════════════════════════════════ */ ?>
+<?php  ?>
 <?php if ($hasReviews && $reviewCollection): ?>
 <div class="pv3-pdp-reviews-wrapper">
     <div class="pv3-pdp-specs-header">
@@ -93,7 +87,7 @@ if ($product) {
                 if ($votes && $votes->count()) {
                     $total = 0;
                     foreach ($votes as $vote) { $total += (int) $vote->getPercent(); }
-                    $rating = round($total / $votes->count() / 20); // 0-5 stars
+                    $rating = round($total / $votes->count() / 20); 
                 }
             } catch (\Throwable $e) {}
         ?>
@@ -117,7 +111,7 @@ if ($product) {
 </div>
 <?php endif; ?>
 
-<?php /* ══ WRITE A REVIEW FORM ═════════════════════════════════════════════ */ ?>
+<?php  ?>
 <div class="pv3-pdp-review-form-wrapper">
     <div class="pv3-pdp-specs-header">
         <span class="pv3-pdp-specs-eyebrow">Share Your Experience</span>

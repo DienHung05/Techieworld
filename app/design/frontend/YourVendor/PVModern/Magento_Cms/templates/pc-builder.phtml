@@ -1,9 +1,7 @@
 <?php
-/** @var \Magento\Framework\View\Element\Template $block */
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   PC BUILDER v6 — strict category-backed component sourcing
-   ═══════════════════════════════════════════════════════════════════════════ */
+
+
 $om                         = \Magento\Framework\App\ObjectManager::getInstance();
 $storeManager               = $om->get(\Magento\Store\Model\StoreManagerInterface::class);
 $productCollectionFactory   = $om->get(\Magento\Catalog\Model\ResourceModel\Product\CollectionFactory::class);
@@ -88,7 +86,7 @@ function pvPcMapItems($collection, $productVisualResolver, $priceCurrency) {
     return $items;
 }
 
-/* ── Slot definitions ────────────────────────────────────────────────────── */
+
 $slots = [
     'cpu'         => ['label' => 'CPU',          'sub' => 'Vi Xu Ly',       'categories' => ['CPU'], 'fallback' => 'cpu'],
     'motherboard' => ['label' => 'Motherboard',  'sub' => 'Bo Mach Chu',    'categories' => ['Mainboard'], 'fallback' => 'mainboard'],

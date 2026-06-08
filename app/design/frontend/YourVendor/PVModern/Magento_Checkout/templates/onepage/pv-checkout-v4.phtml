@@ -1,12 +1,5 @@
 <?php
-/**
- * PVModern customer checkout content.
- *
- * This file is the active checkout content below the existing header. The
- * reference path is used only as design guidance; this runs in Magento.
- *
- * @var \YourVendor\PVModern\Block\Checkout\Flow $block
- */
+
 $bootstrapJson = $block->getSerializedBootstrap();
 $cartUrl = $block->escapeUrl($block->getUrl('checkout/cart'));
 $homeUrl = $block->escapeUrl($block->getUrl(''));
@@ -19,7 +12,7 @@ $ordersUrl = $block->escapeUrl($block->getUrl('sales/order/history'));
      data-home-url="<?= $homeUrl ?>"
      data-orders-url="<?= $ordersUrl ?>"
      data-mage-init='{"pvmodernCheckout":{}}'>
-    <script type="application/json" id="pvcheckout-bootstrap"><?= /* @noEscape */ $bootstrapJson ?></script>
+    <script type="application/json" id="pvcheckout-bootstrap"><?=  $bootstrapJson ?></script>
 
     <div class="checkout-container">
         <div class="checkout-stepper" data-checkout-stepper aria-label="<?= $block->escapeHtmlAttr(__('Checkout steps')) ?>">

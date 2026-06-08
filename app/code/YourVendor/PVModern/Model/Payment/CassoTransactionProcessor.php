@@ -15,10 +15,7 @@ class CassoTransactionProcessor
     ) {
     }
 
-    /**
-     * @param array<string, mixed> $transaction
-     * @return array<string, mixed>
-     */
+    
     public function process(array $transaction, string $rawPayload, bool $signatureVerified): array
     {
         $description = (string) ($transaction['description'] ?? $transaction['memo'] ?? $transaction['content'] ?? '');
@@ -53,12 +50,12 @@ class CassoTransactionProcessor
         }
 
         $transferCode = $this->extractTransferCode($description);
-        // The transfer code (`ORD<digits>`) is unique per order regardless of
-        // which payment method the customer selected (bank_qr / momo / vnpay /
-        // card). In our unified-VietQR flow, money for ANY method actually
-        // arrives as a BIDV bank transfer, so we look up by provider_order_id
-        // across all providers — falling back from bank_transfer to momo/vnpay
-        // /stripe to find whichever attempt was created for this order.
+        
+        
+        
+        
+        
+        
         $attempt = null;
         if ($transferCode !== '') {
             foreach (['bank_transfer', 'momo', 'vnpay', 'stripe'] as $candidateProvider) {
@@ -88,8 +85,8 @@ class CassoTransactionProcessor
             return ['result' => 'manual_review', 'message' => 'No exact transfer code match.'];
         }
 
-        // VND has no sub-unit; banks always round to integer when transferring.
-        // Round both sides before comparing so 113006.20 vs 113006 doesn't trip the mismatch guard.
+        
+        
         $expected = round((float) ($attempt['amount'] ?? 0));
         $received = round((float) $amount);
         if (abs($expected - $received) > 0.5) {
@@ -133,9 +130,7 @@ class CassoTransactionProcessor
         return '';
     }
 
-    /**
-     * @param array<string, mixed> $transaction
-     */
+    
     private function createReviewOnce(
         string $transactionId,
         float $amount,

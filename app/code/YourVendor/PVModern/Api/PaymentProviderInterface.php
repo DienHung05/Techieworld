@@ -15,13 +15,9 @@ interface PaymentProviderInterface
 
     public function isAvailable(array $context = []): bool;
 
-    /**
-     * @return array<string, mixed>
-     */
+    
     public function describeCheckoutMethod(array $context = []): array;
 
-    /**
-     * @return array<string, mixed>
-     */
+    
     public function initialize(array $context): array;
 }

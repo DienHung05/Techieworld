@@ -47,9 +47,7 @@ class Locations implements HttpGetActionInterface
         ]);
     }
 
-    /**
-     * @return array<int, array{name:string,districts:array<int, array{name:string,wards:array<int, string>}>}>
-     */
+    
     private function loadCachedLocations(): array
     {
         try {
@@ -71,9 +69,7 @@ class Locations implements HttpGetActionInterface
         }
     }
 
-    /**
-     * @param array<int, array{name:string,districts:array<int, array{name:string,wards:array<int, string>}>}> $locations
-     */
+    
     private function saveCachedLocations(array $locations): void
     {
         try {
@@ -100,9 +96,7 @@ class Locations implements HttpGetActionInterface
             . DIRECTORY_SEPARATOR . self::CACHE_FILE;
     }
 
-    /**
-     * @return array<int, array{name:string,districts:array<int, array{name:string,wards:array<int, string>}>}>
-     */
+    
     private function loadProviderLocations(): array
     {
         try {
@@ -130,10 +124,7 @@ class Locations implements HttpGetActionInterface
         }
     }
 
-    /**
-     * @param array<mixed> $rows
-     * @return array<int, array{name:string,districts:array<int, array{name:string,wards:array<int, string>}>}>
-     */
+    
     private function sanitizeLocations(array $rows): array
     {
         $locations = [];
@@ -168,12 +159,7 @@ class Locations implements HttpGetActionInterface
         return $locations;
     }
 
-    /**
-     * Safe fallback for offline/local development. The frontend remains usable
-     * even when the public Vietnam locations provider is unavailable.
-     *
-     * @return array<int, array{name:string,districts:array<int, array{name:string,wards:array<int, string>}>}>
-     */
+    
     private function fallbackLocations(): array
     {
         return [

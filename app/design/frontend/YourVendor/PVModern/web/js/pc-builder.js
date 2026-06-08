@@ -11,28 +11,28 @@ define(['jquery'], function ($) {
             $addAllBtn   = $root.find('[data-add-all]'),
             $panelSearch = $root.find('[data-panel-search]'),
             LS_KEY       = 'pvmodern_pcbuild_v1',
-            selected     = {}; /* { componentType: { id, name, price, url, formHtml } } */
+            selected     = {};  
 
-        /* ── Restore from localStorage ── */
+         
         try {
             var saved = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
             if (saved && typeof saved === 'object') { selected = saved; }
-        } catch (e) { /* ignore */ }
+        } catch (e) {   }
 
-        /* ── Helpers ── */
+         
         function formatPrice(n) {
             return '$' + parseFloat(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         }
 
         function persist() {
-            try { localStorage.setItem(LS_KEY, JSON.stringify(selected)); } catch (e) { /* ignore */ }
+            try { localStorage.setItem(LS_KEY, JSON.stringify(selected)); } catch (e) {   }
         }
 
         function activeType() {
             return $slots.filter('.is-active').data('slot') || '';
         }
 
-        /* ── Refresh sidebar slot states ── */
+         
         function refreshSlots() {
             $slots.each(function () {
                 var type  = $(this).data('slot'),
@@ -47,7 +47,7 @@ define(['jquery'], function ($) {
             });
         }
 
-        /* ── Refresh product cards in active section ── */
+         
         function refreshCards(type) {
             var item = selected[type];
             $root.find('[data-section="' + type + '"] [data-card]').each(function () {
@@ -62,7 +62,7 @@ define(['jquery'], function ($) {
             });
         }
 
-        /* ── Refresh summary bar chips ── */
+         
         function refreshSummary() {
             var total = 0, chips = [];
             $.each(selected, function (type, item) {
@@ -81,10 +81,10 @@ define(['jquery'], function ($) {
             $addAllBtn.prop('disabled', Object.keys(selected).length === 0);
         }
 
-        /* ── Select a product ── */
+         
         function selectProduct(type, id, name, price) {
             if (selected[type] && String(selected[type].id) === String(id)) {
-                /* toggle off */
+                 
                 delete selected[type];
             } else {
                 selected[type] = { id: id, name: name, price: price };
@@ -95,18 +95,18 @@ define(['jquery'], function ($) {
             refreshSummary();
         }
 
-        /* ── Switch active component type tab ── */
+         
         function switchTab(type) {
             $slots.removeClass('is-active');
             $slots.filter('[data-slot="' + type + '"]').addClass('is-active');
             $sections.removeClass('is-active');
             $sections.filter('[data-section="' + type + '"]').addClass('is-active');
             refreshCards(type);
-            /* clear search */
+             
             $panelSearch.val('').trigger('input');
         }
 
-        /* ── Panel search ── */
+         
         $panelSearch.on('input', function () {
             var q = $(this).val().toLowerCase().trim();
             var type = activeType();
@@ -116,12 +116,12 @@ define(['jquery'], function ($) {
             });
         });
 
-        /* ── Slot click ── */
+         
         $slots.on('click', function () {
             switchTab($(this).data('slot'));
         });
 
-        /* ── Select / deselect card ── */
+         
         $root.on('click', '[data-select-btn]', function (e) {
             e.stopPropagation();
             var $card = $(this).closest('[data-card]'),
@@ -135,7 +135,7 @@ define(['jquery'], function ($) {
             );
         });
 
-        /* Double-click card also works */
+         
         $root.on('dblclick', '[data-card]', function () {
             var $sect = $(this).closest('[data-section]'),
                 type  = $sect.data('section');
@@ -147,7 +147,7 @@ define(['jquery'], function ($) {
             );
         });
 
-        /* ── Remove chip from summary bar ── */
+         
         $summaryList.on('click', '[data-remove]', function () {
             var type = $(this).data('remove');
             delete selected[type];
@@ -157,17 +157,17 @@ define(['jquery'], function ($) {
             refreshSummary();
         });
 
-        /* ── Add all to cart: navigate to each product page sequentially (or open tabs) ── */
+         
         $addAllBtn.on('click', function () {
             var items = Object.values(selected);
             if (!items.length) return;
-            /* Submit add‑to‑cart forms for each selected product that has a form */
+             
             var $forms = $root.find('[data-add-form]').filter(function () {
                 var type = $(this).data('add-form');
                 return !!selected[type];
             });
             if ($forms.length) {
-                /* Submit first form; signal via custom event for the rest */
+                 
                 $forms.each(function (i) {
                     var $f = $(this);
                     if (i === 0) {
@@ -177,14 +177,14 @@ define(['jquery'], function ($) {
                     }
                 });
             } else {
-                /* Fallback: open product pages in new tabs */
+                 
                 $.each(selected, function (type, item) {
                     if (item.url) { window.open(item.url, '_blank'); }
                 });
             }
         });
 
-        /* ── Init ── */
+         
         refreshSlots();
         refreshSummary();
         var firstSlot = $slots.first().data('slot');

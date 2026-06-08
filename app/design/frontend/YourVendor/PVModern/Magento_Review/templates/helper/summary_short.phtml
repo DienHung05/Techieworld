@@ -1,11 +1,5 @@
 <?php
-/**
- * Hide the empty-review CTA in the product info column.
- * When reviews exist, keep the real rating summary visible.
- *
- * @var \Magento\Review\Block\Product\ReviewRenderer $block
- * @var \Magento\Framework\Escaper $escaper
- */
+
 $url = $block->getReviewsUrl() . '#reviews';
 ?>
 <?php if ($block->isReviewEnabled() && $block->getReviewsCount()): ?>
@@ -15,7 +9,7 @@ $url = $block->getReviewsUrl() . '#reviews';
             <div class="rating-summary">
                 <span class="label"><span><?= $escaper->escapeHtml(__('Rating')) ?>:</span></span>
                 <div class="rating-result"
-                     id="rating-result_<?= /* @noEscape */ $block->getProduct()->getId() ?>"
+                     id="rating-result_<?=  $block->getProduct()->getId() ?>"
                      title="<?= $escaper->escapeHtmlAttr($rating) ?>%">
                     <span style="width: <?= $escaper->escapeHtmlAttr($rating) ?>%;">
                         <span><?= $escaper->escapeHtml($rating) ?>%</span>

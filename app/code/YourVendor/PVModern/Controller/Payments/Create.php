@@ -132,9 +132,7 @@ class Create implements HttpPostActionInterface, CsrfAwareActionInterface
         ]);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
     private function readPayload(): array
     {
         $raw = (string) $this->request->getContent();
@@ -159,9 +157,7 @@ class Create implements HttpPostActionInterface, CsrfAwareActionInterface
         return $order && $order->getId() ? $order : null;
     }
 
-    /**
-     * @param array<string, mixed> $payment
-     */
+    
     private function buildQrPayload(string $method, array $payment, float $amount, string $reference): string
     {
         if (!in_array($method, ['bank', 'bank_transfer'], true)) {

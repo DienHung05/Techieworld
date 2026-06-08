@@ -72,3 +72,9 @@ atlassian*
 /generated/*
 !/generated/.htaccess
 .DS_Store
+
+# Local secrets / deploy artifacts — never commit
+/pvmodern.env
+/deploy/.env.production
+/deploy/CREDENTIALS.txt
+/deploy/env.php.production

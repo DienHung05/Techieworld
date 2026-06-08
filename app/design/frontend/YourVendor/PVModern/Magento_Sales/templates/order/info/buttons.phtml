@@ -1,9 +1,5 @@
 <?php
-/**
- * PVModern order detail buttons override: add tracking action.
- *
- * @var \Magento\Sales\Block\Order\Info\Buttons $block
- */
+
 ?>
 <div class="actions">
     <?php $_order = $block->getOrder() ?>
@@ -15,7 +11,7 @@
     </a>
     <?php if ($this->helper(\Magento\Sales\Helper\Reorder::class)->canReorder($_order->getEntityId())) : ?>
         <a href="#" data-post='<?=
-        /* @noEscape */ $this->helper(\Magento\Framework\Data\Helper\PostHelper::class)
+         $this->helper(\Magento\Framework\Data\Helper\PostHelper::class)
             ->getPostData($block->getReorderUrl($_order))
         ?>' class="action order">
             <span><?= $block->escapeHtml(__('Reorder')) ?></span>

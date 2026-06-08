@@ -62,16 +62,16 @@ class Casso implements HttpPostActionInterface, CsrfAwareActionInterface
         $secret = (string) ($config['webhook_secret'] ?? '');
 
         if ($secret === '') {
-            // Allow sandbox bypass only when explicitly enabled (dev/testing).
+            
             return !empty($config['sandbox_mode']);
         }
 
-        // Casso Flow Webhook V2 signs requests as documented at:
-        //   https://github.com/CassoHQ/casso-webhook-v2-verify-signature
-        // Header: X-Casso-Signature: t=<unix_ms>,v1=<hex_hmac_sha512>
-        // The signed message is "{t}.{canonical_json}" where canonical_json is
-        // the request body re-serialized after recursively sorting object keys
-        // ascending (A→Z). HMAC uses SHA-512 with the Webhook V2 Key bảo mật.
+        
+        
+        
+        
+        
+        
         $sig = (string) $this->request->getHeader('X-Casso-Signature');
         if ($sig !== '' && preg_match('/t=(\d+),v1=([a-f0-9]+)/i', $sig, $m)) {
             $timestamp = $m[1];
@@ -95,7 +95,7 @@ class Casso implements HttpPostActionInterface, CsrfAwareActionInterface
             }
         }
 
-        // Fallback: legacy plain-token headers (older Casso Connect / manual tests).
+        
         $sent = (string) (
             $this->request->getHeader('Secure-Token')
             ?: $this->request->getHeader('X-Webhook-Secret')
@@ -107,14 +107,7 @@ class Casso implements HttpPostActionInterface, CsrfAwareActionInterface
         return $sent !== '' && hash_equals($secret, $sent);
     }
 
-    /**
-     * Recursively sort associative-array keys ascending. List arrays preserve
-     * order (their items are still recursed into). Mirrors the reference
-     * sortObjDataByKey() from CassoHQ/casso-webhook-v2-verify-signature.
-     *
-     * @param mixed $data
-     * @return mixed
-     */
+    
     private function sortObjectKeysRecursively(mixed $data): mixed
     {
         if (!is_array($data)) {
@@ -132,10 +125,7 @@ class Casso implements HttpPostActionInterface, CsrfAwareActionInterface
         return $sorted;
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     * @return array<int, array<string, mixed>>
-     */
+    
     private function extractTransactions(array $payload): array
     {
         if (isset($payload['data']) && is_array($payload['data'])) {

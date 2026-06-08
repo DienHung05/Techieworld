@@ -260,7 +260,7 @@ body.order_tracking-index-index .page-title-wrapper {
     border-color: rgba(148, 163, 184, .8);
 }
 
-/* News */
+ 
 .pvnews-cats {
     display: flex;
     gap: 8px;
@@ -539,7 +539,7 @@ body.order_tracking-index-index .page-title-wrapper {
     color: #fff;
 }
 
-/* Weather */
+ 
 .pvweather-search {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto auto;
@@ -636,7 +636,7 @@ body.order_tracking-index-index .page-title-wrapper {
     border: 1px solid #e2e8f0;
 }
 
-/* Currency */
+ 
 .pvcurrency-top {
     display: grid;
     grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr);
@@ -730,7 +730,7 @@ body.order_tracking-index-index .page-title-wrapper {
     color: #64748b;
 }
 
-/* Tracking */
+ 
 .pvtracking-dashboard {
     display: grid;
     gap: 18px;
@@ -993,7 +993,7 @@ body.order_tracking-index-index .page-title-wrapper {
     .pvtracking-meta {
         grid-template-columns: 1fr;
     }
-    /* 2 cols on tablet; 430px breakpoint collapses to 1fr */
+     
     .pvweather-metrics {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -1043,7 +1043,7 @@ body.order_tracking-index-index .page-title-wrapper {
     }
 }
 
-/* ── PVModern information dashboards final product polish ───────────── */
+ 
 .pvinfo-page {
     --pv-bg: #f8fafc;
     --pv-card: rgba(255, 255, 255, .94);
@@ -1496,7 +1496,7 @@ body.order_tracking-index-index .page-title-wrapper {
     }
 }
 
-/* GlobalPulse realtime dashboard rebuild */
+ 
 .gp-page,
 .gp-page * { box-sizing: border-box; }
 .gp-page {
@@ -1636,7 +1636,7 @@ body.order_tracking-index-index .page-title-wrapper {
 @media (max-width:820px){.gp-container{width:min(100% - 28px,1280px)}.gp-appbar{grid-template-columns:1fr auto}.gp-tabs{grid-column:1/-1;justify-content:start;order:3}.gp-hero,.gp-news-hero{grid-template-columns:1fr}.gp-hero-orb{width:160px;justify-self:start}.gp-preset-grid,.gp-control-grid,.gp-weather-metrics,.gp-currency-grid,.gp-news-grid,.gp-news-mini-grid,.gp-sidebar{grid-template-columns:1fr}.gp-daily button{grid-template-columns:1fr}}
 @media (max-width:540px){.gp-page{padding-top:14px}.gp-container{width:min(100% - 20px,1280px)}.gp-appbar,.gp-hero,.gp-surface{border-radius:20px}.gp-hero{padding:22px}.gp-hero h1{font-size:38px}.gp-currency-pair{grid-template-columns:1fr}.gp-swap{width:100%}.gp-section-head,.gp-hero-actions,.gp-converter-actions{flex-direction:column;align-items:stretch}.gp-button{width:100%}.gp-toast-stack{left:16px;right:16px;padding-bottom:max(12px,env(safe-area-inset-bottom))}}
 
-/* Final UI polish for News / Weather / Currency pages. */
+ 
 .gp-page {
     --gp-radius-sm: 14px;
     --gp-radius-md: 18px;
@@ -2064,7 +2064,7 @@ body.order_tracking-index-index .page-title-wrapper {
     }
 }
 
-/* Mobile overflow hardening for GlobalPulse dashboards. */
+ 
 body.news-index-index,
 body.weather-index-index,
 body.currency-index-index,
@@ -2324,7 +2324,7 @@ body.currencyrate-index-index {
     }
 }
 
-/* ── Finance-chart style for USD/VND history (winning override) ── */
+ 
 .pvcurrency-chart.pvcurrency-chart {
     padding: 18px 18px 28px !important;
     gap: 4px !important;
@@ -2363,7 +2363,7 @@ body.currencyrate-index-index {
     background: linear-gradient(180deg, #7f1d1d 0%, #b91c1c 60%, #ef4444 100%) !important;
 }
 
-/* ── Finance-chart style for /realtime-dashboard USD/VND (winning override) ── */
+ 
 .gp-chart.gp-chart {
     padding: 18px 18px 28px !important;
     gap: 4px !important;

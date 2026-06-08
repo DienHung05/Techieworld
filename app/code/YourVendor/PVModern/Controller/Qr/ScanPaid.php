@@ -10,22 +10,7 @@ use YourVendor\PVModern\Model\IntegrationConfig;
 use YourVendor\PVModern\Model\Payment\CassoTransactionProcessor;
 use YourVendor\PVModern\Helper\PaymentDb;
 
-/**
- * DEMO-MODE-ONLY "scan-to-pay" trigger.
- *
- * When PVMODERN_PAYMENT_DEMO=true, the storefront generates QR codes that
- * encode a URL like:
- *   https://<host>/api/qr/scan-paid?order=ORD000000076
- * instead of a bank-transfer VietQR string.
- *
- * Any phone camera or QR-scanner app that opens the URL triggers this
- * controller. We invoke the same CassoTransactionProcessor pipeline that
- * a real SePay webhook would, marking the order paid and pushing a `paid`
- * SSE frame to the open browser tab — which then auto-advances to step 5.
- *
- * Refuses to run when demo mode is disabled, so it can never be abused on
- * a live-money deployment.
- */
+
 class ScanPaid implements HttpGetActionInterface
 {
     public function __construct(
@@ -53,7 +38,7 @@ class ScanPaid implements HttpGetActionInterface
             return $this->landingHtml('error', 'Mã đơn hàng không hợp lệ.', $result);
         }
 
-        // Resolve the order so we can use the real amount for the synthetic event.
+        
         $incrementId = preg_replace('/^ORD0*/', '', $transferCode) ?: '';
         $incrementId = str_pad($incrementId, 9, '0', STR_PAD_LEFT);
         $pvOrder = $this->paymentDb->findByIncrementId($incrementId);
@@ -80,7 +65,7 @@ class ScanPaid implements HttpGetActionInterface
         $rawPayload = json_encode(['source' => 'demo_scan', 'transferCode' => $transferCode, 'amount' => $amount]);
         $this->transactionProcessor->process($fakeTxn, $rawPayload ?: '', true);
 
-        // Re-read after processing so we report the actual outcome.
+        
         $after = $this->paymentDb->findByIncrementId($incrementId);
         $afterStatus = (string) ($after['payment_status'] ?? 'pending');
 
@@ -93,11 +78,7 @@ class ScanPaid implements HttpGetActionInterface
         );
     }
 
-    /**
-     * Renders a tiny mobile-friendly landing page so the customer's phone
-     * shows a clear success/error confirmation after scanning. Inline CSS
-     * so we don't depend on Magento's full theme stack for this view.
-     */
+    
     private function landingHtml(string $kind, string $message, $result)
     {
         $color = match ($kind) {

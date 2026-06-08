@@ -1,5 +1,5 @@
 <?php
-/** @var \Magento\Framework\View\Element\Template $block */
+
 $om                       = \Magento\Framework\App\ObjectManager::getInstance();
 $storeManager             = $om->get(\Magento\Store\Model\StoreManagerInterface::class);
 $productCollectionFactory = $om->get(\Magento\Catalog\Model\ResourceModel\Product\CollectionFactory::class);
@@ -10,7 +10,7 @@ $store                    = $storeManager->getStore();
 
 $activeFilter = isset($_GET['filter']) ? htmlspecialchars((string)$_GET['filter'], ENT_QUOTES) : 'all';
 
-/* ── Fetch sale products ─────────────────────────────────────────────────── */
+
 $deals = [];
 try {
     $collection = $productCollectionFactory->create();
@@ -47,9 +47,9 @@ try {
         ];
     }
     usort($deals, function ($a, $b) { return $b['disc'] - $a['disc']; });
-} catch (\Throwable $e) { /* silent */ }
+} catch (\Throwable $e) {  }
 
-/* ── Filter helpers ──────────────────────────────────────────────────────── */
+
 function _pvd_count($deals, $filter) {
     $c = 0;
     foreach ($deals as $d) {

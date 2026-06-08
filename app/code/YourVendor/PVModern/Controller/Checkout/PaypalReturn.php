@@ -49,9 +49,7 @@ class PaypalReturn implements HttpGetActionInterface
         ]);
     }
 
-    /**
-     * @param array<string, mixed> $params
-     */
+    
     private function extractIncrementId(array $params): string
     {
         foreach (['orderId', 'invoice', 'custom', 'cm', 'item_number'] as $key) {
@@ -70,9 +68,7 @@ class PaypalReturn implements HttpGetActionInterface
         return stripos($paymentUrl, 'sandbox.paypal.com') !== false;
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     */
+    
     private function applySandboxReturn(array $payload, string $incrementId): string
     {
         $transactionId = preg_replace('/[^A-Za-z0-9_-]/', '', (string) ($payload['tx'] ?? $payload['txn_id'] ?? '')) ?: '';

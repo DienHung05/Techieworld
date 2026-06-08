@@ -1,14 +1,11 @@
 <?php
-/**
- * PVModern Cart Item – reference-faithful layout.
- * Matches: CartItemComponent.tsx from /reference/tmp
- */
 
-// phpcs:disable Magento2.Templates.ThisInTemplate
-// phpcs:disable Generic.Files.LineLength
 
-/** @var $block \Magento\Checkout\Block\Cart\Item\Renderer */
-/** @var \Magento\Framework\Escaper $escaper */
+
+
+
+
+
 
 $_item   = $block->getItem();
 $product = $_item->getProduct();
@@ -76,9 +73,9 @@ $discountPct  = ($regularPrice > 0 && $regularPrice > $finalPrice)
                                 <span class="msrp notice"><?= $escaper->escapeHtml(__('See price before order confirmation.')) ?></span>
                             </span>
                         <?php else: ?>
-                            <span class="pvcart-current-price"><?= /* @noEscape */ $priceHelper->currency($finalPrice, true, false) ?></span>
+                            <span class="pvcart-current-price"><?=  $priceHelper->currency($finalPrice, true, false) ?></span>
                             <?php if ($discountPct > 0): ?>
-                                <span class="pvcart-original-price"><?= /* @noEscape */ $priceHelper->currency($regularPrice, true, false) ?></span>
+                                <span class="pvcart-original-price"><?=  $priceHelper->currency($regularPrice, true, false) ?></span>
                             <?php endif ?>
                         <?php endif ?>
                         <?php if ($discountPct > 0): ?>
@@ -160,7 +157,7 @@ $discountPct  = ($regularPrice > 0 && $regularPrice > $finalPrice)
                         <?php if ($canApplyMsrp): ?>
                             --
                         <?php else: ?>
-                            <?= /* @noEscape */ $priceHelper->currency($rowTotal, true, false) ?>
+                            <?=  $priceHelper->currency($rowTotal, true, false) ?>
                         <?php endif ?>
                     </strong>
 
@@ -168,7 +165,7 @@ $discountPct  = ($regularPrice > 0 && $regularPrice > $finalPrice)
                         <a href="#"
                            class="pvcart-remove-btn"
                            title="<?= $escaper->escapeHtmlAttr(__('Remove')) ?>"
-                           data-post='<?= /* @noEscape */ $removePostJson ?>'>
+                           data-post='<?=  $removePostJson ?>'>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17" aria-hidden="true">
                                 <path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/>
                                 <path d="M10 11v6"/><path d="M14 11v6"/>

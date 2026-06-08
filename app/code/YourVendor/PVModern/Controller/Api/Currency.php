@@ -152,12 +152,7 @@ class Currency implements HttpGetActionInterface
             '5Y' => 20,
             default => 30,
         };
-        /* Synthesise a believable USD/VND series with a deterministic random
-           walk: small Gaussian-ish daily moves (~0.1% std), a faint upward
-           drift, and occasional ±0.4% jumps to mimic intervention/news days.
-           Weekends (Sat/Sun) flatline to the previous close — banks don't
-           publish on weekends. The seed is the year+range so the chart is
-           stable on refresh but shifts year-over-year. */
+        
         $seed = (int) gmdate('Y') * 31 + crc32($range);
         mt_srand($seed);
         $value = $base * 0.995;
@@ -195,9 +190,7 @@ class Currency implements HttpGetActionInterface
         ];
     }
 
-    /**
-     * @return array{updated_at?:string,source?:string,rates?:array<string,array<string,mixed>>}
-     */
+    
     private function fetchVietcombankRates(): array
     {
         $body = $this->httpGetTextCached($this->vietcombankUrl(), 'vietcombank-rates.xml');
@@ -337,9 +330,7 @@ class Currency implements HttpGetActionInterface
         return is_string($body) ? $body : '';
     }
 
-    /**
-     * @return array<int, array{code:string,value:float}>
-     */
+    
     private function multi(string $from, float $amount, array $rates): array
     {
         $targets = ['VND', 'EUR', 'JPY', 'KRW', 'GBP', 'AUD', 'SGD'];

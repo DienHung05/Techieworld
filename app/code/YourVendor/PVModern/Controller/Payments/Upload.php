@@ -13,7 +13,7 @@ use YourVendor\PVModern\Helper\PaymentDb;
 
 class Upload implements HttpPostActionInterface, CsrfAwareActionInterface
 {
-    private const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+    private const MAX_BYTES = 5 * 1024 * 1024; 
     private const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     private const ALLOWED_EXT  = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
 
@@ -52,7 +52,7 @@ class Upload implements HttpPostActionInterface, CsrfAwareActionInterface
             return $result->setData(['success' => true, 'message' => 'Already paid']);
         }
 
-        // Validate uploaded file
+        
         $files = $this->request->getFiles();
         $file = $files['file'] ?? null;
         if (!$file || empty($file['tmp_name']) || $file['error'] !== UPLOAD_ERR_OK) {
@@ -69,8 +69,8 @@ class Upload implements HttpPostActionInterface, CsrfAwareActionInterface
         $origExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         $ext = in_array($origExt, self::ALLOWED_EXT, true) ? $origExt : 'jpg';
 
-        // Generate secure token + save path
-        $token = bin2hex(random_bytes(24)); // 48-char hex
+        
+        $token = bin2hex(random_bytes(24)); 
         $pubRoot = $this->directoryList->getPath('pub') . '/media/pvmodern/proofs/' . $token;
         if (!is_dir($pubRoot)) { mkdir($pubRoot, 0755, true); }
 
@@ -80,7 +80,7 @@ class Upload implements HttpPostActionInterface, CsrfAwareActionInterface
             return $result->setHttpResponseCode(500)->setData(['success' => false, 'message' => 'Failed to save file']);
         }
 
-        // Relative URL stored in DB
+        
         $screenshotUrl = 'pvmodern/proofs/' . $token . '/' . $filename;
 
         $this->paymentDb->updateOrder($pvOrderId, [
@@ -99,7 +99,7 @@ class Upload implements HttpPostActionInterface, CsrfAwareActionInterface
             'note' => 'Customer uploaded payment proof',
         ]);
 
-        // Admin notification via Telegram (if configured)
+        
         $this->notifyAdmin($pvOrder, $pvOrderId);
 
         return $result->setData([

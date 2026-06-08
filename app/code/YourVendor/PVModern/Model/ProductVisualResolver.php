@@ -17,9 +17,7 @@ class ProductVisualResolver
         'import/pvmodern-image-sync',
     ];
 
-    /**
-     * Prefer real Magento media when present, otherwise fall back to curated product visuals.
-     */
+    
     private const EXACT_SKU_MAP = [
         'APL-WATCH-S10-46' => 'https://www.apple.com/newsroom/images/2024/09/introducing-apple-watch-series-10/article/Apple-Watch-Series-10-lineup-240909_big.jpg.large.jpg',
         'APL-WATCH-ULTRA2-BLACK' => 'https://www.apple.com/assets-www/en_WW/watch/og/watch_og_1ff2ee953.png',
@@ -121,10 +119,10 @@ class ProductVisualResolver
             return $this->normalizeImageUrl(self::EXACT_SKU_MAP[$sku]);
         }
 
-        // Broad prefix-based remote fallbacks can easily produce the wrong
-        // model image. For unresolved SKUs we return the local placeholder and
-        // let the storefront image-fallback layer generate a product-name-aware
-        // visual instead of showing a mismatched external image.
+        
+        
+        
+        
         return $this->assetRepository->getUrl(self::PLACEHOLDER_ASSET);
     }
 

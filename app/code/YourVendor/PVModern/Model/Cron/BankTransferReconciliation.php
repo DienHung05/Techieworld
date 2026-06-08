@@ -46,9 +46,7 @@ class BankTransferReconciliation
         }
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
     private function getJson(string $url, string $apiKey): array
     {
         if (!function_exists('curl_init')) {
@@ -77,10 +75,7 @@ class BankTransferReconciliation
         return is_array($decoded) ? $decoded : [];
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     * @return array<int, array<string, mixed>>
-     */
+    
     private function extractTransactions(array $payload): array
     {
         $data = $payload['data'] ?? $payload;

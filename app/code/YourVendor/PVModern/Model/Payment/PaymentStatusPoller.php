@@ -17,10 +17,7 @@ class PaymentStatusPoller
     ) {
     }
 
-    /**
-     * @param array<string, mixed> $attempt
-     * @return array<string, mixed>
-     */
+    
     public function pollAttempt(array $attempt): array
     {
         return match ((string) ($attempt['provider'] ?? '')) {
@@ -30,10 +27,7 @@ class PaymentStatusPoller
         };
     }
 
-    /**
-     * @param array<string, mixed> $attempt
-     * @return array<string, mixed>
-     */
+    
     private function pollMomo(array $attempt): array
     {
         $config = $this->integrationConfig->getMomoConfig();
@@ -93,10 +87,7 @@ class PaymentStatusPoller
         return ['checked' => true, 'provider' => 'momo', 'resultCode' => (string) ($response['resultCode'] ?? '')];
     }
 
-    /**
-     * @param array<string, mixed> $attempt
-     * @return array<string, mixed>
-     */
+    
     private function pollStripe(array $attempt): array
     {
         $config = $this->integrationConfig->getStripeConfig();
@@ -141,10 +132,7 @@ class PaymentStatusPoller
         return ['checked' => true, 'provider' => 'stripe', 'payment_status' => (string) ($response['payment_status'] ?? '')];
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     * @return array<string, mixed>
-     */
+    
     private function postJson(string $url, array $payload): array
     {
         if (!function_exists('curl_init')) {
@@ -171,9 +159,7 @@ class PaymentStatusPoller
         return is_array($decoded) ? $decoded : [];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
     private function getJson(string $url, string $bearerToken): array
     {
         if (!function_exists('curl_init')) {

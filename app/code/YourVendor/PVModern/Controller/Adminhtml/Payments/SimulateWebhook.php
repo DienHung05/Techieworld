@@ -11,10 +11,7 @@ use YourVendor\PVModern\Helper\PaymentDb;
 use YourVendor\PVModern\Model\IntegrationConfig;
 use YourVendor\PVModern\Model\Payment\CassoTransactionProcessor;
 
-/**
- * Admin-only sandbox tool: fires a synthetic Casso webhook for a pending order.
- * Gated behind isMockModeEnabled('payment') — unavailable in production.
- */
+
 class SimulateWebhook extends Action
 {
     public const ADMIN_RESOURCE = 'YourVendor_PVModern::payments';

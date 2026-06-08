@@ -258,8 +258,7 @@ class Weather implements HttpGetActionInterface
         $timezoneOffset = (int) ($current['timezone'] ?? 0);
         $cityName = trim((string) ($current['name'] ?? $city));
         $country = trim((string) ($country ?: ($current['sys']['country'] ?? '')));
-        /* OpenWeatherMap returns hyper-local neighborhood names like "Xom Pho"
-           for Hanoi-area coords. Normalise to the user-facing city. */
+        
         $coordLat = (float) ($current['coord']['lat'] ?? $lat);
         $coordLon = (float) ($current['coord']['lon'] ?? $lon);
         if ($country === 'VN' && abs($coordLat - 21.03) < 0.25 && abs($coordLon - 105.85) < 0.35) {
@@ -335,9 +334,7 @@ class Weather implements HttpGetActionInterface
         return gmdate($format, $timestamp + $timezoneOffset);
     }
 
-    /**
-     * @return array<int, array<string, mixed>>
-     */
+    
     private function dailyFromOpenWeatherForecast(array $forecast, int $timezoneOffset, string $unit): array
     {
         $groups = [];
@@ -383,9 +380,7 @@ class Weather implements HttpGetActionInterface
         }, array_slice(array_values($groups), 0, 5));
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
     private function fetchOpenWeatherAirQuality(string $base, string $lat, string $lon, string $key): array
     {
         $data = $this->httpGetJson($base . '/data/2.5/air_pollution?' . http_build_query([
@@ -453,7 +448,7 @@ class Weather implements HttpGetActionInterface
 
     private function env(string $key): string
     {
-        // Use IntegrationConfig so pvmodern.env keys (e.g. OPENWEATHER_API_KEY) are resolved.
+        
         return $this->integrationConfig->getString($key) ?? '';
     }
 

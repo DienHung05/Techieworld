@@ -46,9 +46,7 @@ class CheckoutService
     ) {
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
     public function buildCheckoutBootstrap(): array
     {
         $quote = $this->checkoutSession->getQuote();
@@ -94,10 +92,7 @@ class CheckoutService
         ];
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     * @return array<string, mixed>
-     */
+    
     public function quoteShippingOptions(array $payload): array
     {
         $normalized = $this->normalizePayload($payload, false);
@@ -168,10 +163,7 @@ class CheckoutService
         ];
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     * @return array<string, mixed>
-     */
+    
     public function placeOrder(array $payload): array
     {
         $quote = $this->checkoutSession->getQuote();
@@ -411,9 +403,7 @@ class CheckoutService
         }
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
     private function buildCartSummary(): array
     {
         $quote = $this->checkoutSession->getQuote();
@@ -459,10 +449,7 @@ class CheckoutService
         ];
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     * @return array<string, string>
-     */
+    
     private function normalizePayload(array $payload, bool $requireFinalSelections): array
     {
         $receivingMethod = $this->normalizeString($payload['receiving_method'] ?? 'delivery');
@@ -517,9 +504,7 @@ class CheckoutService
         return $normalized;
     }
 
-    /**
-     * @return array{0:string,1:string}
-     */
+    
     private function splitName(string $fullName): array
     {
         $parts = preg_split('/\s+/', trim($fullName)) ?: [];
@@ -531,9 +516,7 @@ class CheckoutService
         return [trim(implode(' ', $parts)), $lastName];
     }
 
-    /**
-     * @return array<string, string>
-     */
+    
     private function buildSummary(float $shippingAmount): array
     {
         $quote = $this->checkoutSession->getQuote();
@@ -553,21 +536,13 @@ class CheckoutService
         return $this->stripRedundantDecimals($formatted);
     }
 
-    /**
-     * Strip the redundant ",00" / ".00" decimal tail that Magento appends for
-     * VND-style integer currencies (e.g. "10.000,00 ₫" → "10.000 ₫").
-     * Anchored to either end-of-string or a currency suffix so that
-     * thousands separators (which always have more digits after them) survive.
-     */
+    
     private function stripRedundantDecimals(string $formatted): string
     {
         return (string) preg_replace('/[.,]0+(?=\s|[^\d.,]|$)/', '', $formatted);
     }
 
-    /**
-     * @param array<string, mixed> $payment
-     * @return array<string, mixed>
-     */
+    
     private function normalizePaymentResponse(array $payment): array
     {
         $paymentUrl = (string) ($payment['paymentUrl'] ?? $payment['payment_url'] ?? $payment['redirect_url'] ?? '');
@@ -597,12 +572,7 @@ class CheckoutService
         return $payment;
     }
 
-    /**
-     * Build a same-origin QR image URL. If the payload looks like a bare ORD
-     * transfer code (no scheme), wrap it into the demo scanpaid URL so phones
-     * scanning the QR can actually open something. Routes through our
-     * /api/qr/url proxy so CSP `img-src 'self'` always permits the image.
-     */
+    
     private function buildQrCodeUrl(string $payload): string
     {
         $payload = trim($payload);
@@ -610,17 +580,15 @@ class CheckoutService
             return '';
         }
         if (!preg_match('#^[a-z][a-z0-9+.-]*://#i', $payload)) {
-            // Bare reference like "ORD000000076" — turn it into a scannable URL
-            // pointing at the demo scanpaid endpoint on the current store host.
+            
+            
             $base = rtrim((string) $this->urlBuilder->getBaseUrl(['_secure' => true]), '/');
             $payload = $base . '/api/qr/scanpaid?order=' . rawurlencode($payload);
         }
         return '/api/qr/url?size=540&data=' . rawurlencode($payload);
     }
 
-    /**
-     * @param array<string, string> $normalized
-     */
+    
     private function resolveFrontendPaymentMethod(array $normalized): string
     {
         $walletId = strtolower((string) ($normalized['wallet_id'] ?? ''));

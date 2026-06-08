@@ -7,22 +7,13 @@ use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\RawFactory;
 
-/**
- * Same-origin proxy that turns any plain-text payload into a QR PNG.
- *
- * Used by demo mode so the QR image embeds an HTTPS URL (not bank EMV).
- * When a phone scans the QR, its camera offers to open the URL, which lands
- * on Controller/Qr/ScanPaid.php and triggers the simulated paid event.
- *
- * Route: GET /api/qr/url?data=<urlencoded>&size=540
- */
+
 class Url implements HttpGetActionInterface
 {
     private const UPSTREAM_TEMPLATE = 'https://api.qrserver.com/v1/create-qr-code/?size=%dx%d&margin=10&format=png&qzone=2&data=%s';
     private const TIMEOUT_SEC = 4;
     private const MAX_DATA_LEN = 600;
-    /** Filesystem cache TTL — same QR can be served thousands of times during
-     *  the 30-min payment window across page reloads, refresh, etc. */
+    
     private const CACHE_TTL_SEC = 1800;
 
     public function __construct(
@@ -59,8 +50,7 @@ class Url implements HttpGetActionInterface
 
         $result = $this->rawFactory->create();
         $result->setHeader('Content-Type', 'image/png', true);
-        /* Far-future cache + immutable so Cloudflare and browser keep the PNG
-           — same QR is fetched many times during the payment window. */
+        
         $result->setHeader('Cache-Control', 'public, max-age=31536000, immutable', true);
         $result->setHeader('X-QR-Source', 'qrserver-cached', true);
         $result->setContents($body);
@@ -97,9 +87,7 @@ class Url implements HttpGetActionInterface
         }
     }
 
-    /**
-     * @return array{0:string,1:string,2:int}
-     */
+    
     private function fetchUpstream(string $url): array
     {
         if (!function_exists('curl_init')) {

@@ -76,7 +76,7 @@ PAYLOAD=$(cat <<EOF
   "id": $TS,
   "gateway": "BIDV",
   "transactionDate": "$(date '+%Y-%m-%d %H:%M:%S')",
-  "accountNumber": "4661104867",
+  "accountNumber": "0000000000",
   "subAccount": "",
   "code": "$TRANSFER_CODE",
   "content": "$TRANSFER_CODE thanh toan don hang",

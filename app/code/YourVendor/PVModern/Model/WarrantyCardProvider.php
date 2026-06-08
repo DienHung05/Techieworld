@@ -67,7 +67,7 @@ class WarrantyCardProvider
 
     public function findByOrderCode(string $orderCode): ?array
     {
-        // Strip prefix: ORD000000037 → 000000037, also accept plain numeric
+        
         $code = strtoupper(trim($orderCode));
         if (str_starts_with($code, 'ORD')) {
             $code = substr($code, 3);
@@ -77,7 +77,7 @@ class WarrantyCardProvider
             return null;
         }
 
-        // Find Magento order — check both zero-padded and plain numeric forms
+        
         $orders = $this->orderCollectionFactory->create()
             ->addFieldToFilter('increment_id', ['in' => [$incrementId, str_pad($incrementId, 9, '0', STR_PAD_LEFT)]])
             ->setPageSize(1);
@@ -86,7 +86,7 @@ class WarrantyCardProvider
             return null;
         }
 
-        // Get first ordered product SKU to resolve warranty card
+        
         $items = $this->orderItemCollectionFactory->create()
             ->addFieldToFilter('order_id', $order->getId())
             ->addFieldToFilter('product_type', 'simple')
@@ -94,7 +94,7 @@ class WarrantyCardProvider
         $firstItem = $items->getFirstItem();
         $sku = $firstItem && $firstItem->getId() ? (string)$firstItem->getSku() : '';
 
-        // Find the matching warranty card by SKU
+        
         $card = null;
         if ($sku !== '') {
             foreach ($this->loadCards() as $c) {
@@ -111,7 +111,7 @@ class WarrantyCardProvider
             return null;
         }
 
-        // Build the order-level purchase code (same algorithm as history.phtml)
+        
         $seed = implode('|', [
             (string)$order->getIncrementId(),
             (string)$order->getEntityId(),
@@ -150,7 +150,7 @@ class WarrantyCardProvider
             ->setCurPage(1);
 
         $cards = [];
-        /** @var Product $product */
+        
         foreach ($collection as $product) {
             $cards[] = $this->buildCard($product, $today);
         }
